@@ -1,0 +1,20 @@
+Package: mediator
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Aymeric",
+           family = "Stamm",
+           role = c("aut", "cre"),
+           email = "aymeric@stamm.fr",
+           comment = c(ORCID = "0000-0002-8725-3654"))
+Description: What the package does (one paragraph).
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo
+Imports: 
+    Rcpp
