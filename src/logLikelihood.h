@@ -15,7 +15,7 @@ public:
   unsigned int GetDataDimension() {return m_DataDimension;}
   unsigned int GetSampleSize() {return m_SampleSize;}
 
-  virtual double GetNormalizationFactor(const arma::mat &params) = 0;
+  virtual double GetNormalizationFactor(const arma::mat &params, arma::vec &grad) = 0;
   virtual double GetLogDeterminant(const arma::mat &params, arma::vec &grad) = 0;
 
   // Return the objective function f(x) for the given x.
@@ -55,7 +55,7 @@ private:
 class GaussianLogLikelihood : public BaseLogLikelihood
 {
 public:
-  double GetNormalizationFactor(const arma::mat &params);
+  double GetNormalizationFactor(const arma::mat &params, arma::vec &grad);
   double GetLogDeterminant(const arma::mat &params, arma::vec &grad);
 
   double EvaluateConstraint(const unsigned int i, const arma::mat& x);

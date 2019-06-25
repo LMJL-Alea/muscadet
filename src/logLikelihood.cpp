@@ -39,14 +39,26 @@ void BaseLogLikelihood::SetInputs(const arma::mat &points, const double volume)
 
 double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
-  arma::vec detGradient;
+  arma::vec detGradient, normGradient;
   double logLik = 2.0 * m_DataVolume;
-  logLik += m_DataVolume * GetNormalizationFactor(x);
+  logLik += m_DataVolume * GetNormalizationFactor(x, normGradient);
   logLik += GetLogDeterminant(x, detGradient);
   return -2.0 * logLik;
 }
 
-double GaussianLogLikelihood::GetNormalizationFactor(const arma::mat &params)
+void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
+{
+  arma::vec detGradient, normGradient;
+  GetNormalizationFactor(x, normGradient);
+  GetLogDeterminant(x, detGradient);
+  unsigned int numParams = x.n_cols;
+  g.set_size(numParams, 1);
+  for (unsigned int i = 0;i < numParams;++i)
+    g[i] = normGradient[i] + detGradient[i];
+  g *= -2.0;
+}
+
+double GaussianLogLikelihood::GetNormalizationFactor(const arma::mat &params, arma::vec &grad)
 {
   GaussianIntegrand integrand;
   integrand.SetParameters(params);
@@ -54,7 +66,43 @@ double GaussianLogLikelihood::GetNormalizationFactor(const arma::mat &params)
   integrand.SetIntensity2(m_Intensity2);
   integrand.SetDataDimension(m_DataDimension);
   auto f = [&integrand](double t){ return integrand(t); };
-  return 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f, 0.0, std::numeric_limits<double>::infinity());
+  double resVal = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f, 0.0, std::numeric_limits<double>::infinity());
+
+  grad.set_size(4);
+
+  GaussianAlpha1Integrand integrand1;
+  integrand1.SetParameters(params);
+  integrand1.SetIntensity1(m_Intensity1);
+  integrand1.SetIntensity2(m_Intensity2);
+  integrand1.SetDataDimension(m_DataDimension);
+  auto f1 = [&integrand1](double t){ return integrand1(t); };
+  grad[0] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f1, 0.0, std::numeric_limits<double>::infinity());
+
+  GaussianAlpha12Integrand integrand2;
+  integrand2.SetParameters(params);
+  integrand2.SetIntensity1(m_Intensity1);
+  integrand2.SetIntensity2(m_Intensity2);
+  integrand2.SetDataDimension(m_DataDimension);
+  auto f2 = [&integrand2](double t){ return integrand2(t); };
+  grad[1] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f2, 0.0, std::numeric_limits<double>::infinity());
+
+  GaussianAlpha2Integrand integrand3;
+  integrand3.SetParameters(params);
+  integrand3.SetIntensity1(m_Intensity1);
+  integrand3.SetIntensity2(m_Intensity2);
+  integrand3.SetDataDimension(m_DataDimension);
+  auto f3 = [&integrand3](double t){ return integrand3(t); };
+  grad[2] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f3, 0.0, std::numeric_limits<double>::infinity());
+
+  GaussianCovarianceIntegrand integrand4;
+  integrand4.SetParameters(params);
+  integrand4.SetIntensity1(m_Intensity1);
+  integrand4.SetIntensity2(m_Intensity2);
+  integrand4.SetDataDimension(m_DataDimension);
+  auto f4 = [&integrand4](double t){ return integrand4(t); };
+  grad[3] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f4, 0.0, std::numeric_limits<double>::infinity());
+
+  return resVal;
 }
 
 double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::vec &grad)
@@ -198,14 +246,4 @@ arma::mat CalcDistMat(const arma::mat &x)
   GaussianLogLikelihood logLik;
   logLik.SetInputs(x, 1.0);
   return logLik.GetDistanceMatrix();
-}
-
-//' @export
-// [[Rcpp::export]]
-double CalcInt(const arma::mat &x)
-{
-  GaussianLogLikelihood logLik;
-  logLik.SetInputs(x, 1.0);
-  arma::mat beta(4, 1, arma::fill::randn);
-  return logLik.GetNormalizationFactor(beta);
 }

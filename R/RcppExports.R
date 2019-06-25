@@ -52,8 +52,3 @@ CalcDistMat <- function(x) {
     .Call('_mediator_CalcDistMat', PACKAGE = 'mediator', x)
 }
 
-#' @export
-CalcInt <- function(x) {
-    .Call('_mediator_CalcInt', PACKAGE = 'mediator', x)
-}
-

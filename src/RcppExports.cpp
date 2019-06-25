@@ -30,22 +30,10 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// CalcInt
-double CalcInt(const arma::mat& x);
-RcppExport SEXP _mediator_CalcInt(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(CalcInt(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_lin_reg_lbfgs", (DL_FUNC) &_mediator_lin_reg_lbfgs, 2},
     {"_mediator_CalcDistMat", (DL_FUNC) &_mediator_CalcDistMat, 1},
-    {"_mediator_CalcInt", (DL_FUNC) &_mediator_CalcInt, 1},
     {NULL, NULL, 0}
 };
 
