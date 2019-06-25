@@ -23,3 +23,5 @@ LinkingTo:
     BH
 Imports: 
     Rcpp
+URL: https://github.com/astamm/mediator
+BugReports: https://github.com/astamm/mediator/issues
