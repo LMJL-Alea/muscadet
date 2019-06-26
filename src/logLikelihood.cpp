@@ -35,6 +35,11 @@ void BaseLogLikelihood::SetInputs(const arma::mat &points, const double volume)
 
   m_Intensity1 /= volume;
   m_Intensity2 /= volume;
+
+  Rcpp::Rcout << "Intensity 1: " << m_Intensity1 << std::endl;
+  Rcpp::Rcout << "Intensity 2: " << m_Intensity2 << std::endl;
+  Rcpp::Rcout << "Point Dimension: " << m_DataDimension << std::endl;
+  Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
 }
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
@@ -101,7 +106,7 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
   g.set_size(numParams, 1);
 
   for (unsigned int i = 0;i < numParams;++i)
-    g[i] = m_GradientIntegral[i] + m_GradientLogDeterminant[i];
+    g(i, 0) = m_GradientIntegral[i] + m_GradientLogDeterminant[i];
 
   g *= -2.0;
 }
@@ -258,6 +263,7 @@ double GaussianLogLikelihood::GetLogDeterminant()
 
   arma::log_det(resVal, workSign, lMatrix);
   arma::mat lMatrixInverse = arma::inv(lMatrix);
+
   m_GradientLogDeterminant[0] = arma::trace(lMatrixInverse * lMatrixDeriv1);
   m_GradientLogDeterminant[1] = arma::trace(lMatrixInverse * lMatrixDeriv1);
   m_GradientLogDeterminant[2] = arma::trace(lMatrixInverse * lMatrixDeriv1);
@@ -266,7 +272,7 @@ double GaussianLogLikelihood::GetLogDeterminant()
   return resVal;
 }
 
-double GaussianLogLikelihood::EvaluateConstraint(const unsigned int i, const arma::mat& x)
+double GaussianLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)
 {
   this->SetModelParameters(x);
   double tau = m_Covariance  / std::sqrt(m_Intensity1 * m_Intensity2);

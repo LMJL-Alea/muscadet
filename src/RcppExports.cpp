@@ -7,15 +7,14 @@
 
 using namespace Rcpp;
 
-// lin_reg_lbfgs
-arma::mat lin_reg_lbfgs(const arma::mat& X, const arma::vec& y);
-RcppExport SEXP _mediator_lin_reg_lbfgs(SEXP XSEXP, SEXP ySEXP) {
+// Estimate
+arma::mat Estimate(const arma::mat& X);
+RcppExport SEXP _mediator_Estimate(SEXP XSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(lin_reg_lbfgs(X, y));
+    rcpp_result_gen = Rcpp::wrap(Estimate(X));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -32,7 +31,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mediator_lin_reg_lbfgs", (DL_FUNC) &_mediator_lin_reg_lbfgs, 2},
+    {"_mediator_Estimate", (DL_FUNC) &_mediator_Estimate, 1},
     {"_mediator_CalcDistMat", (DL_FUNC) &_mediator_CalcDistMat, 1},
     {NULL, NULL, 0}
 };
