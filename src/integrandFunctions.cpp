@@ -8,14 +8,6 @@ double BaseIntegrand::operator()(const double radius)
   return (std::log1p(-lmax) + std::log1p(-lmin)) * radius;
 }
 
-void BaseIntegrand::SetParameters(const arma::mat &params)
-{
-  m_Alpha1     = std::exp(params[0]);
-  m_Alpha12    = std::exp(params[1]);
-  m_Alpha2     = std::exp(params[2]);
-  m_Covariance = params[3];
-}
-
 void BaseIntegrand::RetrieveEigenvalues(const arma::vec &kernelMatrix, double &lambdaMax, double &lambdaMin)
 {
   double k11 = kernelMatrix[0];

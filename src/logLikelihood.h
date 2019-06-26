@@ -3,20 +3,23 @@
 class BaseLogLikelihood
 {
 public:
-  BaseLogLikelihood()  {}
+  BaseLogLikelihood()
+  {
+    m_DataVolume = 1.0;
+    m_Modified = true;
+    m_Alpha1 = 0.0;
+    m_Alpha12 = 0.0;
+    m_Alpha2 = 0.0;
+    m_Covariance = 0.0;
+    m_Integral = 0.0;
+    m_LogDeterminant = 0.0;
+    m_GradientIntegral.set_size(4);
+    m_GradientLogDeterminant.set_size(4);
+  }
+
   ~BaseLogLikelihood() {}
 
-  void SetInputs(const arma::mat &points, const double volume);
-  double GetIntensity1() {return m_Intensity1;}
-  double GetIntensity2() {return m_Intensity2;}
-  arma::mat GetDistanceMatrix() {return m_DistanceMatrix;}
-  arma::vec GetPointLabels() {return m_PointLabels;}
-  double GetDataVolume() {return m_DataVolume;}
-  unsigned int GetDataDimension() {return m_DataDimension;}
-  unsigned int GetSampleSize() {return m_SampleSize;}
-
-  virtual double GetNormalizationFactor(const arma::mat &params, arma::vec &grad) = 0;
-  virtual double GetLogDeterminant(const arma::mat &params, arma::vec &grad) = 0;
+  void SetInputs(const arma::mat &points, const double volume = 1.0);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -41,8 +44,16 @@ public:
   // direction where the constraint would be satisfied.
   void GradientConstraint(const unsigned i, const arma::mat& x, arma::mat& g) {g.fill(0.0);}
 
+  arma::mat GetDistanceMatrix() {return m_DistanceMatrix;}
+
 protected:
+  void SetModelParameters(const arma::mat &params);
+  virtual double GetIntegral() = 0;
+  virtual double GetLogDeterminant() = 0;
+
+  double m_Alpha1, m_Alpha12, m_Alpha2, m_Covariance;
   double m_Intensity1, m_Intensity2;
+  arma::vec m_GradientIntegral, m_GradientLogDeterminant;
   unsigned int m_DataDimension;
   unsigned int m_SampleSize;
   arma::mat m_DistanceMatrix;
@@ -50,13 +61,16 @@ protected:
 
 private:
   double m_DataVolume;
+  bool m_Modified;
+  double m_Integral, m_LogDeterminant;
 };
 
 class GaussianLogLikelihood : public BaseLogLikelihood
 {
 public:
-  double GetNormalizationFactor(const arma::mat &params, arma::vec &grad);
-  double GetLogDeterminant(const arma::mat &params, arma::vec &grad);
-
   double EvaluateConstraint(const unsigned int i, const arma::mat& x);
+
+protected:
+  double GetIntegral();
+  double GetLogDeterminant();
 };

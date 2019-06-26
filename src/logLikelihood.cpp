@@ -37,88 +37,143 @@ void BaseLogLikelihood::SetInputs(const arma::mat &points, const double volume)
   m_Intensity2 /= volume;
 }
 
+void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
+{
+  m_Modified = false;
+
+  double workScalar = std::exp(params[0]);
+  if (m_Alpha1 != workScalar)
+  {
+    m_Alpha1 = workScalar;
+    m_Modified = true;
+  }
+
+  workScalar = std::exp(params[1]);
+  if (m_Alpha12 != workScalar)
+  {
+    m_Alpha12 = workScalar;
+    m_Modified = true;
+  }
+
+  workScalar = std::exp(params[2]);
+  if (m_Alpha2 != workScalar)
+  {
+    m_Alpha2 = workScalar;
+    m_Modified = true;
+  }
+
+  workScalar = params[3];
+  if (m_Covariance != workScalar)
+  {
+    m_Covariance = workScalar;
+    m_Modified = true;
+  }
+}
+
 double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
-  arma::vec detGradient, normGradient;
+  this->SetModelParameters(x);
+
+  if (m_Modified)
+  {
+    m_Integral = this->GetIntegral();
+    m_LogDeterminant = this->GetLogDeterminant();
+  }
+
   double logLik = 2.0 * m_DataVolume;
-  logLik += m_DataVolume * GetNormalizationFactor(x, normGradient);
-  logLik += GetLogDeterminant(x, detGradient);
+  logLik += m_DataVolume * m_Integral;
+  logLik += m_LogDeterminant;
+
   return -2.0 * logLik;
 }
 
 void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
 {
-  arma::vec detGradient, normGradient;
-  GetNormalizationFactor(x, normGradient);
-  GetLogDeterminant(x, detGradient);
+  this->SetModelParameters(x);
+
+  if (m_Modified)
+  {
+    m_Integral = this->GetIntegral();
+    m_LogDeterminant = this->GetLogDeterminant();
+  }
+
   unsigned int numParams = x.n_cols;
   g.set_size(numParams, 1);
+
   for (unsigned int i = 0;i < numParams;++i)
-    g[i] = normGradient[i] + detGradient[i];
+    g[i] = m_GradientIntegral[i] + m_GradientLogDeterminant[i];
+
   g *= -2.0;
 }
 
-double GaussianLogLikelihood::GetNormalizationFactor(const arma::mat &params, arma::vec &grad)
+double GaussianLogLikelihood::GetIntegral()
 {
   GaussianIntegrand integrand;
-  integrand.SetParameters(params);
+  integrand.SetAlpha1(m_Alpha1);
+  integrand.SetAlpha12(m_Alpha12);
+  integrand.SetAlpha2(m_Alpha2);
+  integrand.SetCovariance(m_Covariance);
   integrand.SetIntensity1(m_Intensity1);
   integrand.SetIntensity2(m_Intensity2);
   integrand.SetDataDimension(m_DataDimension);
   auto f = [&integrand](double t){ return integrand(t); };
   double resVal = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f, 0.0, std::numeric_limits<double>::infinity());
 
-  grad.set_size(4);
-
   GaussianAlpha1Integrand integrand1;
-  integrand1.SetParameters(params);
+  integrand1.SetAlpha1(m_Alpha1);
+  integrand1.SetAlpha12(m_Alpha12);
+  integrand1.SetAlpha2(m_Alpha2);
+  integrand1.SetCovariance(m_Covariance);
   integrand1.SetIntensity1(m_Intensity1);
   integrand1.SetIntensity2(m_Intensity2);
   integrand1.SetDataDimension(m_DataDimension);
   auto f1 = [&integrand1](double t){ return integrand1(t); };
-  grad[0] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f1, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[0] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f1, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianAlpha12Integrand integrand2;
-  integrand2.SetParameters(params);
+  integrand2.SetAlpha1(m_Alpha1);
+  integrand2.SetAlpha12(m_Alpha12);
+  integrand2.SetAlpha2(m_Alpha2);
+  integrand2.SetCovariance(m_Covariance);
   integrand2.SetIntensity1(m_Intensity1);
   integrand2.SetIntensity2(m_Intensity2);
   integrand2.SetDataDimension(m_DataDimension);
   auto f2 = [&integrand2](double t){ return integrand2(t); };
-  grad[1] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f2, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[1] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f2, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianAlpha2Integrand integrand3;
-  integrand3.SetParameters(params);
+  integrand3.SetAlpha1(m_Alpha1);
+  integrand3.SetAlpha12(m_Alpha12);
+  integrand3.SetAlpha2(m_Alpha2);
+  integrand3.SetCovariance(m_Covariance);
   integrand3.SetIntensity1(m_Intensity1);
   integrand3.SetIntensity2(m_Intensity2);
   integrand3.SetDataDimension(m_DataDimension);
   auto f3 = [&integrand3](double t){ return integrand3(t); };
-  grad[2] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f3, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[2] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f3, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianCovarianceIntegrand integrand4;
-  integrand4.SetParameters(params);
+  integrand4.SetAlpha1(m_Alpha1);
+  integrand4.SetAlpha12(m_Alpha12);
+  integrand4.SetAlpha2(m_Alpha2);
+  integrand4.SetCovariance(m_Covariance);
   integrand4.SetIntensity1(m_Intensity1);
   integrand4.SetIntensity2(m_Intensity2);
   integrand4.SetDataDimension(m_DataDimension);
   auto f4 = [&integrand4](double t){ return integrand4(t); };
-  grad[3] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f4, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[3] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f4, 0.0, std::numeric_limits<double>::infinity());
 
   return resVal;
 }
 
-double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::vec &grad)
+double GaussianLogLikelihood::GetLogDeterminant()
 {
-  // Transform unconstrained parameters into real parameters
-  double alpha1 = std::exp(params[0]);
-  double alpha12 = std::exp(params[1]);
-  double alpha2 = std::exp(params[2]);
-  double tau = params[3];
-
   arma::mat lMatrix(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv1(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv2(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv3(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv4(m_SampleSize, m_SampleSize);
-  double workValue = 0.0;
+  double resVal = 0.0;
   double workValue1 = 0.0;
   double workValue2 = 0.0;
   double workValue3 = 0.0;
@@ -133,7 +188,7 @@ double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::v
 
       if (workLabel == 2)
       {
-        workValue = 0.0;
+        resVal = 0.0;
         workValue1 = 0.0;
         workValue2 = 0.0;
         workValue3 = 0.0;
@@ -141,34 +196,34 @@ double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::v
         for (unsigned int k = 1;k <= 50;++k)
         {
           double tmpVal = std::pow(m_Intensity1, (double)k);
-          tmpVal *= std::pow(std::sqrt(M_PI) * alpha1, m_DataDimension * (k - 1.0));
+          tmpVal *= std::pow(std::sqrt(M_PI) * m_Alpha1, m_DataDimension * (k - 1.0));
           tmpVal *= std::pow((double)k, -m_DataDimension / 2.0);
-          tmpVal *= std::exp(-m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * alpha1 * alpha1));
-          workValue += tmpVal;
-          workValue1 += tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * alpha1 * alpha1));
+          tmpVal *= std::exp(-m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha1 * m_Alpha1));
+          resVal += tmpVal;
+          workValue1 += tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha1 * m_Alpha1));
         }
       }
       else if (workLabel == 3)
       {
-        workValue = 0.0;
+        resVal = 0.0;
         workValue1 = 0.0;
         workValue2 = 0.0;
         workValue3 = 0.0;
         workValue4 = 0.0;
         for (unsigned int k = 1;k <= 50;++k)
         {
-          double tmpVal = std::pow(tau, k - 1.0);
-          tmpVal *= std::pow(std::sqrt(M_PI) * alpha12, m_DataDimension * (k - 1.0));
+          double tmpVal = std::pow(m_Covariance, k - 1.0);
+          tmpVal *= std::pow(std::sqrt(M_PI) * m_Alpha12, m_DataDimension * (k - 1.0));
           tmpVal *= std::pow((double)k, -m_DataDimension / 2.0);
-          tmpVal *= std::exp(-m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * alpha12 * alpha12));
-          workValue +=  tau * tmpVal;
-          workValue2 += tau * tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * alpha12 * alpha12));
+          tmpVal *= std::exp(-m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha12 * m_Alpha12));
+          resVal +=  m_Covariance * tmpVal;
+          workValue2 += m_Covariance * tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha12 * m_Alpha12));
           workValue4 += tmpVal * k;
         }
       }
       else
       {
-        workValue = 0.0;
+        resVal = 0.0;
         workValue1 = 0.0;
         workValue2 = 0.0;
         workValue3 = 0.0;
@@ -176,15 +231,15 @@ double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::v
         for (unsigned int k = 1;k <= 50;++k)
         {
           double tmpVal = std::pow(m_Intensity2, (double)k);
-          tmpVal *= std::pow(std::sqrt(M_PI) * alpha2, m_DataDimension * (k - 1.0));
+          tmpVal *= std::pow(std::sqrt(M_PI) * m_Alpha2, m_DataDimension * (k - 1.0));
           tmpVal *= std::pow((double)k, -m_DataDimension / 2.0);
-          tmpVal *= std::exp(-m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * alpha2 * alpha2));
-          workValue += tmpVal;
-          workValue3 += tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * alpha2 * alpha2));
+          tmpVal *= std::exp(-m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha2 * m_Alpha2));
+          resVal += tmpVal;
+          workValue3 += tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha2 * m_Alpha2));
         }
       }
 
-      lMatrix(i, j) = workValue;
+      lMatrix(i, j) = resVal;
       lMatrixDeriv1(i, j) = workValue1;
       lMatrixDeriv2(i, j) = workValue2;
       lMatrixDeriv3(i, j) = workValue3;
@@ -192,7 +247,7 @@ double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::v
 
       if (i != j)
       {
-        lMatrix(j, i) = workValue;
+        lMatrix(j, i) = resVal;
         lMatrixDeriv1(j, i) = workValue1;
         lMatrixDeriv2(j, i) = workValue2;
         lMatrixDeriv3(j, i) = workValue3;
@@ -201,40 +256,35 @@ double GaussianLogLikelihood::GetLogDeterminant(const arma::mat &params, arma::v
     }
   }
 
-  arma::log_det(workValue, workSign, lMatrix);
-
-  grad.set_size(4);
+  arma::log_det(resVal, workSign, lMatrix);
   arma::mat lMatrixInverse = arma::inv(lMatrix);
-  grad[0] = arma::trace(lMatrixInverse * lMatrixDeriv1);
-  grad[1] = arma::trace(lMatrixInverse * lMatrixDeriv1);
-  grad[2] = arma::trace(lMatrixInverse * lMatrixDeriv1);
-  grad[3] = arma::trace(lMatrixInverse * lMatrixDeriv1);
+  m_GradientLogDeterminant[0] = arma::trace(lMatrixInverse * lMatrixDeriv1);
+  m_GradientLogDeterminant[1] = arma::trace(lMatrixInverse * lMatrixDeriv1);
+  m_GradientLogDeterminant[2] = arma::trace(lMatrixInverse * lMatrixDeriv1);
+  m_GradientLogDeterminant[3] = arma::trace(lMatrixInverse * lMatrixDeriv1);
 
-  return workValue;
+  return resVal;
 }
 
 double GaussianLogLikelihood::EvaluateConstraint(const unsigned int i, const arma::mat& x)
 {
-  // Transform unconstrained parameters into real parameters
-  double alpha1 = std::exp(x[0]);
-  double alpha12 = std::exp(x[1]);
-  double alpha2 = std::exp(x[2]);
-  double tau = x[3]  / std::sqrt(m_Intensity1 * m_Intensity2);
+  this->SetModelParameters(x);
+  double tau = m_Covariance  / std::sqrt(m_Intensity1 * m_Intensity2);
 
   if (i == 0)
-    return (m_Intensity1 * std::pow(std::sqrt(M_PI) * alpha1, (double)m_DataDimension) <= 1.0) ? 0.0 : DBL_MAX;
+    return (m_Intensity1 * std::pow(std::sqrt(M_PI) * m_Alpha1, (double)m_DataDimension) <= 1.0) ? 0.0 : DBL_MAX;
 
   if (i == 1)
-    return (m_Intensity2 * std::pow(std::sqrt(M_PI) * alpha2, (double)m_DataDimension) <= 1.0) ? 0.0 : DBL_MAX;
+    return (m_Intensity2 * std::pow(std::sqrt(M_PI) * m_Alpha2, (double)m_DataDimension) <= 1.0) ? 0.0 : DBL_MAX;
 
   if (i == 2)
-    return (2.0 * alpha12 * alpha12 >= alpha1 * alpha1 + alpha2 * alpha2) ? 0.0 : DBL_MAX;
+    return (2.0 * m_Alpha12 * m_Alpha12 >= m_Alpha1 * m_Alpha1 + m_Alpha2 * m_Alpha2) ? 0.0 : DBL_MAX;
 
   if (i == 3)
-    return (tau * tau * std::pow(alpha12, 2.0 * m_DataDimension) <= std::pow(alpha1 * alpha2, (double)m_DataDimension)) ? 0.0 : DBL_MAX;
+    return (tau * tau * std::pow(m_Alpha12, 2.0 * m_DataDimension) <= std::pow(m_Alpha1 * m_Alpha2, (double)m_DataDimension)) ? 0.0 : DBL_MAX;
 
   if (i == 4)
-    return (tau * tau * std::pow(alpha12, 2.0 * m_DataDimension) <= 4.0 * std::pow(alpha1 * alpha2, (double)m_DataDimension) * (1.0 / (m_Intensity1 * std::pow(std::sqrt(M_PI) * alpha1, (double)m_DataDimension)) - 1.0) * (1.0 / (m_Intensity2 * std::pow(std::sqrt(M_PI) * alpha2, (double)m_DataDimension)) - 1.0)) ? 0.0 : DBL_MAX;
+    return (tau * tau * std::pow(m_Alpha12, 2.0 * m_DataDimension) <= 4.0 * std::pow(m_Alpha1 * m_Alpha2, (double)m_DataDimension) * (1.0 / (m_Intensity1 * std::pow(std::sqrt(M_PI) * m_Alpha1, (double)m_DataDimension)) - 1.0) * (1.0 / (m_Intensity2 * std::pow(std::sqrt(M_PI) * m_Alpha2, (double)m_DataDimension)) - 1.0)) ? 0.0 : DBL_MAX;
 
   return -1.0;
 }
@@ -244,6 +294,6 @@ double GaussianLogLikelihood::EvaluateConstraint(const unsigned int i, const arm
 arma::mat CalcDistMat(const arma::mat &x)
 {
   GaussianLogLikelihood logLik;
-  logLik.SetInputs(x, 1.0);
+  logLik.SetInputs(x);
   return logLik.GetDistanceMatrix();
 }
