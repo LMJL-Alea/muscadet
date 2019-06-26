@@ -37,10 +37,10 @@ arma::vec GaussianIntegrand::GetFourierKernel(const double radius)
   out[3] = (m_DataDimension / m_Alpha1 + 2.0 * workValue * m_Alpha1) * out[0];
   // D_a12 (K12)
   out[4] = (m_DataDimension / m_Alpha12 + 2.0 * workValue * m_Alpha12) * out[1];
-  // D_tau (K12)
-  out[5] = tmpValue;
   // D_a2 (K22)
-  out[6] = (m_DataDimension / m_Alpha2 + 2.0 * workValue * m_Alpha2) * out[2];
+  out[5] = (m_DataDimension / m_Alpha2 + 2.0 * workValue * m_Alpha2) * out[2];
+  // D_tau (K12)
+  out[6] = tmpValue;
 
   return out;
 }

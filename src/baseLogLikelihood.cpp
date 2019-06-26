@@ -49,6 +49,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   if (m_Alpha1 != workScalar)
   {
     m_Alpha1 = workScalar;
+    m_Amplitude1  = m_Intensity1 * std::pow(std::sqrt(M_PI) * m_Alpha1,  m_DataDimension);
     m_Modified = true;
   }
 
@@ -56,6 +57,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   if (m_Alpha12 != workScalar)
   {
     m_Alpha12 = workScalar;
+    m_Amplitude12 = m_Covariance * std::pow(std::sqrt(M_PI) * m_Alpha12, m_DataDimension);
     m_Modified = true;
   }
 
@@ -63,6 +65,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   if (m_Alpha2 != workScalar)
   {
     m_Alpha2 = workScalar;
+    m_Amplitude2  = m_Intensity2 * std::pow(std::sqrt(M_PI) * m_Alpha2,  m_DataDimension);
     m_Modified = true;
   }
 
@@ -72,13 +75,6 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     m_Covariance = workScalar;
     m_Modified = true;
   }
-
-  if (m_Modified)
-  {
-    m_Amplitude1  = m_Intensity1 * std::pow(std::sqrt(M_PI) * m_Alpha1,  m_DataDimension);
-    m_Amplitude12 = m_Covariance * std::pow(std::sqrt(M_PI) * m_Alpha12, m_DataDimension);
-    m_Amplitude2  = m_Intensity2 * std::pow(std::sqrt(M_PI) * m_Alpha2,  m_DataDimension);
-  }
 }
 
 double BaseLogLikelihood::Evaluate(const arma::mat& x)
@@ -86,15 +82,13 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   Rcpp::Rcout << "init evaluate" << std::endl;
   this->SetModelParameters(x);
 
+  bool validParams = this->CheckModelParameters();
+  if (!validParams)
+    return DBL_MAX;
+
   if (m_Modified)
   {
     Rcpp::Rcout << "enter modified" << std::endl;
-
-    bool validParams = this->CheckModelParameters();
-
-    if (!validParams)
-      return DBL_MAX;
-
     m_Integral = this->GetIntegral();
     Rcpp::Rcout << "done with integral in evaluate" << std::endl;
     m_LogDeterminant = this->GetLogDeterminant();
@@ -124,19 +118,17 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
   unsigned int numParams = x.n_cols;
   g.set_size(numParams, 1);
 
+  bool validParams = this->CheckModelParameters();
+  if (!validParams)
+  {
+    g.fill(0.0);
+    Rcpp::Rcout << "done with gradient" << std::endl;
+    return;
+  }
+
   if (m_Modified)
   {
     Rcpp::Rcout << "enter modified" << std::endl;
-
-    bool validParams = this->CheckModelParameters();
-
-    if (!validParams)
-    {
-      g.fill(0.0);
-      Rcpp::Rcout << "done with gradient" << std::endl;
-      return;
-    }
-
     m_Integral = this->GetIntegral();
     Rcpp::Rcout << "done with integral in gradient" << std::endl;
     m_LogDeterminant = this->GetLogDeterminant();
@@ -161,10 +153,7 @@ double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)
 {
   Rcpp::Rcout << "init with evaluate constraint" << std::endl;
   this->SetModelParameters(x);
-
-  if (m_Modified)
-    this->CheckModelParameters();
-
+  this->CheckModelParameters();
   Rcpp::Rcout << "done with evaluate constraint: " << m_ConstraintVector[i] << std::endl;
   return m_ConstraintVector[i];
 }
