@@ -37,12 +37,12 @@ arma::mat Estimate(const arma::mat& X) {
 
   // Create a starting point for our optimization randomly.
   // The model has p parameters, so the shape is p x 1.
-  arma::mat params(4, 1, arma::fill::randn);
-  // arma::mat params(4, 1);
-  // params[0] = std::log(0.05);
-  // params[1] = std::log(0.05);
-  // params[2] = std::log(0.05);
-  // params[3] = 0.1;
+  // arma::mat params(4, 1, arma::fill::randn);
+  arma::mat params(4, 1);
+  params[0] = std::log(0.05);
+  params[1] = std::log(0.05);
+  params[2] = std::log(0.05);
+  params[3] = 0.001;
 
   // Time the routine
   arma::wall_clock clock;

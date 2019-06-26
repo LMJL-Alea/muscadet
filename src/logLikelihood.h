@@ -11,6 +11,9 @@ public:
     m_Alpha12 = 0.0;
     m_Alpha2 = 0.0;
     m_Covariance = 0.0;
+    m_Amplitude1 = 0.0;
+    m_Amplitude12 = 0.0;
+    m_Amplitude2 = 0.0;
     m_Integral = 0.0;
     m_LogDeterminant = 0.0;
     m_GradientIntegral.set_size(4);
@@ -35,7 +38,7 @@ public:
   // any real value can be returned.  The optimizer will add this value to its
   // overall objective that it is trying to minimize.  (So, a hard constraint
   // can just return 0 if it's satisfied.)
-  virtual double EvaluateConstraint(const size_t i, const arma::mat& x) = 0;
+  double EvaluateConstraint(const size_t i, const arma::mat& x);
 
   // Evaluate the gradient of constraint i at the parameters x, storing the
   // result in the given matrix g.  If this is a hard constraint you can set
@@ -52,16 +55,19 @@ public:
 
 protected:
   void SetModelParameters(const arma::mat &params);
+  virtual bool CheckModelParameters() = 0;
   virtual double GetIntegral() = 0;
   virtual double GetLogDeterminant() = 0;
 
-  double m_Alpha1, m_Alpha12, m_Alpha2, m_Covariance;
-  double m_Intensity1, m_Intensity2;
+  double m_Alpha1, m_Alpha12, m_Alpha2;
+  double m_Intensity1, m_Covariance, m_Intensity2;
+  double m_Amplitude1, m_Amplitude12, m_Amplitude2;
   arma::vec m_GradientIntegral, m_GradientLogDeterminant;
   unsigned int m_DataDimension;
   unsigned int m_SampleSize;
   arma::mat m_DistanceMatrix;
   arma::vec m_PointLabels;
+  arma::vec m_ConstraintVector;
 
 private:
   double m_DataVolume;
@@ -71,10 +77,8 @@ private:
 
 class GaussianLogLikelihood : public BaseLogLikelihood
 {
-public:
-  double EvaluateConstraint(const size_t i, const arma::mat& x);
-
 protected:
+  bool CheckModelParameters();
   double GetIntegral();
   double GetLogDeterminant();
 };
