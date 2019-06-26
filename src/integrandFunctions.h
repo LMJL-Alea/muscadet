@@ -1,3 +1,5 @@
+#pragma once
+
 #include <RcppEnsmallen.h>
 
 class BaseIntegrand

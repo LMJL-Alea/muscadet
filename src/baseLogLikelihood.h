@@ -1,3 +1,5 @@
+#pragma once
+
 #include <RcppEnsmallen.h>
 
 class BaseLogLikelihood
@@ -73,12 +75,4 @@ private:
   double m_DataVolume;
   bool m_Modified;
   double m_Integral, m_LogDeterminant;
-};
-
-class GaussianLogLikelihood : public BaseLogLikelihood
-{
-protected:
-  bool CheckModelParameters();
-  double GetIntegral();
-  double GetLogDeterminant();
 };
