@@ -6,42 +6,45 @@ bool GaussianLogLikelihood::CheckModelParameters()
 {
   m_ConstraintVector.set_size(this->NumConstraints());
   m_ConstraintVector.fill(0.0);
+  unsigned int numViolations = 0;
 
   if (m_Amplitude1 >= 1.0)
   {
     m_ConstraintVector[0] = DBL_MAX;
-    return false;
+    ++numViolations;
   }
 
   if (m_Amplitude2 >= 1.0)
   {
     m_ConstraintVector[1] = DBL_MAX;
-    return false;
+    ++numViolations;
   }
 
   if (2.0 * m_Alpha12 * m_Alpha12 < m_Alpha1 * m_Alpha1 + m_Alpha2 * m_Alpha2)
   {
     m_ConstraintVector[2] = DBL_MAX;
-    return false;
+    ++numViolations;
   }
 
   if (m_Amplitude12 * m_Amplitude12 > m_Amplitude1 * m_Amplitude2)
   {
     m_ConstraintVector[3] = DBL_MAX;
-    return false;
+    ++numViolations;
   }
 
   if (m_Amplitude12 * m_Amplitude12 >= 4.0 * (1.0 - m_Amplitude1) * (1.0 - m_Amplitude2))
   {
     m_ConstraintVector[4] = DBL_MAX;
-    return false;
+    ++numViolations;
   }
 
-  return true;
+  return (numViolations == 0);
 }
 
 double GaussianLogLikelihood::GetIntegral()
 {
+  typedef boost::math::quadrature::gauss_kronrod<double, 61> QuadratureType;
+
   GaussianIntegrand integrand;
   integrand.SetAlpha1(m_Alpha1);
   integrand.SetAlpha12(m_Alpha12);
@@ -51,7 +54,7 @@ double GaussianLogLikelihood::GetIntegral()
   integrand.SetIntensity2(m_Intensity2);
   integrand.SetDataDimension(m_DataDimension);
   auto f = [&integrand](double t){ return integrand(t); };
-  double resVal = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f, 0.0, std::numeric_limits<double>::infinity());
+  double resVal = 2.0 * M_PI * QuadratureType::integrate(f, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianAlpha1Integrand integrand1;
   integrand1.SetAlpha1(m_Alpha1);
@@ -62,7 +65,7 @@ double GaussianLogLikelihood::GetIntegral()
   integrand1.SetIntensity2(m_Intensity2);
   integrand1.SetDataDimension(m_DataDimension);
   auto f1 = [&integrand1](double t){ return integrand1(t); };
-  m_GradientIntegral[0] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f1, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(f1, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianAlpha12Integrand integrand2;
   integrand2.SetAlpha1(m_Alpha1);
@@ -73,7 +76,7 @@ double GaussianLogLikelihood::GetIntegral()
   integrand2.SetIntensity2(m_Intensity2);
   integrand2.SetDataDimension(m_DataDimension);
   auto f2 = [&integrand2](double t){ return integrand2(t); };
-  m_GradientIntegral[1] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f2, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(f2, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianAlpha2Integrand integrand3;
   integrand3.SetAlpha1(m_Alpha1);
@@ -84,7 +87,7 @@ double GaussianLogLikelihood::GetIntegral()
   integrand3.SetIntensity2(m_Intensity2);
   integrand3.SetDataDimension(m_DataDimension);
   auto f3 = [&integrand3](double t){ return integrand3(t); };
-  m_GradientIntegral[2] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f3, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(f3, 0.0, std::numeric_limits<double>::infinity());
 
   GaussianCovarianceIntegrand integrand4;
   integrand4.SetAlpha1(m_Alpha1);
@@ -95,13 +98,15 @@ double GaussianLogLikelihood::GetIntegral()
   integrand4.SetIntensity2(m_Intensity2);
   integrand4.SetDataDimension(m_DataDimension);
   auto f4 = [&integrand4](double t){ return integrand4(t); };
-  m_GradientIntegral[3] = 2.0 * M_PI * boost::math::quadrature::gauss_kronrod<double, 15>::integrate(f4, 0.0, std::numeric_limits<double>::infinity());
+  m_GradientIntegral[3] = 2.0 * M_PI * QuadratureType::integrate(f4, 0.0, std::numeric_limits<double>::infinity());
 
   return resVal;
 }
 
 double GaussianLogLikelihood::GetLogDeterminant()
 {
+  const unsigned int N = 1000;
+
   arma::mat lMatrix(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv1(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv2(m_SampleSize, m_SampleSize);
@@ -127,7 +132,7 @@ double GaussianLogLikelihood::GetLogDeterminant()
         workValue2 = 0.0;
         workValue3 = 0.0;
         workValue4 = 0.0;
-        for (unsigned int k = 1;k <= 50;++k)
+        for (unsigned int k = 1;k <= N;++k)
         {
           double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha1 * m_Alpha1);
           double tmpVal = std::pow(m_Amplitude1, k - 1.0);
@@ -144,7 +149,7 @@ double GaussianLogLikelihood::GetLogDeterminant()
         workValue2 = 0.0;
         workValue3 = 0.0;
         workValue4 = 0.0;
-        for (unsigned int k = 1;k <= 50;++k)
+        for (unsigned int k = 1;k <= N;++k)
         {
           double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha12 * m_Alpha12);
           double tmpVal = std::pow(m_Amplitude12, k - 1.0);
@@ -162,7 +167,7 @@ double GaussianLogLikelihood::GetLogDeterminant()
         workValue2 = 0.0;
         workValue3 = 0.0;
         workValue4 = 0.0;
-        for (unsigned int k = 1;k <= 50;++k)
+        for (unsigned int k = 1;k <= N;++k)
         {
           double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha2 * m_Alpha2);
           double tmpVal = std::pow(m_Amplitude2, k - 1.0);

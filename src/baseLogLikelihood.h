@@ -50,7 +50,7 @@ public:
   void GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g)
   {
     Rcpp::Rcout << "init with gradient constraint" << std::endl;
-    g.set_size(x.n_cols, 1);
+    g.set_size(x.n_rows, 1);
     g.fill(0.0);
     Rcpp::Rcout << "done with gradient constraint" << std::endl;
   }

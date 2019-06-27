@@ -35,6 +35,7 @@ arma::mat Estimate(const arma::mat& X) {
   // The ens::L_BFGS is used internally.
   // ens::AugLagrangian optimizer;
   // ens::DE optimizer;
+  // ens::CNE optimizer;
   ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly.
@@ -44,7 +45,7 @@ arma::mat Estimate(const arma::mat& X) {
   params[0] = std::log(0.05);
   params[1] = std::log(0.05);
   params[2] = std::log(0.05);
-  params[3] = 0.001;
+  params[3] = 0;
 
   // Time the routine
   arma::wall_clock clock;
