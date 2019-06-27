@@ -34,8 +34,8 @@ arma::mat Estimate(const arma::mat& X) {
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
   // ens::AugLagrangian optimizer;
-  ens::DE optimizer;
-  // ens::L_BFGS optimizer;
+  // ens::DE optimizer;
+  ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly.
   // The model has p parameters, so the shape is p x 1.

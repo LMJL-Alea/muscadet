@@ -4,7 +4,7 @@ double BaseIntegrand::operator()(const double radius)
 {
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
-  RetrieveEigenvalues(kernel, lmax, lmin);
+  this->RetrieveEigenvalues(kernel, lmax, lmin);
   Rcpp::Rcout << "eVals: " << lmax << " " << lmin << std::endl;
   return (std::log1p(-lmax) + std::log1p(-lmin)) * radius;
 }
@@ -35,11 +35,11 @@ arma::vec GaussianIntegrand::GetFourierKernel(const double radius)
   // K22
   out[2] = m_Intensity2 * std::pow(m_Alpha2 * std::sqrt(M_PI), (double)m_DataDimension) * std::exp(workValue * m_Alpha2 * m_Alpha2);
   // D_a1 (K11)
-  out[3] = (m_DataDimension / m_Alpha1 + 2.0 * workValue * m_Alpha1) * out[0];
+  out[3] = (m_DataDimension + 2.0 * workValue * m_Alpha1 * m_Alpha1) * out[0];
   // D_a12 (K12)
-  out[4] = (m_DataDimension / m_Alpha12 + 2.0 * workValue * m_Alpha12) * out[1];
+  out[4] = (m_DataDimension + 2.0 * workValue * m_Alpha12 * m_Alpha12) * out[1];
   // D_a2 (K22)
-  out[5] = (m_DataDimension / m_Alpha2 + 2.0 * workValue * m_Alpha2) * out[2];
+  out[5] = (m_DataDimension + 2.0 * workValue * m_Alpha2 * m_Alpha2) * out[2];
   // D_tau (K12)
   out[6] = tmpValue;
 
@@ -50,11 +50,18 @@ double GaussianAlpha1Integrand::operator()(const double radius)
 {
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
-  RetrieveEigenvalues(kernel, lmax, lmin);
+  this->RetrieveEigenvalues(kernel, lmax, lmin);
 
   double diffValue = kernel[0] - kernel[2];
   double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-  double resValue = -0.5 * m_Alpha1 * kernel[3] * ((1.0 + diffValue / sqrtValue) / (1.0 - lmax) + (1.0 - diffValue / sqrtValue) / (1.0 - lmin));
+
+  double resValue = -0.5 * kernel[3];
+
+  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    resValue *= (1.0 / (1.0 - lmax) + 1.0 / (1.0 - lmin));
+  else
+    resValue *= ((1.0 + diffValue / sqrtValue) / (1.0 - lmax) + (1.0 - diffValue / sqrtValue) / (1.0 - lmin));
+
   return resValue * radius;
 }
 
@@ -62,11 +69,15 @@ double GaussianAlpha12Integrand::operator()(const double radius)
 {
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
-  RetrieveEigenvalues(kernel, lmax, lmin);
+  this->RetrieveEigenvalues(kernel, lmax, lmin);
 
   double diffValue = kernel[0] - kernel[2];
   double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-  double resValue = -0.5 * m_Alpha12 * kernel[1] * kernel[4] / sqrtValue * (1.0 / (1.0 - lmax) - 1.0 / (1.0 - lmin));
+
+  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    return 0.0;
+
+  double resValue = -0.5 * kernel[1] * kernel[4] / sqrtValue * (1.0 / (1.0 - lmax) - 1.0 / (1.0 - lmin));
   return resValue * radius;
 }
 
@@ -74,11 +85,17 @@ double GaussianAlpha2Integrand::operator()(const double radius)
 {
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
-  RetrieveEigenvalues(kernel, lmax, lmin);
+  this->RetrieveEigenvalues(kernel, lmax, lmin);
 
   double diffValue = kernel[0] - kernel[2];
   double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-  double resValue = -0.5 * m_Alpha2 * kernel[5] * ((1.0 - diffValue / sqrtValue) / (1.0 - lmax) + (1.0 + diffValue / sqrtValue) / (1.0 - lmin));
+
+  double resValue = -0.5 * kernel[5];
+  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    resValue *= (1.0 / (1.0 - lmax) + 1.0 / (1.0 - lmin));
+  else
+    resValue *= ((1.0 - diffValue / sqrtValue) / (1.0 - lmax) + (1.0 + diffValue / sqrtValue) / (1.0 - lmin));
+
   return resValue * radius;
 }
 
@@ -86,10 +103,14 @@ double GaussianCovarianceIntegrand::operator()(const double radius)
 {
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
-  RetrieveEigenvalues(kernel, lmax, lmin);
+  this->RetrieveEigenvalues(kernel, lmax, lmin);
 
   double diffValue = kernel[0] - kernel[2];
   double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
+
+  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    return 0.0;
+
   double resValue = -0.5 * kernel[1] * kernel[6] / sqrtValue * (1.0 / (1.0 - lmax) - 1.0 / (1.0 - lmin));
   return resValue * radius;
 }

@@ -116,7 +116,7 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
   Rcpp::Rcout << "init gradient" << std::endl;
   this->SetModelParameters(x);
 
-  unsigned int numParams = x.n_cols;
+  unsigned int numParams = x.n_rows;
   g.set_size(numParams, 1);
 
   bool validParams = this->CheckModelParameters();
@@ -148,6 +148,9 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
   g *= -2.0;
 
   Rcpp::Rcout << "done with gradient" << std::endl;
+  Rcpp::Rcout << m_GradientIntegral.as_row() << std::endl;
+  Rcpp::Rcout << m_GradientLogDeterminant.as_row() << std::endl;
+  Rcpp::Rcout << g.as_row() << std::endl;
 }
 
 double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)

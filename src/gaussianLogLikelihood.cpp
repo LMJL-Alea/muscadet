@@ -102,10 +102,6 @@ double GaussianLogLikelihood::GetIntegral()
 
 double GaussianLogLikelihood::GetLogDeterminant()
 {
-  Rcpp::Rcout << m_Amplitude1 << std::endl;
-  Rcpp::Rcout << m_Amplitude12 << std::endl;
-  Rcpp::Rcout << m_Amplitude2 << std::endl;
-
   arma::mat lMatrix(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv1(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv2(m_SampleSize, m_SampleSize);
