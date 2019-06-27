@@ -4,7 +4,7 @@
 \alias{Estimate}
 \title{Stationary Bivariate Gaussian DPP Estimator}
 \usage{
-Estimate(X)
+Estimate(X, volume = 1)
 }
 \arguments{
 \item{X}{A matrix of size n x (d+1) storing the points in R^d and their label in last column.}

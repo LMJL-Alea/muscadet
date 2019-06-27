@@ -24,7 +24,7 @@ public:
 
   ~BaseLogLikelihood() {}
 
-  void SetInputs(const arma::mat &points, const double volume = 1.0);
+  void SetInputs(const arma::mat &points, const double rho1, const double rho2, const double volume = 1.0);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -47,13 +47,7 @@ public:
   // the gradient to 0.  If the constraint is not satisfied, it could be
   // helpful to set the gradient in such a way that the gradient points in the
   // direction where the constraint would be satisfied.
-  void GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g)
-  {
-    Rcpp::Rcout << "init with gradient constraint" << std::endl;
-    g.set_size(x.n_rows, 1);
-    g.fill(0.0);
-    Rcpp::Rcout << "done with gradient constraint" << std::endl;
-  }
+  void GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g);
 
   arma::mat GetDistanceMatrix() {return m_DistanceMatrix;}
 

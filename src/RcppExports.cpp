@@ -8,31 +8,20 @@
 using namespace Rcpp;
 
 // Estimate
-arma::mat Estimate(const arma::mat& X);
-RcppExport SEXP _mediator_Estimate(SEXP XSEXP) {
+arma::mat Estimate(const arma::mat& X, const double volume);
+RcppExport SEXP _mediator_Estimate(SEXP XSEXP, SEXP volumeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(Estimate(X));
-    return rcpp_result_gen;
-END_RCPP
-}
-// CalcDistMat
-arma::mat CalcDistMat(const arma::mat& x);
-RcppExport SEXP _mediator_CalcDistMat(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(CalcDistMat(x));
+    Rcpp::traits::input_parameter< const double >::type volume(volumeSEXP);
+    rcpp_result_gen = Rcpp::wrap(Estimate(X, volume));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mediator_Estimate", (DL_FUNC) &_mediator_Estimate, 1},
-    {"_mediator_CalcDistMat", (DL_FUNC) &_mediator_CalcDistMat, 1},
+    {"_mediator_Estimate", (DL_FUNC) &_mediator_Estimate, 2},
     {NULL, NULL, 0}
 };
 

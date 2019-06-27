@@ -5,7 +5,6 @@ double BaseIntegrand::operator()(const double radius)
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
   this->RetrieveEigenvalues(kernel, lmax, lmin);
-  Rcpp::Rcout << "eVals: " << lmax << " " << lmin << std::endl;
   return (std::log1p(-lmax) + std::log1p(-lmin)) * radius;
 }
 

@@ -25,11 +25,26 @@
 //' # Verify parameters were recovered
 //' params
 // [[Rcpp::export]]
-arma::mat Estimate(const arma::mat& X) {
+arma::mat Estimate(const arma::mat& X, const double volume = 1.0)
+{
+  // First, get estimates of marginal intensities
+  double rho1 = 0.0;
+  double rho2 = 0.0;
+  for (unsigned int i = 0;i < X.n_rows;++i)
+  {
+    if (X(i, X.n_cols - 1) == 1)
+      ++rho1;
+
+    if (X(i, X.n_cols - 1) == 2)
+      ++rho2;
+  }
+
+  rho1 /= volume;
+  rho2 /= volume;
 
   // Construct the objective function.
   GaussianLogLikelihood logLik;
-  logLik.SetInputs(X);
+  logLik.SetInputs(X, rho1, rho2, volume);
 
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
@@ -38,13 +53,13 @@ arma::mat Estimate(const arma::mat& X) {
   // ens::CNE optimizer;
   ens::L_BFGS optimizer;
 
-  // Create a starting point for our optimization randomly.
-  // The model has p parameters, so the shape is p x 1.
-  // arma::mat params(4, 1, arma::fill::randn);
+  // Create a starting point for our optimization randomly within the
+  // authorized search space.
+
   arma::mat params(4, 1);
-  params[0] = std::log(0.05);
+  params[0] = std::log(0.04);
   params[1] = std::log(0.05);
-  params[2] = std::log(0.05);
+  params[2] = std::log(0.04);
   params[3] = 0;
 
   // Time the routine

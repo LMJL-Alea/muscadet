@@ -24,12 +24,7 @@
 #'
 #' # Verify parameters were recovered
 #' params
-Estimate <- function(X) {
-    .Call('_mediator_Estimate', PACKAGE = 'mediator', X)
-}
-
-#' @export
-CalcDistMat <- function(x) {
-    .Call('_mediator_CalcDistMat', PACKAGE = 'mediator', x)
+Estimate <- function(X, volume = 1.0) {
+    .Call('_mediator_Estimate', PACKAGE = 'mediator', X, volume)
 }
 

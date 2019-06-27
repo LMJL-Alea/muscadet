@@ -205,12 +205,3 @@ double GaussianLogLikelihood::GetLogDeterminant()
 
   return resVal;
 }
-
-//' @export
-// [[Rcpp::export]]
-arma::mat CalcDistMat(const arma::mat &x)
-{
-  GaussianLogLikelihood logLik;
-  logLik.SetInputs(x);
-  return logLik.GetDistanceMatrix();
-}

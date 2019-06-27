@@ -1,25 +1,21 @@
 #include "baseLogLikelihood.h"
 
-void BaseLogLikelihood::SetInputs(const arma::mat &points, const double volume)
+void BaseLogLikelihood::SetInputs(const arma::mat &points, const double rho1, const double rho2, const double volume)
 {
   m_DataDimension = points.n_cols - 1;
   m_SampleSize = points.n_rows;
   m_PointLabels = points.col(m_DataDimension);
   m_DataVolume = volume;
+  m_Intensity1 = rho1;
+  m_Intensity2 = rho2;
 
   m_DistanceMatrix.set_size(m_SampleSize, m_SampleSize);
   m_DistanceMatrix.fill(0.0);
-  m_Intensity1 = 0.0;
-  m_Intensity2 = 0.0;
   arma::mat dataPoints = points.cols(0, m_DataDimension - 1);
   arma::rowvec workVec1, workVec2;
+
   for (unsigned int i = 0;i < m_SampleSize;++i)
   {
-    if (m_PointLabels[i] == 1)
-      ++m_Intensity1;
-    if (m_PointLabels[i] == 2)
-      ++m_Intensity2;
-
     workVec1 = dataPoints.row(i);
 
     for (unsigned int j = i + 1;j < m_SampleSize;++j)
@@ -31,18 +27,12 @@ void BaseLogLikelihood::SetInputs(const arma::mat &points, const double volume)
     }
   }
 
-  m_Intensity1 /= volume;
-  m_Intensity2 /= volume;
-
-  Rcpp::Rcout << "Intensity 1: " << m_Intensity1 << std::endl;
-  Rcpp::Rcout << "Intensity 2: " << m_Intensity2 << std::endl;
   Rcpp::Rcout << "Point Dimension: " << m_DataDimension << std::endl;
   Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
 }
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 {
-  Rcpp::Rcout << params.as_row() << std::endl;
   m_Modified = false;
 
   double workScalar = std::exp(params[0]);
@@ -80,7 +70,6 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 
 double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
-  Rcpp::Rcout << "init evaluate" << std::endl;
   this->SetModelParameters(x);
 
   bool validParams = this->CheckModelParameters();
@@ -89,31 +78,22 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 
   if (m_Modified)
   {
-    Rcpp::Rcout << "enter modified" << std::endl;
     m_Integral = this->GetIntegral();
-    Rcpp::Rcout << "done with integral in evaluate" << std::endl;
     m_LogDeterminant = this->GetLogDeterminant();
-    Rcpp::Rcout << "done with determ in evaluate" << std::endl;
   }
 
-  Rcpp::Rcout << m_Integral << std::endl;
-  Rcpp::Rcout << m_LogDeterminant << std::endl;
-
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
-    Rcpp::stop("Non finite stuff");
+    Rcpp::stop("Non finite stuff in evaluate");
 
   double logLik = 2.0 * m_DataVolume;
   logLik += m_DataVolume * m_Integral;
   logLik += m_LogDeterminant;
-
-  Rcpp::Rcout << "done with evaluate" << std::endl;
 
   return -2.0 * logLik;
 }
 
 void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
 {
-  Rcpp::Rcout << "init gradient" << std::endl;
   this->SetModelParameters(x);
 
   unsigned int numParams = x.n_rows;
@@ -123,41 +103,33 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
   if (!validParams)
   {
     g.fill(0.0);
-    Rcpp::Rcout << "done with gradient" << std::endl;
     return;
   }
 
   if (m_Modified)
   {
-    Rcpp::Rcout << "enter modified" << std::endl;
     m_Integral = this->GetIntegral();
-    Rcpp::Rcout << "done with integral in gradient" << std::endl;
     m_LogDeterminant = this->GetLogDeterminant();
-    Rcpp::Rcout << "done with determ in gradient" << std::endl;
   }
 
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
-    Rcpp::stop("Non finite studd in gradient");
-
-  Rcpp::Rcout << m_Integral << std::endl;
-  Rcpp::Rcout << m_LogDeterminant << std::endl;
+    Rcpp::stop("Non finite stuff in gradient");
 
   for (unsigned int i = 0;i < numParams;++i)
     g[i] = m_GradientIntegral[i] + m_GradientLogDeterminant[i];
 
   g *= -2.0;
-
-  Rcpp::Rcout << "done with gradient" << std::endl;
-  Rcpp::Rcout << m_GradientIntegral.as_row() << std::endl;
-  Rcpp::Rcout << m_GradientLogDeterminant.as_row() << std::endl;
-  Rcpp::Rcout << g.as_row() << std::endl;
 }
 
 double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)
 {
-  Rcpp::Rcout << "init with evaluate constraint" << std::endl;
   this->SetModelParameters(x);
   this->CheckModelParameters();
-  Rcpp::Rcout << "done with evaluate constraint: " << m_ConstraintVector[i] << std::endl;
   return m_ConstraintVector[i];
+}
+
+void BaseLogLikelihood::GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g)
+{
+  g.set_size(x.n_rows, 1);
+  g.fill(0.0);
 }
