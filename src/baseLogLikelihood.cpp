@@ -73,6 +73,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   if (m_Covariance != workScalar)
   {
     m_Covariance = workScalar;
+    m_Amplitude12 = m_Covariance * std::pow(std::sqrt(M_PI) * m_Alpha12, m_DataDimension);
     m_Modified = true;
   }
 }
@@ -95,11 +96,11 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
     Rcpp::Rcout << "done with determ in evaluate" << std::endl;
   }
 
-  if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
-    Rcpp::stop("Non finite stuff");
-
   Rcpp::Rcout << m_Integral << std::endl;
   Rcpp::Rcout << m_LogDeterminant << std::endl;
+
+  if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
+    Rcpp::stop("Non finite stuff");
 
   double logLik = 2.0 * m_DataVolume;
   logLik += m_DataVolume * m_Integral;

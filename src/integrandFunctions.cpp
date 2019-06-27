@@ -5,6 +5,7 @@ double BaseIntegrand::operator()(const double radius)
   arma::vec kernel = GetFourierKernel(radius);
   double lmax, lmin;
   RetrieveEigenvalues(kernel, lmax, lmin);
+  Rcpp::Rcout << "eVals: " << lmax << " " << lmin << std::endl;
   return (std::log1p(-lmax) + std::log1p(-lmin)) * radius;
 }
 
@@ -14,7 +15,7 @@ void BaseIntegrand::RetrieveEigenvalues(const arma::vec &kernelMatrix, double &l
   double k12 = kernelMatrix[1];
   double k22 = kernelMatrix[2];
   double meanDiagonal = (k11 + k22) / 2.0;
-  double addOn = std::sqrt((k11 - k22) * (k11 - k22) + std::abs(k12)) / 2.0;
+  double addOn = std::sqrt((k11 - k22) * (k11 - k22) + k12 * k12) / 2.0;
 
   lambdaMax = meanDiagonal + addOn;
   lambdaMin = meanDiagonal - addOn;

@@ -25,15 +25,13 @@ bool GaussianLogLikelihood::CheckModelParameters()
     return false;
   }
 
-  double leftVal = m_Covariance * m_Covariance * std::pow(m_Alpha12, 2.0 * m_DataDimension);
-  double rightVal = m_Intensity1 * m_Intensity2 * std::pow(m_Alpha1 * m_Alpha2, m_DataDimension);
-  if (leftVal > rightVal)
+  if (m_Amplitude12 * m_Amplitude12 > m_Amplitude1 * m_Amplitude2)
   {
     m_ConstraintVector[3] = DBL_MAX;
     return false;
   }
 
-  if (leftVal > 4.0 * rightVal * (1.0 / m_Amplitude1 - 1.0) * (1.0 / m_Amplitude2 - 1.0))
+  if (m_Amplitude12 * m_Amplitude12 >= 4.0 * (1.0 - m_Amplitude1) * (1.0 - m_Amplitude2))
   {
     m_ConstraintVector[4] = DBL_MAX;
     return false;

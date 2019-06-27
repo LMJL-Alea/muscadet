@@ -33,7 +33,9 @@ arma::mat Estimate(const arma::mat& X) {
 
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
-  ens::AugLagrangian auglag;
+  // ens::AugLagrangian optimizer;
+  ens::DE optimizer;
+  // ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly.
   // The model has p parameters, so the shape is p x 1.
@@ -49,9 +51,9 @@ arma::mat Estimate(const arma::mat& X) {
   clock.tic();
 
   // Run the optimization
-  Rcpp::Rcout << "Initial parameters: " << params << std::endl;
-  auglag.Optimize(logLik, params);
-  Rcpp::Rcout << "Final parameters: " << params << std::endl;
+  Rcpp::Rcout << "Initial parameters: " << params.as_row() << std::endl;
+  optimizer.Optimize(logLik, params);
+  Rcpp::Rcout << "Final parameters: " << params.as_row() << std::endl;
 
   // End time output
   Rcpp::Rcout << "Estimation performed in " << clock.toc() << " seconds." << std::endl;
