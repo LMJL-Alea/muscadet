@@ -1,14 +1,71 @@
 #include "integrandFunctions.h"
 
-double BaseIntegrand::operator()(const double radius)
+void BaseIntegrand::Update(const double radius)
 {
-  arma::vec kernel = GetFourierKernel(radius);
-  double lmax, lmin;
-  this->RetrieveEigenvalues(kernel, lmax, lmin);
-  return (std::log1p(-lmax) + std::log1p(-lmin)) * radius;
+  m_Kernel = GetFourierKernel(radius);
+  this->RetrieveEigenvalues(m_Kernel);
+
+  m_DiffValue = m_Kernel[0] - m_Kernel[2];
+  m_SqrtValue = std::sqrt(m_DiffValue * m_DiffValue + m_Kernel[1] * m_Kernel[1]);
 }
 
-void BaseIntegrand::RetrieveEigenvalues(const arma::vec &kernelMatrix, double &lambdaMax, double &lambdaMin)
+double BaseIntegrand::operator()(const double radius)
+{
+  this->Update(radius);
+  return (std::log1p(-m_LambdaMax) + std::log1p(-m_LambdaMin)) * radius;
+}
+
+double BaseIntegrand::GetDerivativeWRTFirstAlpha(const double radius)
+{
+  this->Update(radius);
+
+  double resValue = -0.5 * m_Kernel[3];
+
+  if (m_SqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    resValue *= (1.0 / (1.0 - m_LambdaMax) + 1.0 / (1.0 - m_LambdaMin));
+  else
+    resValue *= ((1.0 + m_DiffValue / m_SqrtValue) / (1.0 - m_LambdaMax) + (1.0 - m_DiffValue / m_SqrtValue) / (1.0 - m_LambdaMin));
+
+  return resValue * radius;
+}
+
+double BaseIntegrand::GetDerivativeWRTCrossAlpha(const double radius)
+{
+  this->Update(radius);
+
+  if (m_SqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    return 0.0;
+
+  double resValue = -0.5 * m_Kernel[1] * m_Kernel[4] / m_SqrtValue * (1.0 / (1.0 - m_LambdaMax) - 1.0 / (1.0 - m_LambdaMin));
+  return resValue * radius;
+}
+
+double BaseIntegrand::GetDerivativeWRTSecondAlpha(const double radius)
+{
+  this->Update(radius);
+
+  double resValue = -0.5 * m_Kernel[5];
+  if (m_SqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    resValue *= (1.0 / (1.0 - m_LambdaMax) + 1.0 / (1.0 - m_LambdaMin));
+  else
+    resValue *= ((1.0 - m_DiffValue / m_SqrtValue) / (1.0 - m_LambdaMax) + (1.0 + m_DiffValue / m_SqrtValue) / (1.0 - m_LambdaMin));
+
+  return resValue * radius;
+}
+
+double BaseIntegrand::GetDerivativeWRTCrossIntensity(const double radius)
+{
+  this->Update(radius);
+
+  if (m_SqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
+    return 0.0;
+
+  double resValue = -0.5 * m_Kernel[1] * m_Kernel[6] / m_SqrtValue * (1.0 / (1.0 - m_LambdaMax) - 1.0 / (1.0 - m_LambdaMin));
+  return resValue * radius;
+}
+
+
+void BaseIntegrand::RetrieveEigenvalues(const arma::vec &kernelMatrix)
 {
   double k11 = kernelMatrix[0];
   double k12 = kernelMatrix[1];
@@ -16,8 +73,8 @@ void BaseIntegrand::RetrieveEigenvalues(const arma::vec &kernelMatrix, double &l
   double meanDiagonal = (k11 + k22) / 2.0;
   double addOn = std::sqrt((k11 - k22) * (k11 - k22) + k12 * k12) / 2.0;
 
-  lambdaMax = meanDiagonal + addOn;
-  lambdaMin = meanDiagonal - addOn;
+  m_LambdaMax = meanDiagonal + addOn;
+  m_LambdaMin = meanDiagonal - addOn;
 }
 
 arma::vec GaussianIntegrand::GetFourierKernel(const double radius)
@@ -43,73 +100,4 @@ arma::vec GaussianIntegrand::GetFourierKernel(const double radius)
   out[6] = tmpValue;
 
   return out;
-}
-
-double GaussianAlpha1Integrand::operator()(const double radius)
-{
-  arma::vec kernel = GetFourierKernel(radius);
-  double lmax, lmin;
-  this->RetrieveEigenvalues(kernel, lmax, lmin);
-
-  double diffValue = kernel[0] - kernel[2];
-  double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-
-  double resValue = -0.5 * kernel[3];
-
-  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
-    resValue *= (1.0 / (1.0 - lmax) + 1.0 / (1.0 - lmin));
-  else
-    resValue *= ((1.0 + diffValue / sqrtValue) / (1.0 - lmax) + (1.0 - diffValue / sqrtValue) / (1.0 - lmin));
-
-  return resValue * radius;
-}
-
-double GaussianAlpha12Integrand::operator()(const double radius)
-{
-  arma::vec kernel = GetFourierKernel(radius);
-  double lmax, lmin;
-  this->RetrieveEigenvalues(kernel, lmax, lmin);
-
-  double diffValue = kernel[0] - kernel[2];
-  double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-
-  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
-    return 0.0;
-
-  double resValue = -0.5 * kernel[1] * kernel[4] / sqrtValue * (1.0 / (1.0 - lmax) - 1.0 / (1.0 - lmin));
-  return resValue * radius;
-}
-
-double GaussianAlpha2Integrand::operator()(const double radius)
-{
-  arma::vec kernel = GetFourierKernel(radius);
-  double lmax, lmin;
-  this->RetrieveEigenvalues(kernel, lmax, lmin);
-
-  double diffValue = kernel[0] - kernel[2];
-  double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-
-  double resValue = -0.5 * kernel[5];
-  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
-    resValue *= (1.0 / (1.0 - lmax) + 1.0 / (1.0 - lmin));
-  else
-    resValue *= ((1.0 - diffValue / sqrtValue) / (1.0 - lmax) + (1.0 + diffValue / sqrtValue) / (1.0 - lmin));
-
-  return resValue * radius;
-}
-
-double GaussianCovarianceIntegrand::operator()(const double radius)
-{
-  arma::vec kernel = GetFourierKernel(radius);
-  double lmax, lmin;
-  this->RetrieveEigenvalues(kernel, lmax, lmin);
-
-  double diffValue = kernel[0] - kernel[2];
-  double sqrtValue = std::sqrt(diffValue * diffValue + kernel[1] * kernel[1]);
-
-  if (sqrtValue < std::sqrt(std::numeric_limits<double>::epsilon()))
-    return 0.0;
-
-  double resValue = -0.5 * kernel[1] * kernel[6] / sqrtValue * (1.0 / (1.0 - lmax) - 1.0 / (1.0 - lmin));
-  return resValue * radius;
 }

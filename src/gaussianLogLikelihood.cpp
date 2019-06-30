@@ -43,7 +43,9 @@ bool GaussianLogLikelihood::CheckModelParameters()
 
 double GaussianLogLikelihood::GetIntegral()
 {
-  typedef boost::math::quadrature::gauss_kronrod<double, 61> QuadratureType;
+  typedef boost::math::quadrature::gauss_kronrod<double, 15> QuadratureType;
+  const double lBound = 0.0;
+  const double uBound = std::numeric_limits<double>::infinity();
 
   GaussianIntegrand integrand;
   integrand.SetAlpha1(m_Alpha1);
@@ -53,59 +55,24 @@ double GaussianLogLikelihood::GetIntegral()
   integrand.SetIntensity1(m_Intensity1);
   integrand.SetIntensity2(m_Intensity2);
   integrand.SetDataDimension(m_DataDimension);
-  auto f = [&integrand](double t){ return integrand(t); };
-  double resVal = 2.0 * M_PI * QuadratureType::integrate(f, 0.0, std::numeric_limits<double>::infinity());
+  auto GetIntegrandValue = [&integrand](const double &t){return integrand(t);};
+  auto GetDerivativeWRTFirstAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTFirstAlpha(t);};
+  auto GetDerivativeWRTCrossAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossAlpha(t);};
+  auto GetDerivativeWRTSecondAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTSecondAlpha(t);};
+  auto GetDerivativeWRTCrossIntensity = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossIntensity(t);};
 
-  GaussianAlpha1Integrand integrand1;
-  integrand1.SetAlpha1(m_Alpha1);
-  integrand1.SetAlpha12(m_Alpha12);
-  integrand1.SetAlpha2(m_Alpha2);
-  integrand1.SetCovariance(m_Covariance);
-  integrand1.SetIntensity1(m_Intensity1);
-  integrand1.SetIntensity2(m_Intensity2);
-  integrand1.SetDataDimension(m_DataDimension);
-  auto f1 = [&integrand1](double t){ return integrand1(t); };
-  m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(f1, 0.0, std::numeric_limits<double>::infinity());
-
-  GaussianAlpha12Integrand integrand2;
-  integrand2.SetAlpha1(m_Alpha1);
-  integrand2.SetAlpha12(m_Alpha12);
-  integrand2.SetAlpha2(m_Alpha2);
-  integrand2.SetCovariance(m_Covariance);
-  integrand2.SetIntensity1(m_Intensity1);
-  integrand2.SetIntensity2(m_Intensity2);
-  integrand2.SetDataDimension(m_DataDimension);
-  auto f2 = [&integrand2](double t){ return integrand2(t); };
-  m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(f2, 0.0, std::numeric_limits<double>::infinity());
-
-  GaussianAlpha2Integrand integrand3;
-  integrand3.SetAlpha1(m_Alpha1);
-  integrand3.SetAlpha12(m_Alpha12);
-  integrand3.SetAlpha2(m_Alpha2);
-  integrand3.SetCovariance(m_Covariance);
-  integrand3.SetIntensity1(m_Intensity1);
-  integrand3.SetIntensity2(m_Intensity2);
-  integrand3.SetDataDimension(m_DataDimension);
-  auto f3 = [&integrand3](double t){ return integrand3(t); };
-  m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(f3, 0.0, std::numeric_limits<double>::infinity());
-
-  GaussianCovarianceIntegrand integrand4;
-  integrand4.SetAlpha1(m_Alpha1);
-  integrand4.SetAlpha12(m_Alpha12);
-  integrand4.SetAlpha2(m_Alpha2);
-  integrand4.SetCovariance(m_Covariance);
-  integrand4.SetIntensity1(m_Intensity1);
-  integrand4.SetIntensity2(m_Intensity2);
-  integrand4.SetDataDimension(m_DataDimension);
-  auto f4 = [&integrand4](double t){ return integrand4(t); };
-  m_GradientIntegral[3] = 2.0 * M_PI * QuadratureType::integrate(f4, 0.0, std::numeric_limits<double>::infinity());
+  double resVal = 2.0 * M_PI * QuadratureType::integrate(GetIntegrandValue, lBound, uBound);
+  m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTFirstAlpha, lBound, uBound);
+  m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossAlpha, lBound, uBound);
+  m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTSecondAlpha, lBound, uBound);
+  m_GradientIntegral[3] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossIntensity, lBound, uBound);
 
   return resVal;
 }
 
 double GaussianLogLikelihood::GetLogDeterminant()
 {
-  const unsigned int N = 1000;
+  const unsigned int N = 50;
 
   arma::mat lMatrix(m_SampleSize, m_SampleSize);
   arma::mat lMatrixDeriv1(m_SampleSize, m_SampleSize);

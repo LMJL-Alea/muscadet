@@ -11,20 +11,23 @@
 #'
 #' @export
 #' @examples
+#' library(spatstat)
 #' # Simulate some data
-#' m <- spatstat::dppGauss(lambda = 100, alpha = 0.05, d = 2)
-#' X1 <- stats::simulate(m)
+#' m <- dppGauss(lambda = 100, alpha = 0.05, d = 2)
+#' X1 <- simulate(m)
+#' fit1 <- dppm(X1, dppGauss, method = "palm")$fitted$fixedpar
 #' X2 <- stats::simulate(m)
+#' fit2 <- dppm(X2, dppGauss, method = "palm")$fitted$fixedpar
 #' X1 <- cbind(X1$x, X1$y, rep(1, X1$n))
 #' X2 <- cbind(X2$x, X2$y, rep(2, X2$n))
 #' X <- rbind(X1, X2)
 #'
 #' # Run parameter estimation
-#' params <- Estimate(X)
+#' params <- Estimate(X, fit1$lambda, fit2$lambda, fit1$alpha, fit2$alpha)
 #'
 #' # Verify parameters were recovered
 #' params
-Estimate <- function(X, volume = 1.0) {
-    .Call('_mediator_Estimate', PACKAGE = 'mediator', X, volume)
+Estimate <- function(X, rho1, rho2, alpha1, alpha2, volume = 1.0) {
+    .Call('_mediator_Estimate', PACKAGE = 'mediator', X, rho1, rho2, alpha1, alpha2, volume)
 }
 
