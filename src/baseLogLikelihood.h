@@ -7,15 +7,18 @@ class BaseLogLikelihood
 public:
   BaseLogLikelihood()
   {
-    m_DataVolume = 1.0;
+    m_DomainDimension = 1;
+    m_DomainVolume = 1.0;
     m_Modified = true;
-    m_Alpha1 = 0.0;
-    m_Alpha12 = 0.0;
-    m_Alpha2 = 0.0;
-    m_Covariance = 0.0;
-    m_Amplitude1 = 0.0;
-    m_Amplitude12 = 0.0;
-    m_Amplitude2 = 0.0;
+    m_FirstAlpha = 0.0;
+    m_CrossAlpha = 0.0;
+    m_SecondAlpha = 0.0;
+    m_FirstIntensity = 0.0;
+    m_CrossIntensity = 0.0;
+    m_SecondIntensity = 0.0;
+    m_FirstAmplitude = 0.0;
+    m_CrossAmplitude = 0.0;
+    m_SecondAmplitude = 0.0;
     m_Integral = 0.0;
     m_LogDeterminant = 0.0;
     m_GradientIntegral.set_size(4);
@@ -57,18 +60,18 @@ protected:
   virtual double GetIntegral() = 0;
   virtual double GetLogDeterminant() = 0;
 
-  double m_Alpha1, m_Alpha12, m_Alpha2;
-  double m_Intensity1, m_Covariance, m_Intensity2;
-  double m_Amplitude1, m_Amplitude12, m_Amplitude2;
+  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
+  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
   arma::vec m_GradientIntegral, m_GradientLogDeterminant;
-  unsigned int m_DataDimension;
+  unsigned int m_DomainDimension;
   unsigned int m_SampleSize;
   arma::mat m_DistanceMatrix;
   arma::vec m_PointLabels;
   arma::vec m_ConstraintVector;
 
 private:
-  double m_DataVolume;
+  double m_DomainVolume;
   bool m_Modified;
   double m_Integral, m_LogDeterminant;
 };

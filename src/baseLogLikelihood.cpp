@@ -2,16 +2,16 @@
 
 void BaseLogLikelihood::SetInputs(const arma::mat &points, const double rho1, const double rho2, const double volume)
 {
-  m_DataDimension = points.n_cols - 1;
+  m_DomainDimension = points.n_cols - 1;
   m_SampleSize = points.n_rows;
-  m_PointLabels = points.col(m_DataDimension);
-  m_DataVolume = volume;
-  m_Intensity1 = rho1;
-  m_Intensity2 = rho2;
+  m_PointLabels = points.col(m_DomainDimension);
+  m_DomainVolume = volume;
+  m_FirstIntensity = rho1;
+  m_SecondIntensity = rho2;
 
   m_DistanceMatrix.set_size(m_SampleSize, m_SampleSize);
   m_DistanceMatrix.fill(0.0);
-  arma::mat dataPoints = points.cols(0, m_DataDimension - 1);
+  arma::mat dataPoints = points.cols(0, m_DomainDimension - 1);
   arma::rowvec workVec1, workVec2;
 
   for (unsigned int i = 0;i < m_SampleSize;++i)
@@ -27,7 +27,7 @@ void BaseLogLikelihood::SetInputs(const arma::mat &points, const double rho1, co
     }
   }
 
-  Rcpp::Rcout << "Point Dimension: " << m_DataDimension << std::endl;
+  Rcpp::Rcout << "Point Dimension: " << m_DomainDimension << std::endl;
   Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
 }
 
@@ -36,34 +36,34 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   m_Modified = false;
 
   double workScalar = std::exp(params[0]);
-  if (m_Alpha1 != workScalar)
+  if (m_FirstAlpha != workScalar)
   {
-    m_Alpha1 = workScalar;
-    m_Amplitude1  = m_Intensity1 * std::pow(std::sqrt(M_PI) * m_Alpha1,  m_DataDimension);
+    m_FirstAlpha = workScalar;
+    m_FirstAmplitude  = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha,  m_DomainDimension);
     m_Modified = true;
   }
 
   workScalar = std::exp(params[1]);
-  if (m_Alpha12 != workScalar)
+  if (m_CrossAlpha != workScalar)
   {
-    m_Alpha12 = workScalar;
-    m_Amplitude12 = m_Covariance * std::pow(std::sqrt(M_PI) * m_Alpha12, m_DataDimension);
+    m_CrossAlpha = workScalar;
+    m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, m_DomainDimension);
     m_Modified = true;
   }
 
   workScalar = std::exp(params[2]);
-  if (m_Alpha2 != workScalar)
+  if (m_SecondAlpha != workScalar)
   {
-    m_Alpha2 = workScalar;
-    m_Amplitude2  = m_Intensity2 * std::pow(std::sqrt(M_PI) * m_Alpha2,  m_DataDimension);
+    m_SecondAlpha = workScalar;
+    m_SecondAmplitude  = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha,  m_DomainDimension);
     m_Modified = true;
   }
 
   workScalar = params[3];
-  if (m_Covariance != workScalar)
+  if (m_CrossIntensity != workScalar)
   {
-    m_Covariance = workScalar;
-    m_Amplitude12 = m_Covariance * std::pow(std::sqrt(M_PI) * m_Alpha12, m_DataDimension);
+    m_CrossIntensity = workScalar;
+    m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, m_DomainDimension);
     m_Modified = true;
   }
 }
@@ -85,8 +85,8 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
     Rcpp::stop("Non finite stuff in evaluate");
 
-  double logLik = 2.0 * m_DataVolume;
-  logLik += m_DataVolume * m_Integral;
+  double logLik = 2.0 * m_DomainVolume;
+  logLik += m_DomainVolume * m_Integral;
   logLik += m_LogDeterminant;
 
   return -2.0 * logLik;

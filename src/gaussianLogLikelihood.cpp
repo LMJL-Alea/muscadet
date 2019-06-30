@@ -8,31 +8,31 @@ bool GaussianLogLikelihood::CheckModelParameters()
   m_ConstraintVector.fill(0.0);
   unsigned int numViolations = 0;
 
-  if (m_Amplitude1 >= 1.0)
+  if (m_FirstAmplitude >= 1.0)
   {
     m_ConstraintVector[0] = DBL_MAX;
     ++numViolations;
   }
 
-  if (m_Amplitude2 >= 1.0)
+  if (m_SecondAmplitude >= 1.0)
   {
     m_ConstraintVector[1] = DBL_MAX;
     ++numViolations;
   }
 
-  if (2.0 * m_Alpha12 * m_Alpha12 < m_Alpha1 * m_Alpha1 + m_Alpha2 * m_Alpha2)
+  if (2.0 * m_CrossAlpha * m_CrossAlpha < m_FirstAlpha * m_FirstAlpha + m_SecondAlpha * m_SecondAlpha)
   {
     m_ConstraintVector[2] = DBL_MAX;
     ++numViolations;
   }
 
-  if (m_Amplitude12 * m_Amplitude12 > m_Amplitude1 * m_Amplitude2)
+  if (m_CrossAmplitude * m_CrossAmplitude > m_FirstAmplitude * m_SecondAmplitude)
   {
     m_ConstraintVector[3] = DBL_MAX;
     ++numViolations;
   }
 
-  if (m_Amplitude12 * m_Amplitude12 >= 4.0 * (1.0 - m_Amplitude1) * (1.0 - m_Amplitude2))
+  if (m_CrossAmplitude * m_CrossAmplitude >= 4.0 * (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude))
   {
     m_ConstraintVector[4] = DBL_MAX;
     ++numViolations;
@@ -48,13 +48,13 @@ double GaussianLogLikelihood::GetIntegral()
   const double uBound = std::numeric_limits<double>::infinity();
 
   GaussianIntegrand integrand;
-  integrand.SetAlpha1(m_Alpha1);
-  integrand.SetAlpha12(m_Alpha12);
-  integrand.SetAlpha2(m_Alpha2);
-  integrand.SetCovariance(m_Covariance);
-  integrand.SetIntensity1(m_Intensity1);
-  integrand.SetIntensity2(m_Intensity2);
-  integrand.SetDataDimension(m_DataDimension);
+  integrand.SetFirstAlpha(m_FirstAlpha);
+  integrand.SetCrossAlpha(m_CrossAlpha);
+  integrand.SetSecondAlpha(m_SecondAlpha);
+  integrand.SetCrossIntensity(m_CrossIntensity);
+  integrand.SetFirstIntensity(m_FirstIntensity);
+  integrand.SetSecondIntensity(m_SecondIntensity);
+  integrand.SetDataDimension(m_DomainDimension);
   auto GetIntegrandValue = [&integrand](const double &t){return integrand(t);};
   auto GetDerivativeWRTFirstAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTFirstAlpha(t);};
   auto GetDerivativeWRTCrossAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossAlpha(t);};
@@ -101,12 +101,12 @@ double GaussianLogLikelihood::GetLogDeterminant()
         workValue4 = 0.0;
         for (unsigned int k = 1;k <= N;++k)
         {
-          double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha1 * m_Alpha1);
-          double tmpVal = std::pow(m_Amplitude1, k - 1.0);
-          tmpVal *= std::pow((double)k, -(double)m_DataDimension / 2.0);
+          double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_FirstAlpha * m_FirstAlpha);
+          double tmpVal = std::pow(m_FirstAmplitude, k - 1.0);
+          tmpVal *= std::pow((double)k, -(double)m_DomainDimension / 2.0);
           tmpVal *= std::exp(-expInValue);
-          resVal += m_Intensity1 * tmpVal;
-          workValue1 += m_Intensity1 * tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
+          resVal += m_FirstIntensity * tmpVal;
+          workValue1 += m_FirstIntensity * tmpVal * (m_DomainDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
         }
       }
       else if (workLabel == 3)
@@ -118,12 +118,12 @@ double GaussianLogLikelihood::GetLogDeterminant()
         workValue4 = 0.0;
         for (unsigned int k = 1;k <= N;++k)
         {
-          double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha12 * m_Alpha12);
-          double tmpVal = std::pow(m_Amplitude12, k - 1.0);
-          tmpVal *= std::pow((double)k, -(double)m_DataDimension / 2.0);
+          double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_CrossAlpha * m_CrossAlpha);
+          double tmpVal = std::pow(m_CrossAmplitude, k - 1.0);
+          tmpVal *= std::pow((double)k, -(double)m_DomainDimension / 2.0);
           tmpVal *= std::exp(-expInValue);
-          resVal +=  m_Covariance * tmpVal;
-          workValue2 += m_Covariance * tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
+          resVal +=  m_CrossIntensity * tmpVal;
+          workValue2 += m_CrossIntensity * tmpVal * (m_DomainDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
           workValue4 += tmpVal * k;
         }
       }
@@ -136,12 +136,12 @@ double GaussianLogLikelihood::GetLogDeterminant()
         workValue4 = 0.0;
         for (unsigned int k = 1;k <= N;++k)
         {
-          double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_Alpha2 * m_Alpha2);
-          double tmpVal = std::pow(m_Amplitude2, k - 1.0);
-          tmpVal *= std::pow((double)k, -(double)m_DataDimension / 2.0);
+          double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_SecondAlpha * m_SecondAlpha);
+          double tmpVal = std::pow(m_SecondAmplitude, k - 1.0);
+          tmpVal *= std::pow((double)k, -(double)m_DomainDimension / 2.0);
           tmpVal *= std::exp(-expInValue);
-          resVal += m_Intensity2 * tmpVal;
-          workValue3 += m_Intensity2 * tmpVal * (m_DataDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
+          resVal += m_SecondIntensity * tmpVal;
+          workValue3 += m_SecondIntensity * tmpVal * (m_DomainDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
         }
       }
 

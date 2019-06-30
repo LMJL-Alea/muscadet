@@ -5,13 +5,13 @@
 class BaseIntegrand
 {
 public:
-  void SetAlpha1(const double x) {m_Alpha1 = x;}
-  void SetAlpha12(const double x) {m_Alpha12 = x;}
-  void SetAlpha2(const double x) {m_Alpha2 = x;}
-  void SetCovariance(const double x) {m_Covariance = x;}
-  void SetIntensity1(const double x) {m_Intensity1 = x;}
-  void SetIntensity2(const double x) {m_Intensity2 = x;}
-  void SetDataDimension(const unsigned int d) {m_DataDimension = d;}
+  void SetFirstAlpha(const double x) {m_FirstAlpha = x;}
+  void SetCrossAlpha(const double x) {m_CrossAlpha = x;}
+  void SetSecondAlpha(const double x) {m_SecondAlpha = x;}
+  void SetFirstIntensity(const double x) {m_FirstIntensity = x;}
+  void SetCrossIntensity(const double x) {m_CrossIntensity = x;}
+  void SetSecondIntensity(const double x) {m_SecondIntensity = x;}
+  void SetDataDimension(const unsigned int d) {m_DomainDimension = d;}
 
   void Update(const double radius);
   double operator()(const double radius);
@@ -24,9 +24,9 @@ protected:
   virtual arma::vec GetFourierKernel(const double radius) = 0;
   void RetrieveEigenvalues(const arma::vec &kernelMatrix);
 
-  double m_Alpha1, m_Alpha2, m_Alpha12, m_Covariance;
-  double m_Intensity1, m_Intensity2;
-  unsigned int m_DataDimension;
+  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
+  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  unsigned int m_DomainDimension;
 
 private:
   arma::vec m_Kernel;
