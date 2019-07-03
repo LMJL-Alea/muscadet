@@ -39,6 +39,7 @@ public:
       const double rho2
   );
   void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
+  arma::mat GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -66,7 +67,7 @@ public:
   arma::mat GetDistanceMatrix() {return m_DistanceMatrix;}
 
 protected:
-  void SetModelParameters(const arma::mat &params);
+  virtual void SetModelParameters(const arma::mat &params) = 0;
   virtual bool CheckModelParameters() = 0;
   virtual double GetIntegral() = 0;
   virtual double GetLogDeterminant() = 0;
@@ -80,13 +81,13 @@ protected:
   arma::mat m_DistanceMatrix;
   arma::vec m_PointLabels;
   arma::vec m_ConstraintVector;
+  bool m_Modified;
 
 private:
   void SetNeighborhood(const unsigned int n);
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
 
   double m_DomainVolume;
-  bool m_Modified;
   double m_Integral, m_LogDeterminant;
   arma::vec m_DomainLowerBounds, m_DomainUpperBounds;
   NeighborhoodType m_Neighborhood;

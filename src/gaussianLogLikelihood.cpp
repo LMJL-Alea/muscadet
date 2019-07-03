@@ -2,6 +2,43 @@
 #include "integrandFunctions.h"
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
+void GaussianLogLikelihood::SetModelParameters(const arma::mat &params)
+{
+  m_Modified = false;
+
+  double workScalar = std::exp(params[0]);
+  if (m_FirstAlpha != workScalar)
+  {
+    m_FirstAlpha = workScalar;
+    m_FirstAmplitude  = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha,  m_DomainDimension);
+    m_Modified = true;
+  }
+
+  workScalar = std::exp(params[1]);
+  if (m_CrossAlpha != workScalar)
+  {
+    m_CrossAlpha = workScalar;
+    m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, m_DomainDimension);
+    m_Modified = true;
+  }
+
+  workScalar = std::exp(params[2]);
+  if (m_SecondAlpha != workScalar)
+  {
+    m_SecondAlpha = workScalar;
+    m_SecondAmplitude  = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha,  m_DomainDimension);
+    m_Modified = true;
+  }
+
+  workScalar = params[3];
+  if (m_CrossIntensity != workScalar)
+  {
+    m_CrossIntensity = workScalar;
+    m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, m_DomainDimension);
+    m_Modified = true;
+  }
+}
+
 bool GaussianLogLikelihood::CheckModelParameters()
 {
   m_ConstraintVector.set_size(this->NumConstraints());

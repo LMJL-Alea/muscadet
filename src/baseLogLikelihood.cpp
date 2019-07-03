@@ -24,6 +24,25 @@ void BaseLogLikelihood::SetNeighborhood(const unsigned int n)
   }
 }
 
+std::vector<arma::rowvec> BaseLogLikelihood::GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub)
+{
+  unsigned int numTrials = m_Neighborhood.size();
+  std::vector<arma::rowvec> trialVectors(numTrials);
+  std::vector<int> workNeighborhood;
+  arma::rowvec workVector;
+
+  for (unsigned int i = 0;i < numTrials;++i)
+  {
+    workNeighborhood = m_Neighborhood[i];
+    workVector = x;
+    for (unsigned int j = 0;j < m_DomainDimension;++j)
+      workVector[j] += (double)workNeighborhood[j] * (ub[j] - lb[j]);
+    trialVectors[i] = workVector;
+  }
+
+  return trialVectors;
+}
+
 void BaseLogLikelihood::SetInputs(
     const arma::mat &points,
     const arma::vec &labels,
@@ -84,60 +103,29 @@ void BaseLogLikelihood::SetInputs(
   Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
 }
 
-std::vector<arma::rowvec> BaseLogLikelihood::GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub)
+arma::mat BaseLogLikelihood::GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2)
 {
-  unsigned int numTrials = m_Neighborhood.size();
-  std::vector<arma::rowvec> trialVectors(numTrials);
-  std::vector<int> workNeighborhood;
-  arma::rowvec workVector;
+  const double epsilon = 1.0e-4;
+  arma::mat params(4, 1);
 
-  for (unsigned int i = 0;i < numTrials;++i)
-  {
-    workNeighborhood = m_Neighborhood[i];
-    workVector = x;
-    for (unsigned int j = 0;j < m_DomainDimension;++j)
-      workVector[j] += (double)workNeighborhood[j] * (ub[j] - lb[j]);
-    trialVectors[i] = workVector;
-  }
+  double alpha12 = (1.0 + epsilon) * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
 
-  return trialVectors;
-}
+  double amp1 = rho1 * std::pow(std::sqrt(M_PI) * alpha1, (double)m_DomainDimension);
+  double amp2 = rho2 * std::pow(std::sqrt(M_PI) * alpha2, (double)m_DomainDimension);
+  double amp12 = std::pow(std::sqrt(M_PI) * alpha12, (double)m_DomainDimension);
+  double ub = std::sqrt(amp1 * amp2) / amp12;
+  ub = std::min(ub, std::sqrt(4.0 * (1.0 - amp1) * (1.0 - amp2)) / amp12) - epsilon;
 
-void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
-{
-  m_Modified = false;
+  Rcpp::Rcout << ub << std::endl;
+  double lb = -ub;
+  double sigma12 = lb + (ub - lb) * arma::randu();
 
-  double workScalar = std::exp(params[0]);
-  if (m_FirstAlpha != workScalar)
-  {
-    m_FirstAlpha = workScalar;
-    m_FirstAmplitude  = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha,  m_DomainDimension);
-    m_Modified = true;
-  }
+  params[0] = std::log(alpha1);
+  params[1] = std::log(alpha12);
+  params[2] = std::log(alpha2);
+  params[3] = sigma12;
 
-  workScalar = std::exp(params[1]);
-  if (m_CrossAlpha != workScalar)
-  {
-    m_CrossAlpha = workScalar;
-    m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, m_DomainDimension);
-    m_Modified = true;
-  }
-
-  workScalar = std::exp(params[2]);
-  if (m_SecondAlpha != workScalar)
-  {
-    m_SecondAlpha = workScalar;
-    m_SecondAmplitude  = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha,  m_DomainDimension);
-    m_Modified = true;
-  }
-
-  workScalar = params[3];
-  if (m_CrossIntensity != workScalar)
-  {
-    m_CrossIntensity = workScalar;
-    m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, m_DomainDimension);
-    m_Modified = true;
-  }
+  return params;
 }
 
 double BaseLogLikelihood::Evaluate(const arma::mat& x)

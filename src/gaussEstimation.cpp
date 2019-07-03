@@ -1,31 +1,6 @@
 #include <RcppEnsmallen.h>
 #include "gaussianLogLikelihood.h"
 
-arma::mat GetStartingPoint(const double rho1, const double rho2, const double alpha1, const double alpha2, const unsigned int dimension)
-{
-  const double epsilon = 1.0e-4;
-  arma::mat params(4, 1);
-
-  double alpha12 = (1.0 + epsilon) * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
-
-  double amp1 = rho1 * std::pow(std::sqrt(M_PI) * alpha1, (double)dimension);
-  double amp2 = rho2 * std::pow(std::sqrt(M_PI) * alpha2, (double)dimension);
-  double amp12 = std::pow(std::sqrt(M_PI) * alpha12, (double)dimension);
-  double ub = std::sqrt(amp1 * amp2) / amp12;
-  ub = std::min(ub, std::sqrt(4.0 * (1.0 - amp1) * (1.0 - amp2)) / amp12) - epsilon;
-
-  Rcpp::Rcout << ub << std::endl;
-  double lb = -ub;
-  double sigma12 = lb + (ub - lb) * arma::randu();
-
-  params[0] = std::log(alpha1);
-  params[1] = std::log(alpha12);
-  params[2] = std::log(alpha2);
-  params[3] = sigma12;
-
-  return params;
-}
-
 //' Stationary Bivariate Gaussian DPP Estimator
 //'
 //' This function estimates the parameters of a stationary bivariate Gaussian DPP from a set of observed points and labels.
@@ -71,13 +46,15 @@ arma::mat Estimate(
   // The ens::L_BFGS is used internally.
   // ens::AugLagrangian optimizer;
   // ens::DE optimizer;
-  ens::CNE optimizer;
-  // ens::L_BFGS optimizer;
+  // ens::SPSA optimizer(0.1, 0.102, 0.16, 0.3, 100000, 1e-5);
+  // ens::ExponentialSchedule expSchedule;
+  // ens::SA<> optimizer(expSchedule);
+  // ens::CNE optimizer(200, 10000, 0.2, 0.2, 0.3, 1e-5);
+  ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly within the
   // authorized search space.
-
-  arma::mat params = GetStartingPoint(rho1, rho2, alpha1, alpha2, X.n_cols);
+  arma::mat params = logLik.GetInitialPoint(rho1, rho2, alpha1, alpha2);
 
   // Time the routine
   arma::wall_clock clock;
