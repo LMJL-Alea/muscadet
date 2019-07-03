@@ -108,22 +108,24 @@ arma::mat BaseLogLikelihood::GetInitialPoint(const double rho1, const double rho
   const double epsilon = 1.0e-4;
   arma::mat params(4, 1);
 
-  double alpha12 = (1.0 + epsilon) * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
+  // Initialize CrossAlpha to the maximum between FirstAlpha and
+  // SecondAlpha which automatically satisfies constraint #3
+  double alpha12 = std::max(alpha1, alpha2);
 
+  // Finds lower and upper bounds for CrossIntensity and
+  // randomly sample within the corresponding interval
   double amp1 = rho1 * std::pow(std::sqrt(M_PI) * alpha1, (double)m_DomainDimension);
   double amp2 = rho2 * std::pow(std::sqrt(M_PI) * alpha2, (double)m_DomainDimension);
   double amp12 = std::pow(std::sqrt(M_PI) * alpha12, (double)m_DomainDimension);
   double ub = std::sqrt(amp1 * amp2) / amp12;
-  ub = std::min(ub, std::sqrt(4.0 * (1.0 - amp1) * (1.0 - amp2)) / amp12) - epsilon;
-
+  ub = std::min(ub, 2.0 * std::sqrt((1.0 - amp1) * (1.0 - amp2)) / amp12 - epsilon);
   Rcpp::Rcout << ub << std::endl;
-  double lb = -ub;
-  double sigma12 = lb + (ub - lb) * arma::randu();
+  double rho12 = ub * (2.0 * arma::randu() - 1.0);
 
   params[0] = std::log(alpha1);
   params[1] = std::log(alpha12);
   params[2] = std::log(alpha2);
-  params[3] = sigma12;
+  params[3] = rho12;
 
   return params;
 }
@@ -143,7 +145,10 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   }
 
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
+  {
+    Rcpp::Rcout << m_Integral << " " << m_LogDeterminant << " " << x.as_row() << std::endl;
     Rcpp::stop("Non finite stuff in evaluate");
+  }
 
   double logLik = 2.0 * m_DomainVolume;
   logLik += m_DomainVolume * m_Integral;
@@ -173,12 +178,50 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
   }
 
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
+  {
+    Rcpp::Rcout << m_Integral << " " << m_LogDeterminant << " " << x.as_row() << std::endl;
     Rcpp::stop("Non finite stuff in gradient");
+  }
 
   for (unsigned int i = 0;i < numParams;++i)
-    g[i] = m_GradientIntegral[i] + m_GradientLogDeterminant[i];
+    g[i] = m_DomainVolume * m_GradientIntegral[i] + m_GradientLogDeterminant[i];
 
   g *= -2.0;
+}
+
+double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
+{
+  this->SetModelParameters(x);
+
+  unsigned int numParams = x.n_rows;
+  g.set_size(numParams, 1);
+
+  bool validParams = this->CheckModelParameters();
+  if (!validParams)
+  {
+    g.fill(0.0);
+    return DBL_MAX;
+  }
+
+  m_Integral = this->GetIntegral();
+  m_LogDeterminant = this->GetLogDeterminant();
+
+  if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
+  {
+    Rcpp::Rcout << m_Integral << " " << m_LogDeterminant << " " << x.as_row() << std::endl;
+    Rcpp::stop("Non finite stuff in gradient");
+  }
+
+  double logLik = 2.0 * m_DomainVolume;
+  logLik += m_DomainVolume * m_Integral;
+  logLik += m_LogDeterminant;
+
+  for (unsigned int i = 0;i < numParams;++i)
+    g[i] = m_DomainVolume * m_GradientIntegral[i] + m_GradientLogDeterminant[i];
+
+  g *= -2.0;
+
+  return -2.0 * logLik;
 }
 
 double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)

@@ -47,6 +47,17 @@ public:
   // Compute the gradient of f(x) for the given x and store the result in g.
   void Gradient(const arma::mat& x, arma::mat& g);
 
+  // OPTIONAL: this may be implemented in addition to---or instead
+  // of---Evaluate() and Gradient().  If this is the only function implemented,
+  // implementations of Evaluate() and Gradient() will be automatically
+  // generated using template metaprogramming.  Often, implementing
+  // EvaluateWithGradient() can result in more efficient optimizations.
+  //
+  // Given parameters x and a matrix g, return the value of f(x) and store
+  // f'(x) in the provided matrix g.  g should have the same size (rows,
+  // columns) as x.
+  double EvaluateWithGradient(const arma::mat& x, arma::mat& g);
+
   // Get the number of constraints on the objective function.
   size_t NumConstraints() {return 5;}
 
@@ -64,17 +75,14 @@ public:
   // direction where the constraint would be satisfied.
   void GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g);
 
-  arma::mat GetDistanceMatrix() {return m_DistanceMatrix;}
-
 protected:
+  //! Generic functions to be implemented in each child class
   virtual void SetModelParameters(const arma::mat &params) = 0;
   virtual bool CheckModelParameters() = 0;
   virtual double GetIntegral() = 0;
   virtual double GetLogDeterminant() = 0;
 
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
-  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  //! Generic variables used by all models and needed in each child class
   arma::vec m_GradientIntegral, m_GradientLogDeterminant;
   unsigned int m_DomainDimension;
   unsigned int m_SampleSize;
@@ -83,10 +91,17 @@ protected:
   arma::vec m_ConstraintVector;
   bool m_Modified;
 
+  //! Variables specific to the Gaussian kernel
+  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
+  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+
 private:
+  //! Helper functions for periodizing the domain
   void SetNeighborhood(const unsigned int n);
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
 
+  //! Generic variables used by all models but not needed in child classes
   double m_DomainVolume;
   double m_Integral, m_LogDeterminant;
   arma::vec m_DomainLowerBounds, m_DomainUpperBounds;
