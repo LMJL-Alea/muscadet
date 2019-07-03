@@ -11,7 +11,7 @@ public:
   void SetFirstIntensity(const double x) {m_FirstIntensity = x;}
   void SetCrossIntensity(const double x) {m_CrossIntensity = x;}
   void SetSecondIntensity(const double x) {m_SecondIntensity = x;}
-  void SetDataDimension(const unsigned int d) {m_DomainDimension = d;}
+  void SetDomainDimension(const unsigned int d) {m_DomainDimension = d;}
 
   void Update(const double radius);
   double operator()(const double radius);

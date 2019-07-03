@@ -5,10 +5,13 @@
 class BaseLogLikelihood
 {
 public:
+  typedef std::vector  <std::vector <int> > NeighborhoodType;
+
   BaseLogLikelihood()
   {
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
+    m_UsePeriodicDomain = true;
     m_Modified = true;
     m_FirstAlpha = 0.0;
     m_CrossAlpha = 0.0;
@@ -27,7 +30,15 @@ public:
 
   ~BaseLogLikelihood() {}
 
-  void SetInputs(const arma::mat &points, const double rho1, const double rho2, const double volume = 1.0);
+  void SetInputs(
+      const arma::mat &points,
+      const arma::vec &labels,
+      const arma::vec &lb,
+      const arma::vec &ub,
+      const double rho1,
+      const double rho2
+  );
+  void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -71,7 +82,13 @@ protected:
   arma::vec m_ConstraintVector;
 
 private:
+  void SetNeighborhood(const unsigned int n);
+  std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
+
   double m_DomainVolume;
   bool m_Modified;
   double m_Integral, m_LogDeterminant;
+  arma::vec m_DomainLowerBounds, m_DomainUpperBounds;
+  NeighborhoodType m_Neighborhood;
+  bool m_UsePeriodicDomain;
 };

@@ -27,7 +27,7 @@
 #'
 #' # Verify parameters were recovered
 #' params
-Estimate <- function(X, rho1, rho2, alpha1, alpha2, volume = 1.0) {
-    .Call('_mediator_Estimate', PACKAGE = 'mediator', X, rho1, rho2, alpha1, alpha2, volume)
+Estimate <- function(X, labels, lb, ub, rho1, rho2, alpha1, alpha2) {
+    .Call('_mediator_Estimate', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2)
 }
 

@@ -1,27 +1,80 @@
 #include "baseLogLikelihood.h"
 
-void BaseLogLikelihood::SetInputs(const arma::mat &points, const double rho1, const double rho2, const double volume)
+void BaseLogLikelihood::SetNeighborhood(const unsigned int n)
 {
-  m_DomainDimension = points.n_cols - 1;
+  std::vector<int> workVec(n, 0);
+  m_Neighborhood.resize(1);
+  m_Neighborhood[0] = workVec;
+  NeighborhoodType workList;
+
+  for (unsigned int i = 0;i < n;++i)
+  {
+    workList = m_Neighborhood;
+    m_Neighborhood.clear();
+
+    for (unsigned int j = 0;j < workList.size();++j)
+    {
+      for (int k = -1;k <= 1;++k)
+      {
+        workVec = workList[j];
+        workVec[i] += k;
+        m_Neighborhood.push_back(workVec);
+      }
+    }
+  }
+}
+
+void BaseLogLikelihood::SetInputs(
+    const arma::mat &points,
+    const arma::vec &labels,
+    const arma::vec &lb,
+    const arma::vec &ub,
+    const double rho1,
+    const double rho2)
+{
+  m_DomainDimension = points.n_cols;
   m_SampleSize = points.n_rows;
-  m_PointLabels = points.col(m_DomainDimension);
-  m_DomainVolume = volume;
+  m_PointLabels = labels;
+  m_DomainLowerBounds = lb;
+  m_DomainUpperBounds = ub;
+  m_DomainVolume = 1.0;
+  for (unsigned int i = 0;i < m_DomainDimension;++i)
+    m_DomainVolume *= (ub[i] - lb[i]);
+
   m_FirstIntensity = rho1;
   m_SecondIntensity = rho2;
 
+  this->SetNeighborhood(m_DomainDimension);
   m_DistanceMatrix.set_size(m_SampleSize, m_SampleSize);
   m_DistanceMatrix.fill(0.0);
-  arma::mat dataPoints = points.cols(0, m_DomainDimension - 1);
+  std::vector<arma::rowvec> trialVectors;
   arma::rowvec workVec1, workVec2;
 
   for (unsigned int i = 0;i < m_SampleSize;++i)
   {
-    workVec1 = dataPoints.row(i);
+    workVec1 = points.row(i);
+
+    if (m_UsePeriodicDomain)
+      trialVectors = this->GetTrialVectors(workVec1, lb, ub);
 
     for (unsigned int j = i + 1;j < m_SampleSize;++j)
     {
-      workVec2 = dataPoints.row(j);
-      double workDistance = arma::norm(workVec1 - workVec2);
+      workVec2 = points.row(j);
+
+      double workDistance = 0.0;
+
+      if (m_UsePeriodicDomain)
+      {
+        for (unsigned int k = 0;k < trialVectors.size();++k)
+        {
+          double testDistance = arma::norm(trialVectors[k] - workVec2);
+          if (testDistance < workDistance || k == 0)
+            workDistance = testDistance;
+        }
+      }
+      else
+        workDistance = arma::norm(workVec1 - workVec2);
+
       m_DistanceMatrix(i, j) = workDistance;
       m_DistanceMatrix(j, i) = workDistance;
     }
@@ -29,6 +82,25 @@ void BaseLogLikelihood::SetInputs(const arma::mat &points, const double rho1, co
 
   Rcpp::Rcout << "Point Dimension: " << m_DomainDimension << std::endl;
   Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
+}
+
+std::vector<arma::rowvec> BaseLogLikelihood::GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub)
+{
+  unsigned int numTrials = m_Neighborhood.size();
+  std::vector<arma::rowvec> trialVectors(numTrials);
+  std::vector<int> workNeighborhood;
+  arma::rowvec workVector;
+
+  for (unsigned int i = 0;i < numTrials;++i)
+  {
+    workNeighborhood = m_Neighborhood[i];
+    workVector = x;
+    for (unsigned int j = 0;j < m_DomainDimension;++j)
+      workVector[j] += (double)workNeighborhood[j] * (ub[j] - lb[j]);
+    trialVectors[i] = workVector;
+  }
+
+  return trialVectors;
 }
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)

@@ -54,7 +54,7 @@ double GaussianLogLikelihood::GetIntegral()
   integrand.SetCrossIntensity(m_CrossIntensity);
   integrand.SetFirstIntensity(m_FirstIntensity);
   integrand.SetSecondIntensity(m_SecondIntensity);
-  integrand.SetDataDimension(m_DomainDimension);
+  integrand.SetDomainDimension(m_DomainDimension);
   auto GetIntegrandValue = [&integrand](const double &t){return integrand(t);};
   auto GetDerivativeWRTFirstAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTFirstAlpha(t);};
   auto GetDerivativeWRTCrossAlpha = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossAlpha(t);};
@@ -92,53 +92,38 @@ double GaussianLogLikelihood::GetLogDeterminant()
     {
       unsigned int workLabel = m_PointLabels[i] + m_PointLabels[j];
 
-      if (workLabel == 2)
+      resVal = 0.0;
+      workValue1 = 0.0;
+      workValue2 = 0.0;
+      workValue3 = 0.0;
+      workValue4 = 0.0;
+
+      for (unsigned int k = 1;k <= N;++k)
       {
-        resVal = 0.0;
-        workValue1 = 0.0;
-        workValue2 = 0.0;
-        workValue3 = 0.0;
-        workValue4 = 0.0;
-        for (unsigned int k = 1;k <= N;++k)
+        double tmpVal = std::pow((double)k, -(double)m_DomainDimension / 2.0);
+
+        if (workLabel == 2)
         {
           double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_FirstAlpha * m_FirstAlpha);
-          double tmpVal = std::pow(m_FirstAmplitude, k - 1.0);
-          tmpVal *= std::pow((double)k, -(double)m_DomainDimension / 2.0);
+          tmpVal *= std::pow(m_FirstAmplitude, k - 1.0);
           tmpVal *= std::exp(-expInValue);
           resVal += m_FirstIntensity * tmpVal;
           workValue1 += m_FirstIntensity * tmpVal * (m_DomainDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
+
         }
-      }
-      else if (workLabel == 3)
-      {
-        resVal = 0.0;
-        workValue1 = 0.0;
-        workValue2 = 0.0;
-        workValue3 = 0.0;
-        workValue4 = 0.0;
-        for (unsigned int k = 1;k <= N;++k)
+        else if (workLabel == 3)
         {
           double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_CrossAlpha * m_CrossAlpha);
-          double tmpVal = std::pow(m_CrossAmplitude, k - 1.0);
-          tmpVal *= std::pow((double)k, -(double)m_DomainDimension / 2.0);
+          tmpVal *= std::pow(m_CrossAmplitude, k - 1.0);
           tmpVal *= std::exp(-expInValue);
           resVal +=  m_CrossIntensity * tmpVal;
           workValue2 += m_CrossIntensity * tmpVal * (m_DomainDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);
           workValue4 += tmpVal * k;
         }
-      }
-      else
-      {
-        resVal = 0.0;
-        workValue1 = 0.0;
-        workValue2 = 0.0;
-        workValue3 = 0.0;
-        workValue4 = 0.0;
-        for (unsigned int k = 1;k <= N;++k)
+        else
         {
           double expInValue = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j) / (k * m_SecondAlpha * m_SecondAlpha);
-          double tmpVal = std::pow(m_SecondAmplitude, k - 1.0);
-          tmpVal *= std::pow((double)k, -(double)m_DomainDimension / 2.0);
+          tmpVal *= std::pow(m_SecondAmplitude, k - 1.0);
           tmpVal *= std::exp(-expInValue);
           resVal += m_SecondIntensity * tmpVal;
           workValue3 += m_SecondIntensity * tmpVal * (m_DomainDimension * (m_SampleSize - 1.0) + 2.0 * expInValue);

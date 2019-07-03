@@ -8,24 +8,26 @@
 using namespace Rcpp;
 
 // Estimate
-arma::mat Estimate(const arma::mat& X, const double rho1, const double rho2, const double alpha1, const double alpha2, const double volume);
-RcppExport SEXP _mediator_Estimate(SEXP XSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP volumeSEXP) {
+arma::mat Estimate(const arma::mat& X, const arma::vec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2);
+RcppExport SEXP _mediator_Estimate(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type labels(labelsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const double >::type volume(volumeSEXP);
-    rcpp_result_gen = Rcpp::wrap(Estimate(X, rho1, rho2, alpha1, alpha2, volume));
+    rcpp_result_gen = Rcpp::wrap(Estimate(X, labels, lb, ub, rho1, rho2, alpha1, alpha2));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mediator_Estimate", (DL_FUNC) &_mediator_Estimate, 6},
+    {"_mediator_Estimate", (DL_FUNC) &_mediator_Estimate, 8},
     {NULL, NULL, 0}
 };
 
