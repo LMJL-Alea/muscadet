@@ -6,6 +6,9 @@ void GaussianLogLikelihood::SetModelParameters(const arma::mat &params)
 {
   m_Modified = false;
 
+  m_FirstIntensity = 100;
+  m_SecondIntensity = 100;
+
   double workScalar = std::exp(params[0]);
   if (m_FirstAlpha != workScalar)
   {
@@ -30,7 +33,7 @@ void GaussianLogLikelihood::SetModelParameters(const arma::mat &params)
     m_Modified = true;
   }
 
-  workScalar = params[3];
+  workScalar = 70.7;// params[3];
   if (m_CrossIntensity != workScalar)
   {
     m_CrossIntensity = workScalar;
@@ -39,19 +42,19 @@ void GaussianLogLikelihood::SetModelParameters(const arma::mat &params)
   }
 }
 
-bool GaussianLogLikelihood::CheckModelParameters()
+bool GaussianLogLikelihood::CheckModelParameters(const arma::mat &params)
 {
   m_ConstraintVector.set_size(this->NumConstraints());
   m_ConstraintVector.fill(0.0);
   unsigned int numViolations = 0;
 
-  if (m_FirstAmplitude >= 1.0)
+  if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0 - m_Epsilon)
   {
     m_ConstraintVector[0] = DBL_MAX;
     ++numViolations;
   }
 
-  if (m_SecondAmplitude >= 1.0)
+  if (m_SecondAmplitude < m_Epsilon || m_SecondAmplitude > 1.0 - m_Epsilon)
   {
     m_ConstraintVector[1] = DBL_MAX;
     ++numViolations;
@@ -69,7 +72,7 @@ bool GaussianLogLikelihood::CheckModelParameters()
     ++numViolations;
   }
 
-  if (m_CrossAmplitude * m_CrossAmplitude >= 4.0 * (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude))
+  if (m_CrossAmplitude * m_CrossAmplitude > 4.0 * (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon)
   {
     m_ConstraintVector[4] = DBL_MAX;
     ++numViolations;
@@ -99,6 +102,8 @@ double GaussianLogLikelihood::GetIntegral()
   auto GetDerivativeWRTCrossIntensity = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossIntensity(t);};
 
   double resVal = 2.0 * M_PI * QuadratureType::integrate(GetIntegrandValue, lBound, uBound);
+
+  m_GradientIntegral.set_size(this->GetNumberOfParameters());
   m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTFirstAlpha, lBound, uBound);
   m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossAlpha, lBound, uBound);
   m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTSecondAlpha, lBound, uBound);
@@ -187,6 +192,7 @@ double GaussianLogLikelihood::GetLogDeterminant()
   arma::log_det(resVal, workSign, lMatrix);
   arma::mat lMatrixInverse = arma::inv(lMatrix);
 
+  m_GradientLogDeterminant.set_size(this->GetNumberOfParameters());
   m_GradientLogDeterminant[0] = arma::trace(lMatrixInverse * lMatrixDeriv1);
   m_GradientLogDeterminant[1] = arma::trace(lMatrixInverse * lMatrixDeriv2);
   m_GradientLogDeterminant[2] = arma::trace(lMatrixInverse * lMatrixDeriv3);

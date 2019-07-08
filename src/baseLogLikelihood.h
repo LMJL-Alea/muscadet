@@ -13,30 +13,17 @@ public:
     m_DomainVolume = 1.0;
     m_UsePeriodicDomain = true;
     m_Modified = true;
-    m_FirstAlpha = 0.0;
-    m_CrossAlpha = 0.0;
-    m_SecondAlpha = 0.0;
-    m_FirstIntensity = 0.0;
-    m_CrossIntensity = 0.0;
-    m_SecondIntensity = 0.0;
-    m_FirstAmplitude = 0.0;
-    m_CrossAmplitude = 0.0;
-    m_SecondAmplitude = 0.0;
     m_Integral = 0.0;
     m_LogDeterminant = 0.0;
-    m_GradientIntegral.set_size(4);
-    m_GradientLogDeterminant.set_size(4);
   }
 
   ~BaseLogLikelihood() {}
 
   void SetInputs(
       const arma::mat &points,
-      const arma::vec &labels,
+      const arma::uvec &labels,
       const arma::vec &lb,
-      const arma::vec &ub,
-      const double rho1,
-      const double rho2
+      const arma::vec &ub
   );
   void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
   arma::mat GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2);
@@ -77,8 +64,9 @@ public:
 
 protected:
   //! Generic functions to be implemented in each child class
+  virtual unsigned int GetNumberOfParameters() = 0;
   virtual void SetModelParameters(const arma::mat &params) = 0;
-  virtual bool CheckModelParameters() = 0;
+  virtual bool CheckModelParameters(const arma::mat &params) = 0;
   virtual double GetIntegral() = 0;
   virtual double GetLogDeterminant() = 0;
 
@@ -87,14 +75,12 @@ protected:
   unsigned int m_DomainDimension;
   unsigned int m_SampleSize;
   arma::mat m_DistanceMatrix;
-  arma::vec m_PointLabels;
+  arma::uvec m_PointLabels;
   arma::vec m_ConstraintVector;
   bool m_Modified;
+  double m_DomainVolume;
 
-  //! Variables specific to the Gaussian kernel
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
-  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  static const double m_Epsilon;
 
 private:
   //! Helper functions for periodizing the domain
@@ -102,9 +88,7 @@ private:
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
 
   //! Generic variables used by all models but not needed in child classes
-  double m_DomainVolume;
   double m_Integral, m_LogDeterminant;
-  arma::vec m_DomainLowerBounds, m_DomainUpperBounds;
   NeighborhoodType m_Neighborhood;
   bool m_UsePeriodicDomain;
 };

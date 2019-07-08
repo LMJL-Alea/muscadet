@@ -1,5 +1,7 @@
 #include "baseLogLikelihood.h"
 
+const double BaseLogLikelihood::m_Epsilon = 1.0e-4;
+
 void BaseLogLikelihood::SetNeighborhood(const unsigned int n)
 {
   std::vector<int> workVec(n, 0);
@@ -45,23 +47,16 @@ std::vector<arma::rowvec> BaseLogLikelihood::GetTrialVectors(const arma::rowvec 
 
 void BaseLogLikelihood::SetInputs(
     const arma::mat &points,
-    const arma::vec &labels,
+    const arma::uvec &labels,
     const arma::vec &lb,
-    const arma::vec &ub,
-    const double rho1,
-    const double rho2)
+    const arma::vec &ub)
 {
   m_DomainDimension = points.n_cols;
   m_SampleSize = points.n_rows;
   m_PointLabels = labels;
-  m_DomainLowerBounds = lb;
-  m_DomainUpperBounds = ub;
   m_DomainVolume = 1.0;
   for (unsigned int i = 0;i < m_DomainDimension;++i)
     m_DomainVolume *= (ub[i] - lb[i]);
-
-  m_FirstIntensity = rho1;
-  m_SecondIntensity = rho2;
 
   this->SetNeighborhood(m_DomainDimension);
   m_DistanceMatrix.set_size(m_SampleSize, m_SampleSize);
@@ -99,18 +94,20 @@ void BaseLogLikelihood::SetInputs(
     }
   }
 
-  Rcpp::Rcout << "Point Dimension: " << m_DomainDimension << std::endl;
-  Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
+  // Rcpp::Rcout << "Domain Dimension: " << m_DomainDimension << std::endl;
+  // Rcpp::Rcout << "Domain Volume: " << m_DomainVolume << std::endl;
+  // Rcpp::Rcout << "Sample size: " << m_SampleSize << std::endl;
+  // Rcpp::Rcout << "Point labels: " << m_PointLabels.as_row() << std::endl;
 }
 
 arma::mat BaseLogLikelihood::GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2)
 {
-  const double epsilon = 1.0e-4;
-  arma::mat params(4, 1);
+  arma::mat params(this->GetNumberOfParameters(), 1);
 
   // Initialize CrossAlpha to the maximum between FirstAlpha and
   // SecondAlpha which automatically satisfies constraint #3
-  double alpha12 = std::max(alpha1, alpha2);
+  // double alpha12 = std::max(alpha1, alpha2);
+  double alpha12 = (1.0 + m_Epsilon) * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
 
   // Finds lower and upper bounds for CrossIntensity and
   // randomly sample within the corresponding interval
@@ -118,7 +115,7 @@ arma::mat BaseLogLikelihood::GetInitialPoint(const double rho1, const double rho
   double amp2 = rho2 * std::pow(std::sqrt(M_PI) * alpha2, (double)m_DomainDimension);
   double amp12 = std::pow(std::sqrt(M_PI) * alpha12, (double)m_DomainDimension);
   double ub = std::sqrt(amp1 * amp2) / amp12;
-  ub = std::min(ub, 2.0 * std::sqrt((1.0 - amp1) * (1.0 - amp2)) / amp12 - epsilon);
+  ub = std::min(ub, 2.0 * std::sqrt((1.0 - amp1) * (1.0 - amp2)) / amp12 - m_Epsilon);
   Rcpp::Rcout << ub << std::endl;
   double rho12 = ub * (2.0 * arma::randu() - 1.0);
 
@@ -134,15 +131,18 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
   this->SetModelParameters(x);
 
-  bool validParams = this->CheckModelParameters();
-  if (!validParams)
-    return DBL_MAX;
+  // bool validParams = this->CheckModelParameters(x);
+  // if (!validParams)
+  //   return DBL_MAX;
 
   if (m_Modified)
   {
     m_Integral = this->GetIntegral();
     m_LogDeterminant = this->GetLogDeterminant();
   }
+
+  Rcpp::Rcout << x.as_row() << std::endl;
+  Rcpp::Rcout << m_Integral << " " << m_LogDeterminant << std::endl;
 
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
   {
@@ -154,22 +154,24 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   logLik += m_DomainVolume * m_Integral;
   logLik += m_LogDeterminant;
 
+  // Rcpp::Rcout << -2.0*logLik << std::endl;
+  // Rcpp::stop("bouh");
+
   return -2.0 * logLik;
 }
 
 void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
 {
-  this->SetModelParameters(x);
+  g.set_size(this->GetNumberOfParameters(), 1);
 
-  unsigned int numParams = x.n_rows;
-  g.set_size(numParams, 1);
-
-  bool validParams = this->CheckModelParameters();
+  bool validParams = this->CheckModelParameters(x);
   if (!validParams)
   {
     g.fill(0.0);
     return;
   }
+
+  this->SetModelParameters(x);
 
   if (m_Modified)
   {
@@ -183,7 +185,7 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
     Rcpp::stop("Non finite stuff in gradient");
   }
 
-  for (unsigned int i = 0;i < numParams;++i)
+  for (unsigned int i = 0;i < this->GetNumberOfParameters();++i)
     g[i] = m_DomainVolume * m_GradientIntegral[i] + m_GradientLogDeterminant[i];
 
   g *= -2.0;
@@ -192,11 +194,9 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
 double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
 {
   this->SetModelParameters(x);
+  g.set_size(this->GetNumberOfParameters(), 1);
 
-  unsigned int numParams = x.n_rows;
-  g.set_size(numParams, 1);
-
-  bool validParams = this->CheckModelParameters();
+  bool validParams = this->CheckModelParameters(x);
   if (!validParams)
   {
     g.fill(0.0);
@@ -209,14 +209,14 @@ double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
   {
     Rcpp::Rcout << m_Integral << " " << m_LogDeterminant << " " << x.as_row() << std::endl;
-    Rcpp::stop("Non finite stuff in gradient");
+    Rcpp::stop("Non finite stuff in evaluate with gradient");
   }
 
   double logLik = 2.0 * m_DomainVolume;
   logLik += m_DomainVolume * m_Integral;
   logLik += m_LogDeterminant;
 
-  for (unsigned int i = 0;i < numParams;++i)
+  for (unsigned int i = 0;i < this->GetNumberOfParameters();++i)
     g[i] = m_DomainVolume * m_GradientIntegral[i] + m_GradientLogDeterminant[i];
 
   g *= -2.0;
@@ -226,13 +226,13 @@ double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
 
 double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)
 {
+  this->CheckModelParameters(x);
   this->SetModelParameters(x);
-  this->CheckModelParameters();
   return m_ConstraintVector[i];
 }
 
 void BaseLogLikelihood::GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g)
 {
-  g.set_size(x.n_rows, 1);
+  g.set_size(this->GetNumberOfParameters(), 1);
   g.fill(0.0);
 }

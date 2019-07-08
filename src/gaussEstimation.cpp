@@ -1,5 +1,6 @@
 #include <RcppEnsmallen.h>
 #include "gaussianLogLikelihood.h"
+#include "gaussianLogLikelihoodV2.h"
 
 //' Stationary Bivariate Gaussian DPP Estimator
 //'
@@ -30,7 +31,7 @@
 // [[Rcpp::export]]
 arma::mat Estimate(
     const arma::mat &X,
-    const arma::vec &labels,
+    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
     const double rho1,
@@ -39,22 +40,32 @@ arma::mat Estimate(
     const double alpha2)
 {
   // Construct the objective function.
-  GaussianLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub, rho1, rho2);
+  // GaussianLogLikelihood logLik;
+  GaussianLogLikelihoodV2 logLik;
+  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetFirstIntensity(rho1);
+  logLik.SetSecondIntensity(rho2);
+  logLik.SetFirstAlpha(alpha1);
+  logLik.SetSecondAlpha(alpha2);
+  logLik.SetCrossAlpha(0.03);
 
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
   // ens::AugLagrangian optimizer;
-  // ens::DE optimizer;
+  ens::DE optimizer;
   // ens::SPSA optimizer(0.1, 0.102, 0.16, 0.3, 100000, 1e-5);
   // ens::ExponentialSchedule expSchedule;
   // ens::SA<> optimizer(expSchedule);
   // ens::CNE optimizer(200, 10000, 0.2, 0.2, 0.3, 1e-5);
-  ens::L_BFGS optimizer;
+  // ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly within the
   // authorized search space.
-  arma::mat params = logLik.GetInitialPoint(rho1, rho2, alpha1, alpha2);
+  // arma::mat params = logLik.GetInitialPoint(rho1, rho2, alpha1, alpha2);
+  arma::mat params(1, 1);
+  // params[0] = 1.0001 * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
+  // params[1] = 0.7;
+  params[0] = 0.2;
 
   // Time the routine
   arma::wall_clock clock;
@@ -69,8 +80,39 @@ arma::mat Estimate(
   Rcpp::Rcout << "Estimation performed in " << clock.toc() << " seconds." << std::endl;
   Rcpp::Rcout << "Min: " << logLik.Evaluate(params) << std::endl;
 
-  for (unsigned int i = 0;i < 3;++i)
-    params[i] = std::exp(params[i]);
+  // for (unsigned int i = 0;i < 3;++i)
+  //   params[i] = std::exp(params[i]);
 
   return params;
+}
+
+// [[Rcpp::export]]
+double Evaluate(
+    const arma::vec &p,
+    const arma::mat &X,
+    const arma::uvec &labels,
+    const arma::vec &lb,
+    const arma::vec &ub,
+    const double rho1,
+    const double rho2,
+    const double alpha1,
+    const double alpha2)
+{
+  // Construct the objective function.
+  GaussianLogLikelihoodV2 logLik;
+  logLik.SetInputs(X, labels, lb, ub);
+
+  logLik.SetFirstAlpha(alpha1);
+  logLik.SetFirstIntensity(rho1);
+
+  logLik.SetSecondAlpha(alpha2);
+  logLik.SetSecondIntensity(rho2);
+
+  // logLik.SetCrossAlpha(0.04);
+  logLik.SetCrossIntensity(50.0);
+
+  arma::mat params(p.n_elem, 1);
+  for (unsigned int i = 0;i < p.n_elem;++i)
+    params[i] = p[i];
+  return logLik.Evaluate(params);
 }

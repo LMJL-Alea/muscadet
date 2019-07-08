@@ -31,3 +31,7 @@ Estimate <- function(X, labels, lb, ub, rho1, rho2, alpha1, alpha2) {
     .Call('_mediator_Estimate', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2)
 }
 
+Evaluate <- function(p, X, labels, lb, ub, rho1, rho2, alpha1, alpha2) {
+    .Call('_mediator_Evaluate', PACKAGE = 'mediator', p, X, labels, lb, ub, rho1, rho2, alpha1, alpha2)
+}
+
