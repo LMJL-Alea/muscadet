@@ -2,154 +2,6 @@
 #include "integrandFunctions.h"
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
-void GaussLogLikelihood::SetFirstAlpha(const double x)
-{
-  m_FirstAlpha = x;
-  m_FirstAmplitude = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
-  m_EstimateFirstBetaValue = false;
-}
-
-void GaussLogLikelihood::SetSecondAlpha(const double x)
-{
-  m_SecondAlpha = x;
-  m_SecondAmplitude = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
-  m_EstimateSecondBetaValue = false;
-}
-
-void GaussLogLikelihood::SetCrossAlpha(const double x)
-{
-  m_CrossAlpha = x;
-  m_CrossAmplitude  = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-  m_EstimateCrossBetaValue = false;
-}
-
-void GaussLogLikelihood::SetFirstIntensity(const double x)
-{
-  m_FirstIntensity = x;
-  m_FirstAmplitude  = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
-  m_EstimateFirstBValue = false;
-}
-
-void GaussLogLikelihood::SetSecondIntensity(const double x)
-{
-  m_SecondIntensity = x;
-  m_SecondAmplitude  = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
-  m_EstimateSecondBValue = false;
-}
-
-void GaussLogLikelihood::SetCrossIntensity(const double x)
-{
-  // m_CrossIntensity = x;
-  // m_CrossAmplitude  = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-
-  m_CrossAmplitude = x;
-  m_CrossIntensity  = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-
-  m_EstimateCrossBValue = false;
-}
-
-void GaussLogLikelihood::SetModelParameters(const arma::mat &params)
-{
-  m_Modified = false;
-
-  unsigned int pos = 0;
-
-  if (m_EstimateFirstBetaValue)
-  {
-    double workScalar = params[pos];
-
-    if (m_FirstAlpha != workScalar)
-    {
-      m_FirstAlpha = workScalar;
-      if (m_EstimateFirstBValue)
-        m_FirstIntensity = m_FirstAmplitude / std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
-      else
-        m_FirstAmplitude = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateSecondBetaValue)
-  {
-    double workScalar = params[pos];
-
-    if (m_SecondAlpha != workScalar)
-    {
-      m_SecondAlpha = workScalar;
-      if (m_EstimateSecondBValue)
-        m_SecondIntensity = m_SecondAmplitude / std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
-      else
-        m_SecondAmplitude = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateCrossBetaValue)
-  {
-    double workScalar = params[pos];
-
-    if (m_CrossAlpha != workScalar)
-    {
-      m_CrossAlpha = workScalar;
-      // if (m_EstimateCrossBValue)
-        m_CrossIntensity = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-      // else
-        // m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateFirstBValue)
-  {
-    double workScalar = params[pos];
-
-    if (m_FirstAmplitude != workScalar)
-    {
-      m_FirstAmplitude = workScalar;
-      m_FirstIntensity = m_FirstAmplitude / std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateSecondBValue)
-  {
-    double workScalar = params[pos];
-
-    if (m_SecondAmplitude != workScalar)
-    {
-      m_SecondAmplitude = workScalar;
-      m_SecondIntensity = m_SecondAmplitude / std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateCrossBValue)
-  {
-    double workScalar = params[pos];
-
-    if (m_CrossAmplitude != workScalar)
-    {
-      m_CrossAmplitude = workScalar;
-      m_CrossIntensity = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
-}
-
 bool GaussLogLikelihood::CheckModelParameters(const arma::mat &params)
 {
   // if (params[0] < m_Epsilon)
@@ -223,4 +75,9 @@ double GaussLogLikelihood::EvaluateLFunction(const double sqDist, const double i
   }
 
   return resVal;
+}
+
+double GaussLogLikelihood::RetrieveIntensityFromParameters(const double amplitude, const double alpha)
+{
+  return amplitude / std::pow(std::sqrt(M_PI) * alpha, (double)m_DomainDimension);
 }

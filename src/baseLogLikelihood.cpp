@@ -312,3 +312,138 @@ void BaseLogLikelihood::GradientConstraint(const size_t i, const arma::mat& x, a
   g.set_size(this->GetNumberOfParameters(), 1);
   g.fill(0.0);
 }
+
+void BaseLogLikelihood::SetFirstAlpha(const double x)
+{
+  m_FirstAlpha = x;
+  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+  m_EstimateFirstBetaValue = false;
+}
+
+void BaseLogLikelihood::SetSecondAlpha(const double x)
+{
+  m_SecondAlpha = x;
+  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+  m_EstimateSecondBetaValue = false;
+}
+
+void BaseLogLikelihood::SetCrossAlpha(const double x)
+{
+  m_CrossAlpha = x;
+  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+  m_EstimateCrossBetaValue = false;
+}
+
+void BaseLogLikelihood::SetFirstAmplitude(const double x)
+{
+  m_FirstAmplitude = x;
+  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+  m_EstimateFirstBValue = false;
+}
+
+void BaseLogLikelihood::SetSecondAmplitude(const double x)
+{
+  m_SecondAmplitude = x;
+  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+  m_EstimateSecondBValue = false;
+}
+
+void BaseLogLikelihood::SetCrossAmplitude(const double x)
+{
+  m_CrossAmplitude = x;
+  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+  m_EstimateCrossBValue = false;
+}
+
+void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
+{
+  m_Modified = false;
+
+  unsigned int pos = 0;
+
+  if (m_EstimateFirstBetaValue)
+  {
+    double workScalar = params[pos];
+
+    if (m_FirstAlpha != workScalar)
+    {
+      m_FirstAlpha = workScalar;
+      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+      m_Modified = true;
+    }
+
+    ++pos;
+  }
+
+  if (m_EstimateSecondBetaValue)
+  {
+    double workScalar = params[pos];
+
+    if (m_SecondAlpha != workScalar)
+    {
+      m_SecondAlpha = workScalar;
+      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+      m_Modified = true;
+    }
+
+    ++pos;
+  }
+
+  if (m_EstimateCrossBetaValue)
+  {
+    double workScalar = params[pos];
+
+    if (m_CrossAlpha != workScalar)
+    {
+      m_CrossAlpha = workScalar;
+      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+      m_Modified = true;
+    }
+
+    ++pos;
+  }
+
+  if (m_EstimateFirstBValue)
+  {
+    double workScalar = params[pos];
+
+    if (m_FirstAmplitude != workScalar)
+    {
+      m_FirstAmplitude = workScalar;
+      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+      m_Modified = true;
+    }
+
+    ++pos;
+  }
+
+  if (m_EstimateSecondBValue)
+  {
+    double workScalar = params[pos];
+
+    if (m_SecondAmplitude != workScalar)
+    {
+      m_SecondAmplitude = workScalar;
+      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+      m_Modified = true;
+    }
+
+    ++pos;
+  }
+
+  if (m_EstimateCrossBValue)
+  {
+    double workScalar = params[pos];
+
+    if (m_CrossAmplitude != workScalar)
+    {
+      m_CrossAmplitude = workScalar;
+      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+      m_Modified = true;
+    }
+
+    ++pos;
+  }
+
+  Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
+}

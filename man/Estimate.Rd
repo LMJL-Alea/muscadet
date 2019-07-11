@@ -4,7 +4,8 @@
 \alias{Estimate}
 \title{Stationary Bivariate Gaussian DPP Estimator}
 \usage{
-Estimate(X, labels, lb, ub, rho1, rho2, alpha1, alpha2)
+Estimate(X, labels, lb, ub, amplitude1 = 0, amplitude2 = 0,
+  amplitude12 = 0, alpha1 = 0, alpha2 = 0, alpha12 = 0)
 }
 \arguments{
 \item{X}{A matrix of size n x (d+1) storing the points in R^d and their label in last column.}

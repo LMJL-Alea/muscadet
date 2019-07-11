@@ -44,6 +44,13 @@ public:
   void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
   arma::mat GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2);
 
+  void SetFirstAlpha(const double x);
+  void SetSecondAlpha(const double x);
+  void SetCrossAlpha(const double x);
+  void SetFirstAmplitude(const double x);
+  void SetSecondAmplitude(const double x);
+  void SetCrossAmplitude(const double x);
+
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
 
@@ -81,7 +88,6 @@ public:
 protected:
   //! Generic functions to be implemented in each child class
   unsigned int GetNumberOfParameters();
-  virtual void SetModelParameters(const arma::mat &params) = 0;
   virtual bool CheckModelParameters(const arma::mat &params) = 0;
   virtual double EvaluateLFunction(
       const double sqDist,
@@ -90,6 +96,7 @@ protected:
       const double alpha) = 0;
   virtual double GetIntegral() = 0;
   double GetLogDeterminant();
+  virtual double RetrieveIntensityFromParameters(const double amplitude, const double alpha) = 0;
 
   //! Generic variables used by all models and needed in each child class
   arma::vec m_GradientIntegral;
@@ -113,6 +120,7 @@ private:
   //! Helper functions for periodizing the domain
   void SetNeighborhood(const unsigned int n);
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
+  void SetModelParameters(const arma::mat &params);
 
   //! Generic variables used by all models but not needed in child classes
   double m_Integral, m_LogDeterminant;

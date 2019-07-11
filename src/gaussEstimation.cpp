@@ -33,20 +33,35 @@ arma::mat Estimate(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double rho1,
-    const double rho2,
-    const double alpha1,
-    const double alpha2)
+    const double amplitude1 = 0,
+    const double amplitude2 = 0,
+    const double amplitude12 = 0,
+    const double alpha1 = 0,
+    const double alpha2 = 0,
+    const double alpha12 = 0)
 {
   // Construct the objective function.
   // GaussianLogLikelihood logLik;
   GaussLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
-  logLik.SetFirstIntensity(rho1);
-  logLik.SetSecondIntensity(rho2);
-  logLik.SetFirstAlpha(alpha1);
-  logLik.SetSecondAlpha(alpha2);
-  logLik.SetCrossAlpha(0.03);
+
+  if (alpha1 > 0)
+    logLik.SetFirstAlpha(alpha1);
+
+  if (amplitude1 > 0)
+    logLik.SetFirstAmplitude(amplitude1);
+
+  if (alpha2 > 0)
+    logLik.SetSecondAlpha(alpha2);
+
+  if (amplitude2 > 0)
+    logLik.SetSecondAmplitude(amplitude2);
+
+  if (alpha12 > 0)
+    logLik.SetCrossAlpha(alpha12);
+
+  if (amplitude12 > 0)
+    logLik.SetCrossAmplitude(amplitude12);
 
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
@@ -92,23 +107,34 @@ double Evaluate(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double rho1,
-    const double rho2,
-    const double alpha1,
-    const double alpha2)
+    const double amplitude1 = 0,
+    const double amplitude2 = 0,
+    const double amplitude12 = 0,
+    const double alpha1 = 0,
+    const double alpha2 = 0,
+    const double alpha12 = 0)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
-  logLik.SetFirstAlpha(alpha1);
-  logLik.SetFirstIntensity(rho1);
+  if (alpha1 > 0)
+    logLik.SetFirstAlpha(alpha1);
 
-  logLik.SetSecondAlpha(alpha2);
-  logLik.SetSecondIntensity(rho2);
+  if (amplitude1 > 0)
+    logLik.SetFirstAmplitude(amplitude1);
 
-  // logLik.SetCrossAlpha(0.04);
-  logLik.SetCrossIntensity(50.0 * M_PI * 0.04 * 0.04);
+  if (alpha2 > 0)
+    logLik.SetSecondAlpha(alpha2);
+
+  if (amplitude2 > 0)
+    logLik.SetSecondAmplitude(amplitude2);
+
+  if (alpha12 > 0)
+    logLik.SetCrossAlpha(alpha12);
+
+  if (amplitude12 > 0)
+    logLik.SetCrossAmplitude(amplitude12);
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)
