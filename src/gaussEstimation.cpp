@@ -1,6 +1,5 @@
 #include <RcppEnsmallen.h>
 #include "gaussianLogLikelihood.h"
-#include "gaussianLogLikelihoodV2.h"
 
 //' Stationary Bivariate Gaussian DPP Estimator
 //'

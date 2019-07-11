@@ -18,16 +18,16 @@ mle_dpp_bessel <- function(X, labels, lb, ub, a1 = 0, a2 = 0, a12 = 0, alpha1 = 
   #          X = X, labels = labels, lb = lb, ub = ub,
   #          amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
   #          alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
-  # # alpha_i
-  # optimise(f = EvaluateBessel, interval = c(1e-4, 0.053),
-  #          X = X, labels = labels, lb = lb, ub = ub,
-  #          amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
-  #          alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
-  # rho12
-  optimise(f = EvaluateBessel, interval = c(-0.28, 0.28),
+  # alpha_i
+  optimise(f = EvaluateBessel, interval = c(1e-4, 0.053),
            X = X, labels = labels, lb = lb, ub = ub,
            amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
            alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
+  # rho12
+  # optimise(f = EvaluateBessel, interval = c(-0.28, 0.28),
+  #          X = X, labels = labels, lb = lb, ub = ub,
+  #          amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
+  #          alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
 }
 
 #' @export

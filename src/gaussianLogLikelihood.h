@@ -2,29 +2,22 @@
 
 #include "baseLogLikelihood.h"
 
-class GaussianLogLikelihood : public BaseLogLikelihood
+class GaussianLogLikelihoodV2 : public BaseLogLikelihood
 {
 public:
-  GaussianLogLikelihood() : BaseLogLikelihood()
-  {
-    m_FirstAlpha = 0.0;
-    m_SecondAlpha = 0.0;
-    m_CrossAlpha = 0.0;
-    m_FirstIntensity = 0.0;
-    m_SecondIntensity = 0.0;
-    m_CrossIntensity = 0.0;
-  }
+  GaussianLogLikelihoodV2() : BaseLogLikelihood() {}
 
-protected:
-  void SetModelParameters(const arma::mat &params);
-  bool CheckModelParameters(const arma::mat &params);
-  double GetIntegral();
-  double GetLogDeterminant();
+  void SetFirstAlpha(const double x);
+  void SetSecondAlpha(const double x);
+  void SetCrossAlpha(const double x);
+  void SetFirstIntensity(const double x);
+  void SetSecondIntensity(const double x);
+  void SetCrossIntensity(const double x);
 
 private:
-  unsigned int GetNumberOfParameters() {return 4;}
-
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
-  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  unsigned int GetNumberOfParameters();
+  void SetModelParameters(const arma::mat &params);
+  bool CheckModelParameters(const arma::mat &params);
+  double EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha);
+  double GetIntegral();
 };

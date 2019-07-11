@@ -9,6 +9,22 @@ public:
 
   BaseLogLikelihood()
   {
+    m_FirstAlpha = 1.0;
+    m_SecondAlpha = 1.0;
+    m_CrossAlpha = 1.0;
+    m_FirstIntensity = 0.0;
+    m_SecondIntensity = 0.0;
+    m_CrossIntensity = 0.0;
+    m_FirstAmplitude = 0.0;
+    m_SecondAmplitude = 0.0;
+    m_CrossAmplitude = 0.0;
+    m_EstimateFirstBValue = true;
+    m_EstimateSecondBValue = true;
+    m_EstimateCrossBValue = true;
+    m_EstimateFirstBetaValue = true;
+    m_EstimateSecondBetaValue = true;
+    m_EstimateCrossBetaValue = true;
+
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
     m_UsePeriodicDomain = true;
@@ -67,11 +83,16 @@ protected:
   virtual unsigned int GetNumberOfParameters() = 0;
   virtual void SetModelParameters(const arma::mat &params) = 0;
   virtual bool CheckModelParameters(const arma::mat &params) = 0;
+  virtual double EvaluateLFunction(
+      const double sqDist,
+      const double intensity,
+      const double amplitude,
+      const double alpha) = 0;
   virtual double GetIntegral() = 0;
-  virtual double GetLogDeterminant() = 0;
+  double GetLogDeterminant();
 
   //! Generic variables used by all models and needed in each child class
-  arma::vec m_GradientIntegral, m_GradientLogDeterminant;
+  arma::vec m_GradientIntegral;
   unsigned int m_DomainDimension;
   unsigned int m_SampleSize;
   arma::mat m_DistanceMatrix;
@@ -79,6 +100,12 @@ protected:
   arma::vec m_ConstraintVector;
   bool m_Modified;
   double m_DomainVolume;
+
+  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
+  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  bool m_EstimateFirstBValue, m_EstimateCrossBValue, m_EstimateSecondBValue;
+  bool m_EstimateFirstBetaValue, m_EstimateCrossBetaValue, m_EstimateSecondBetaValue;
 
   static const double m_Epsilon;
 
@@ -89,6 +116,7 @@ private:
 
   //! Generic variables used by all models but not needed in child classes
   double m_Integral, m_LogDeterminant;
+  arma::vec m_GradientLogDeterminant;
   NeighborhoodType m_Neighborhood;
   bool m_UsePeriodicDomain;
 };
