@@ -1,43 +1,43 @@
-#include "gaussianLogLikelihood.h"
+#include "gaussLogLikelihood.h"
 #include "integrandFunctions.h"
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
-void GaussianLogLikelihood::SetFirstAlpha(const double x)
+void GaussLogLikelihood::SetFirstAlpha(const double x)
 {
   m_FirstAlpha = x;
   m_FirstAmplitude = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
   m_EstimateFirstBetaValue = false;
 }
 
-void GaussianLogLikelihood::SetSecondAlpha(const double x)
+void GaussLogLikelihood::SetSecondAlpha(const double x)
 {
   m_SecondAlpha = x;
   m_SecondAmplitude = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
   m_EstimateSecondBetaValue = false;
 }
 
-void GaussianLogLikelihood::SetCrossAlpha(const double x)
+void GaussLogLikelihood::SetCrossAlpha(const double x)
 {
   m_CrossAlpha = x;
   m_CrossAmplitude  = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
   m_EstimateCrossBetaValue = false;
 }
 
-void GaussianLogLikelihood::SetFirstIntensity(const double x)
+void GaussLogLikelihood::SetFirstIntensity(const double x)
 {
   m_FirstIntensity = x;
   m_FirstAmplitude  = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
   m_EstimateFirstBValue = false;
 }
 
-void GaussianLogLikelihood::SetSecondIntensity(const double x)
+void GaussLogLikelihood::SetSecondIntensity(const double x)
 {
   m_SecondIntensity = x;
   m_SecondAmplitude  = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
   m_EstimateSecondBValue = false;
 }
 
-void GaussianLogLikelihood::SetCrossIntensity(const double x)
+void GaussLogLikelihood::SetCrossIntensity(const double x)
 {
   // m_CrossIntensity = x;
   // m_CrossAmplitude  = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
@@ -48,7 +48,7 @@ void GaussianLogLikelihood::SetCrossIntensity(const double x)
   m_EstimateCrossBValue = false;
 }
 
-void GaussianLogLikelihood::SetModelParameters(const arma::mat &params)
+void GaussLogLikelihood::SetModelParameters(const arma::mat &params)
 {
   m_Modified = false;
 
@@ -150,7 +150,7 @@ void GaussianLogLikelihood::SetModelParameters(const arma::mat &params)
   Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
 }
 
-bool GaussianLogLikelihood::CheckModelParameters(const arma::mat &params)
+bool GaussLogLikelihood::CheckModelParameters(const arma::mat &params)
 {
   // if (params[0] < m_Epsilon)
   //   return false;
@@ -176,7 +176,7 @@ bool GaussianLogLikelihood::CheckModelParameters(const arma::mat &params)
   return true;
 }
 
-double GaussianLogLikelihood::GetIntegral()
+double GaussLogLikelihood::GetIntegral()
 {
   typedef boost::math::quadrature::gauss_kronrod<double, 15> QuadratureType;
   const double lBound = 0.0;
@@ -207,7 +207,7 @@ double GaussianLogLikelihood::GetIntegral()
   return resVal;
 }
 
-double GaussianLogLikelihood::EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha)
+double GaussLogLikelihood::EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha)
 {
   const unsigned int N = 50;
 

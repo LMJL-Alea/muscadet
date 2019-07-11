@@ -2,7 +2,7 @@
 
 #include "baseLogLikelihood.h"
 
-class GaussianLogLikelihood : public BaseLogLikelihood
+class GaussLogLikelihood : public BaseLogLikelihood
 {
 public:
   void SetFirstAlpha(const double x);
