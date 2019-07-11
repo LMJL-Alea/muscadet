@@ -4,21 +4,9 @@
 #include <boost/math/special_functions/bessel.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
-bool BesselLogLikelihood::CheckModelParameters(const arma::mat &params)
+bool BesselLogLikelihood::EvaluateAlphaConstraint()
 {
-  if (m_FirstAmplitude > 1.0 - m_Epsilon)
-    return false;
-
-  if (m_SecondAmplitude > 1.0 - m_Epsilon)
-    return false;
-
-  if (m_CrossAlpha < std::max(m_FirstAlpha, m_SecondAlpha))
-    return false;
-
-  if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude)))
-    return false;
-
-  return true;
+  return m_CrossAlpha < std::max(m_FirstAlpha, m_SecondAlpha);
 }
 
 double BesselLogLikelihood::GetIntegral()

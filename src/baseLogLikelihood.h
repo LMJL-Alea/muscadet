@@ -88,7 +88,6 @@ public:
 protected:
   //! Generic functions to be implemented in each child class
   unsigned int GetNumberOfParameters();
-  virtual bool CheckModelParameters(const arma::mat &params) = 0;
   virtual double EvaluateLFunction(
       const double sqDist,
       const double intensity,
@@ -97,6 +96,7 @@ protected:
   virtual double GetIntegral() = 0;
   double GetLogDeterminant();
   virtual double RetrieveIntensityFromParameters(const double amplitude, const double alpha) = 0;
+  virtual bool EvaluateAlphaConstraint() = 0;
 
   //! Generic variables used by all models and needed in each child class
   arma::vec m_GradientIntegral;
@@ -121,6 +121,7 @@ private:
   void SetNeighborhood(const unsigned int n);
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
   void SetModelParameters(const arma::mat &params);
+  bool CheckModelParameters();
 
   //! Generic variables used by all models but not needed in child classes
   double m_Integral, m_LogDeterminant;

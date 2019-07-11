@@ -2,30 +2,9 @@
 #include "integrandFunctions.h"
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
-bool GaussLogLikelihood::CheckModelParameters(const arma::mat &params)
+bool GaussLogLikelihood::EvaluateAlphaConstraint()
 {
-  // if (params[0] < m_Epsilon)
-  //   return false;
-  //
-  // if (2.0 * params[0] * params[0] < m_FirstAlpha * m_FirstAlpha + m_SecondAlpha * m_SecondAlpha)
-  //   return false;
-  //
-  // if (params[1] * params[1] > std::min(m_FirstAmplitude * m_SecondAmplitude, 4.0 * (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon))
-  //   return false;
-
-  // if (m_FirstAmplitude > 1.0 - m_Epsilon)
-  //   return false;
-  //
-  // if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude)))
-  //   return false;
-
-  // for (unsigned int i = 0;i < params.n_rows;++i)
-  // {
-  //   if (params[i] < m_Epsilon - 1.0 || params[i] > 1.0 - m_Epsilon)
-  //     return false;
-  // }
-
-  return true;
+  return 2.0 * m_CrossAlpha * m_CrossAlpha < m_FirstAlpha * m_FirstAlpha + m_SecondAlpha * m_SecondAlpha;
 }
 
 double GaussLogLikelihood::GetIntegral()

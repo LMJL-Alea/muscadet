@@ -213,7 +213,7 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
   this->SetModelParameters(x);
 
-  bool validParams = this->CheckModelParameters(x);
+  bool validParams = this->CheckModelParameters();
   if (!validParams)
     return DBL_MAX;
 
@@ -240,7 +240,7 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
 {
   g.set_size(this->GetNumberOfParameters(), 1);
 
-  bool validParams = this->CheckModelParameters(x);
+  bool validParams = this->CheckModelParameters();
   if (!validParams)
   {
     g.fill(0.0);
@@ -272,7 +272,7 @@ double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
   this->SetModelParameters(x);
   g.set_size(this->GetNumberOfParameters(), 1);
 
-  bool validParams = this->CheckModelParameters(x);
+  bool validParams = this->CheckModelParameters();
   if (!validParams)
   {
     g.fill(0.0);
@@ -302,8 +302,8 @@ double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
 
 double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)
 {
-  this->CheckModelParameters(x);
   this->SetModelParameters(x);
+  this->CheckModelParameters();
   return m_ConstraintVector[i];
 }
 
@@ -446,4 +446,21 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   }
 
   Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
+}
+
+bool BaseLogLikelihood::CheckModelParameters()
+{
+  if (m_FirstAmplitude > 1.0 - m_Epsilon)
+    return false;
+
+  if (m_SecondAmplitude > 1.0 - m_Epsilon)
+    return false;
+
+  if (this->EvaluateAlphaConstraint())
+    return false;
+
+  if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude)))
+    return false;
+
+  return true;
 }
