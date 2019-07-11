@@ -131,18 +131,15 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
   this->SetModelParameters(x);
 
-  // bool validParams = this->CheckModelParameters(x);
-  // if (!validParams)
-  //   return DBL_MAX;
+  bool validParams = this->CheckModelParameters(x);
+  if (!validParams)
+    return DBL_MAX;
 
   if (m_Modified)
   {
     m_Integral = this->GetIntegral();
     m_LogDeterminant = this->GetLogDeterminant();
   }
-
-  Rcpp::Rcout << x.as_row() << std::endl;
-  Rcpp::Rcout << m_Integral << " " << m_LogDeterminant << std::endl;
 
   if (!std::isfinite(m_Integral) || !std::isfinite(m_LogDeterminant))
   {
@@ -153,9 +150,6 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   double logLik = 2.0 * m_DomainVolume;
   logLik += m_DomainVolume * m_Integral;
   logLik += m_LogDeterminant;
-
-  // Rcpp::Rcout << -2.0*logLik << std::endl;
-  // Rcpp::stop("bouh");
 
   return -2.0 * logLik;
 }

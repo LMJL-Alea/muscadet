@@ -109,7 +109,7 @@ double Evaluate(
   logLik.SetSecondIntensity(rho2);
 
   // logLik.SetCrossAlpha(0.04);
-  logLik.SetCrossIntensity(50.0);
+  logLik.SetCrossIntensity(50.0 * M_PI * 0.04 * 0.04);
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)

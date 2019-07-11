@@ -12,7 +12,7 @@ void GaussianLogLikelihoodV2::SetFirstAlpha(const double x)
 void GaussianLogLikelihoodV2::SetSecondAlpha(const double x)
 {
   m_SecondAlpha = x;
-  m_SecondAmplitude  = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
+  m_SecondAmplitude = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
   m_EstimateSecondBetaValue = false;
 }
 
@@ -39,8 +39,12 @@ void GaussianLogLikelihoodV2::SetSecondIntensity(const double x)
 
 void GaussianLogLikelihoodV2::SetCrossIntensity(const double x)
 {
-  m_CrossIntensity = x;
-  m_CrossAmplitude  = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
+  // m_CrossIntensity = x;
+  // m_CrossAmplitude  = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
+
+  m_CrossAmplitude = x;
+  m_CrossIntensity  = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
+
   m_EstimateCrossBValue = false;
 }
 
@@ -71,8 +75,6 @@ unsigned int GaussianLogLikelihoodV2::GetNumberOfParameters()
 
 void GaussianLogLikelihoodV2::SetModelParameters(const arma::mat &params)
 {
-  // Rcpp::Rcout << params.as_row() << std::endl;
-
   m_Modified = false;
 
   unsigned int pos = 0;
@@ -118,10 +120,10 @@ void GaussianLogLikelihoodV2::SetModelParameters(const arma::mat &params)
     if (m_CrossAlpha != workScalar)
     {
       m_CrossAlpha = workScalar;
-      if (m_EstimateCrossBValue)
+      // if (m_EstimateCrossBValue)
         m_CrossIntensity = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-      else
-        m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
+      // else
+        // m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
       m_Modified = true;
     }
 
@@ -135,11 +137,7 @@ void GaussianLogLikelihoodV2::SetModelParameters(const arma::mat &params)
     if (m_FirstAmplitude != workScalar)
     {
       m_FirstAmplitude = workScalar;
-
-    //   if (m_EstimateFirstBetaValue)
-        m_FirstIntensity = m_FirstAmplitude / std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
-      // else
-      //   m_FirstAmplitude = m_FirstIntensity * std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
+      m_FirstIntensity = m_FirstAmplitude / std::pow(std::sqrt(M_PI) * m_FirstAlpha, (double)m_DomainDimension);
       m_Modified = true;
     }
 
@@ -153,10 +151,7 @@ void GaussianLogLikelihoodV2::SetModelParameters(const arma::mat &params)
     if (m_SecondAmplitude != workScalar)
     {
       m_SecondAmplitude = workScalar;
-      // if (m_EstimateSecondBetaValue)
-        m_SecondIntensity = m_SecondAmplitude / std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
-      // else
-      //   m_SecondAmplitude = m_SecondIntensity * std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
+      m_SecondIntensity = m_SecondAmplitude / std::pow(std::sqrt(M_PI) * m_SecondAlpha, (double)m_DomainDimension);
       m_Modified = true;
     }
 
@@ -170,10 +165,7 @@ void GaussianLogLikelihoodV2::SetModelParameters(const arma::mat &params)
     if (m_CrossAmplitude != workScalar)
     {
       m_CrossAmplitude = workScalar;
-      // if (m_EstimateCrossBetaValue)
-        m_CrossIntensity = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
-      // else
-      //   m_CrossAmplitude = m_CrossIntensity * std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
+      m_CrossIntensity = m_CrossAmplitude / std::pow(std::sqrt(M_PI) * m_CrossAlpha, (double)m_DomainDimension);
       m_Modified = true;
     }
 
@@ -181,7 +173,6 @@ void GaussianLogLikelihoodV2::SetModelParameters(const arma::mat &params)
   }
 
   Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
-  // Rcpp::stop("bah");
 }
 
 bool GaussianLogLikelihoodV2::CheckModelParameters(const arma::mat &params)
@@ -212,11 +203,9 @@ bool GaussianLogLikelihoodV2::CheckModelParameters(const arma::mat &params)
 
 double GaussianLogLikelihoodV2::GetIntegral()
 {
-  typedef boost::math::quadrature::gauss_kronrod<double, 61> QuadratureType;
+  typedef boost::math::quadrature::gauss_kronrod<double, 15> QuadratureType;
   const double lBound = 0.0;
   const double uBound = std::numeric_limits<double>::infinity();
-
-  // Rcpp::Rcout << "Out integrand amplitude: " << m_CrossAmplitude << std::endl;
 
   GaussianIntegrand integrand;
   integrand.SetFirstAlpha(m_FirstAlpha);
@@ -227,18 +216,18 @@ double GaussianLogLikelihoodV2::GetIntegral()
   integrand.SetSecondIntensity(m_SecondIntensity);
   integrand.SetDomainDimension(m_DomainDimension);
   auto GetIntegrandValue =              [&integrand](const double &t){return integrand(t);};
-  // auto GetDerivativeWRTFirstAlpha =     [&integrand](const double &t){return integrand.GetDerivativeWRTFirstAlpha(t);};
-  // auto GetDerivativeWRTCrossAlpha =     [&integrand](const double &t){return integrand.GetDerivativeWRTCrossAlpha(t);};
-  // auto GetDerivativeWRTSecondAlpha =    [&integrand](const double &t){return integrand.GetDerivativeWRTSecondAlpha(t);};
-  // auto GetDerivativeWRTCrossIntensity = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossIntensity(t);};
+  auto GetDerivativeWRTFirstAlpha =     [&integrand](const double &t){return integrand.GetDerivativeWRTFirstAlpha(t);};
+  auto GetDerivativeWRTCrossAlpha =     [&integrand](const double &t){return integrand.GetDerivativeWRTCrossAlpha(t);};
+  auto GetDerivativeWRTSecondAlpha =    [&integrand](const double &t){return integrand.GetDerivativeWRTSecondAlpha(t);};
+  auto GetDerivativeWRTCrossIntensity = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossIntensity(t);};
 
   double resVal = 2.0 * M_PI * QuadratureType::integrate(GetIntegrandValue, lBound, uBound);
 
   m_GradientIntegral.set_size(this->GetNumberOfParameters());
-  // m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTFirstAlpha,     lBound, uBound);
-  // m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossAlpha,     lBound, uBound);
-  // m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTSecondAlpha,    lBound, uBound);
-  // m_GradientIntegral[3] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossIntensity, lBound, uBound);
+  m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTFirstAlpha,     lBound, uBound);
+  m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossAlpha,     lBound, uBound);
+  m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTSecondAlpha,    lBound, uBound);
+  m_GradientIntegral[3] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossIntensity, lBound, uBound);
 
   return resVal;
 }
@@ -265,7 +254,6 @@ double GaussianLogLikelihoodV2::GetLogDeterminant()
     {
       double sqDist = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j);
       unsigned int workLabel = m_PointLabels[i] + m_PointLabels[j];
-      // Rcpp::Rcout << "Label pair: " << m_PointLabels[i] << " " << m_PointLabels[j] << " " << workLabel << std::endl;
 
       resVal = 0.0;
       workValue1 = 0.0;
@@ -280,7 +268,6 @@ double GaussianLogLikelihoodV2::GetLogDeterminant()
         if (workLabel == 2)
         {
           double expInValue = sqDist / ((double)k * m_FirstAlpha * m_FirstAlpha);
-          // Rcpp::Rcout << expInValue << std::endl;
           tmpVal *= std::pow(m_FirstAmplitude, (double)k - 1.0);
           tmpVal *= std::exp(-expInValue);
           resVal += m_FirstIntensity * tmpVal;
@@ -292,6 +279,8 @@ double GaussianLogLikelihoodV2::GetLogDeterminant()
           double expInValue = sqDist / ((double)k * m_CrossAlpha * m_CrossAlpha);
           tmpVal *= std::pow(m_CrossAmplitude, (double)k - 1.0);
           tmpVal *= std::exp(-expInValue);
+          // if (k == 1)
+          //   Rcpp::Rcout << i << " " << j << " " << sqDist << " " << tmpVal << std::endl;
           resVal +=  m_CrossIntensity * tmpVal;
           workValue2 += m_CrossIntensity * tmpVal * (m_DomainDimension * (k - 1.0) + 2.0 * expInValue);
           workValue4 += tmpVal * k;
@@ -305,6 +294,9 @@ double GaussianLogLikelihoodV2::GetLogDeterminant()
           workValue3 += m_SecondIntensity * tmpVal * (m_DomainDimension * (k - 1.0) + 2.0 * expInValue);
         }
       }
+
+      if (workLabel == 3 && resVal > m_Epsilon)
+        Rcpp::Rcout << i << " " << j << " " << sqDist << " " << resVal << std::endl;
 
       lMatrix(i, j) = resVal;
       lMatrixDeriv1(i, j) = workValue1;
@@ -323,7 +315,7 @@ double GaussianLogLikelihoodV2::GetLogDeterminant()
     }
   }
 
-  // Rcpp::stop("bite");
+  Rcpp::stop("boh");
 
   arma::log_det(resVal, workSign, lMatrix);
   arma::mat lMatrixInverse = arma::inv(lMatrix);

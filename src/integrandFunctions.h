@@ -14,6 +14,9 @@ public:
   void SetFirstIntensity(const double x) {m_FirstIntensity = x;}
   void SetCrossIntensity(const double x) {m_CrossIntensity = x;}
   void SetSecondIntensity(const double x) {m_SecondIntensity = x;}
+  void SetFirstAmplitude(const double x) {m_FirstAmplitude = x;}
+  void SetCrossAmplitude(const double x) {m_CrossAmplitude = x;}
+  void SetSecondAmplitude(const double x) {m_SecondAmplitude = x;}
   void SetDomainDimension(const unsigned int d) {m_DomainDimension = d;}
 
   double operator()(const double radius);
@@ -27,6 +30,7 @@ protected:
 
   double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
   double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
   unsigned int m_DomainDimension;
 
 private:
@@ -39,6 +43,12 @@ private:
 };
 
 class GaussianIntegrand : public BaseIntegrand
+{
+private:
+  arma::vec GetFourierKernel(const double radius);
+};
+
+class BesselIntegrand : public BaseIntegrand
 {
 private:
   arma::vec GetFourierKernel(const double radius);

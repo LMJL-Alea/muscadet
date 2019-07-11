@@ -2,5 +2,7 @@
 
 export(Estimate)
 export(mle_dpp)
+export(mle_dpp_bessel)
+export(test_eval)
 importFrom(Rcpp,sourceCpp)
 useDynLib(mediator)

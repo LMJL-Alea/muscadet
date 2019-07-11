@@ -2,10 +2,10 @@
 
 #include "baseLogLikelihood.h"
 
-class GaussianLogLikelihoodV2 : public BaseLogLikelihood
+class BesselLogLikelihood : public BaseLogLikelihood
 {
 public:
-  GaussianLogLikelihoodV2() : BaseLogLikelihood()
+  BesselLogLikelihood() : BaseLogLikelihood()
   {
     m_FirstAlpha = 1.0;
     m_SecondAlpha = 1.0;
@@ -27,14 +27,15 @@ public:
   void SetFirstAlpha(const double x);
   void SetSecondAlpha(const double x);
   void SetCrossAlpha(const double x);
-  void SetFirstIntensity(const double x);
-  void SetSecondIntensity(const double x);
-  void SetCrossIntensity(const double x);
+  void SetFirstAmplitude(const double x);
+  void SetSecondAmplitude(const double x);
+  void SetCrossAmplitude(const double x);
 
 private:
   unsigned int GetNumberOfParameters();
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters(const arma::mat &params);
+  double EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha);
   double GetIntegral();
   double GetLogDeterminant();
 
