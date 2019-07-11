@@ -127,6 +127,31 @@ arma::mat BaseLogLikelihood::GetInitialPoint(const double rho1, const double rho
   return params;
 }
 
+unsigned int BaseLogLikelihood::GetNumberOfParameters()
+{
+  unsigned int numParams = 0;
+
+  if (m_EstimateFirstBValue)
+    ++numParams;
+
+  if (m_EstimateSecondBValue)
+    ++numParams;
+
+  if (m_EstimateCrossBValue)
+    ++numParams;
+
+  if (m_EstimateFirstBetaValue)
+    ++numParams;
+
+  if (m_EstimateSecondBetaValue)
+    ++numParams;
+
+  if (m_EstimateCrossBetaValue)
+    ++numParams;
+
+  return numParams;
+}
+
 double BaseLogLikelihood::GetLogDeterminant()
 {
   arma::mat lMatrix(m_SampleSize, m_SampleSize);

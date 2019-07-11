@@ -80,7 +80,7 @@ public:
 
 protected:
   //! Generic functions to be implemented in each child class
-  virtual unsigned int GetNumberOfParameters() = 0;
+  unsigned int GetNumberOfParameters();
   virtual void SetModelParameters(const arma::mat &params) = 0;
   virtual bool CheckModelParameters(const arma::mat &params) = 0;
   virtual double EvaluateLFunction(

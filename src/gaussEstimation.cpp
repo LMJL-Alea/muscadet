@@ -40,7 +40,7 @@ arma::mat Estimate(
 {
   // Construct the objective function.
   // GaussianLogLikelihood logLik;
-  GaussianLogLikelihoodV2 logLik;
+  GaussianLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
   logLik.SetFirstIntensity(rho1);
   logLik.SetSecondIntensity(rho2);
@@ -98,7 +98,7 @@ double Evaluate(
     const double alpha2)
 {
   // Construct the objective function.
-  GaussianLogLikelihoodV2 logLik;
+  GaussianLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
   logLik.SetFirstAlpha(alpha1);

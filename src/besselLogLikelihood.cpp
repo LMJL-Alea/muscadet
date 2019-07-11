@@ -64,31 +64,6 @@ void BesselLogLikelihood::SetCrossAmplitude(const double x)
   m_EstimateCrossBValue = false;
 }
 
-unsigned int BesselLogLikelihood::GetNumberOfParameters()
-{
-  unsigned int numParams = 0;
-
-  if (m_EstimateFirstBValue)
-    ++numParams;
-
-  if (m_EstimateSecondBValue)
-    ++numParams;
-
-  if (m_EstimateCrossBValue)
-    ++numParams;
-
-  if (m_EstimateFirstBetaValue)
-    ++numParams;
-
-  if (m_EstimateSecondBetaValue)
-    ++numParams;
-
-  if (m_EstimateCrossBetaValue)
-    ++numParams;
-
-  return numParams;
-}
-
 void BesselLogLikelihood::SetModelParameters(const arma::mat &params)
 {
   m_Modified = false;
