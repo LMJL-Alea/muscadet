@@ -3,8 +3,9 @@
 class GaussLogLikelihood : public BaseLogLikelihood
 {
 private:
-  double EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha);
-  double GetIntegral();
-  double RetrieveIntensityFromParameters(const double amplitude, const double alpha);
-  bool EvaluateAlphaConstraint();
+  double EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha, const unsigned int dimension);
+  double RetrieveIntensityFromParameters(const double amplitude, const double alpha, const unsigned int dimension);
+  bool EvaluateAlphaConstraint(const double firstAlpha, const double secondAlpha, const double crossAlpha);
+  static double GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension);
+  KFunctionType GetKFunction();
 };

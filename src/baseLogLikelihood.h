@@ -1,11 +1,11 @@
-#pragma once
-
+#include "integrandFunctions.h"
 #include <RcppEnsmallen.h>
 
 class BaseLogLikelihood
 {
 public:
   typedef std::vector  <std::vector <int> > NeighborhoodType;
+  typedef BaseIntegrand::KFunctionType KFunctionType;
 
   BaseLogLikelihood()
   {
@@ -87,37 +87,35 @@ public:
 
 protected:
   //! Generic functions to be implemented in each child class
-  unsigned int GetNumberOfParameters();
   virtual double EvaluateLFunction(
       const double sqDist,
       const double intensity,
       const double amplitude,
-      const double alpha) = 0;
-  virtual double GetIntegral() = 0;
-  virtual double RetrieveIntensityFromParameters(const double amplitude, const double alpha) = 0;
-  virtual bool EvaluateAlphaConstraint() = 0;
-
-  //! Generic variables used by all models and needed in each child class
-  arma::vec m_GradientIntegral;
-
-  unsigned int m_DomainDimension;
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
-  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
-  bool m_EstimateFirstAmplitude, m_EstimateCrossAmplitude, m_EstimateSecondAmplitude;
-  bool m_EstimateFirstAlpha, m_EstimateCrossAlpha, m_EstimateSecondAlpha;
+      const double alpha,
+      const unsigned int dimension) = 0;
+  virtual double RetrieveIntensityFromParameters(
+      const double amplitude,
+      const double alpha,
+      const unsigned int dimension) = 0;
+  virtual bool EvaluateAlphaConstraint(
+      const double firstAlpha,
+      const double secondAlpha,
+      const double crossAlpha) = 0;
+  virtual KFunctionType GetKFunction() = 0;
 
 private:
   //! Helper functions for periodizing the domain
+  unsigned int GetNumberOfParameters();
   void SetNeighborhood(const unsigned int n);
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
+  double GetIntegral();
   double GetLogDeterminant();
 
   //! Generic variables used by all models but not needed in child classes
   double m_Integral, m_LogDeterminant;
-  arma::vec m_GradientLogDeterminant;
+  arma::vec m_GradientIntegral, m_GradientLogDeterminant;
   NeighborhoodType m_Neighborhood;
   bool m_UsePeriodicDomain;
   unsigned int m_SampleSize;
@@ -126,6 +124,14 @@ private:
   arma::vec m_ConstraintVector;
   bool m_Modified;
   double m_DomainVolume;
+
+  //! Generic variables used by all models and needed in each child class
+  unsigned int m_DomainDimension;
+  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
+  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  bool m_EstimateFirstAmplitude, m_EstimateCrossAmplitude, m_EstimateSecondAmplitude;
+  bool m_EstimateFirstAlpha, m_EstimateCrossAlpha, m_EstimateSecondAlpha;
 
   static const double m_Epsilon;
 };

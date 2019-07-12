@@ -1,4 +1,5 @@
 #include "baseLogLikelihood.h"
+#include <boost/math/quadrature/gauss_kronrod.hpp>
 
 const double BaseLogLikelihood::m_Epsilon = 1.0e-4;
 
@@ -152,6 +153,38 @@ unsigned int BaseLogLikelihood::GetNumberOfParameters()
   return numParams;
 }
 
+double BaseLogLikelihood::GetIntegral()
+{
+  typedef boost::math::quadrature::gauss_kronrod<double, 15> QuadratureType;
+  const double lBound = 0.0;
+  const double uBound = std::numeric_limits<double>::infinity();
+
+  BaseIntegrand integrand;
+  integrand.SetKFunction(this->GetKFunction());
+  integrand.SetFirstAlpha(m_FirstAlpha);
+  integrand.SetSecondAlpha(m_SecondAlpha);
+  integrand.SetCrossAlpha(m_CrossAlpha);
+  integrand.SetFirstAmplitude(m_FirstAmplitude);
+  integrand.SetSecondAmplitude(m_SecondAmplitude);
+  integrand.SetCrossAmplitude(m_CrossAmplitude);
+  integrand.SetDomainDimension(m_DomainDimension);
+  auto GetIntegrandValue =              [&integrand](const double &t){return integrand(t);};
+  auto GetDerivativeWRTFirstAlpha =     [&integrand](const double &t){return integrand.GetDerivativeWRTFirstAlpha(t);};
+  auto GetDerivativeWRTCrossAlpha =     [&integrand](const double &t){return integrand.GetDerivativeWRTCrossAlpha(t);};
+  auto GetDerivativeWRTSecondAlpha =    [&integrand](const double &t){return integrand.GetDerivativeWRTSecondAlpha(t);};
+  auto GetDerivativeWRTCrossIntensity = [&integrand](const double &t){return integrand.GetDerivativeWRTCrossIntensity(t);};
+
+  double resVal = 2.0 * M_PI * QuadratureType::integrate(GetIntegrandValue, lBound, uBound);
+
+  m_GradientIntegral.set_size(this->GetNumberOfParameters());
+  m_GradientIntegral[0] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTFirstAlpha,     lBound, uBound);
+  m_GradientIntegral[1] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossAlpha,     lBound, uBound);
+  m_GradientIntegral[2] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTSecondAlpha,    lBound, uBound);
+  m_GradientIntegral[3] = 2.0 * M_PI * QuadratureType::integrate(GetDerivativeWRTCrossIntensity, lBound, uBound);
+
+  return resVal;
+}
+
 double BaseLogLikelihood::GetLogDeterminant()
 {
   arma::mat lMatrix(m_SampleSize, m_SampleSize);
@@ -174,11 +207,11 @@ double BaseLogLikelihood::GetLogDeterminant()
       unsigned int workLabel = m_PointLabels[i] + m_PointLabels[j];
 
       if (workLabel == 2)
-        resVal = this->EvaluateLFunction(sqDist, m_FirstIntensity, m_FirstAmplitude, m_FirstAlpha);
+        resVal = this->EvaluateLFunction(sqDist, m_FirstIntensity, m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
       else if (workLabel == 3)
-        resVal = this->EvaluateLFunction(sqDist, m_CrossIntensity, m_CrossAmplitude, m_CrossAlpha);
+        resVal = this->EvaluateLFunction(sqDist, m_CrossIntensity, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
       else
-        resVal = this->EvaluateLFunction(sqDist, m_SecondIntensity, m_SecondAmplitude, m_SecondAlpha);
+        resVal = this->EvaluateLFunction(sqDist, m_SecondIntensity, m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
 
       lMatrix(i, j) = resVal;
       lMatrixDeriv1(i, j) = workValue1;
@@ -316,42 +349,42 @@ void BaseLogLikelihood::GradientConstraint(const size_t i, const arma::mat& x, a
 void BaseLogLikelihood::SetFirstAlpha(const double x)
 {
   m_FirstAlpha = x;
-  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
   m_EstimateFirstAlpha = false;
 }
 
 void BaseLogLikelihood::SetSecondAlpha(const double x)
 {
   m_SecondAlpha = x;
-  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
   m_EstimateSecondAlpha = false;
 }
 
 void BaseLogLikelihood::SetCrossAlpha(const double x)
 {
   m_CrossAlpha = x;
-  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
   m_EstimateCrossAlpha = false;
 }
 
 void BaseLogLikelihood::SetFirstAmplitude(const double x)
 {
   m_FirstAmplitude = x;
-  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
   m_EstimateFirstAmplitude = false;
 }
 
 void BaseLogLikelihood::SetSecondAmplitude(const double x)
 {
   m_SecondAmplitude = x;
-  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
   m_EstimateSecondAmplitude = false;
 }
 
 void BaseLogLikelihood::SetCrossAmplitude(const double x)
 {
   m_CrossAmplitude = x;
-  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
   m_EstimateCrossAmplitude = false;
 }
 
@@ -368,7 +401,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_FirstAlpha != workScalar)
     {
       m_FirstAlpha = workScalar;
-      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -382,7 +415,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_SecondAlpha != workScalar)
     {
       m_SecondAlpha = workScalar;
-      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -396,7 +429,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_CrossAlpha != workScalar)
     {
       m_CrossAlpha = workScalar;
-      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -410,7 +443,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_FirstAmplitude != workScalar)
     {
       m_FirstAmplitude = workScalar;
-      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
+      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -424,7 +457,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_SecondAmplitude != workScalar)
     {
       m_SecondAmplitude = workScalar;
-      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
+      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -438,7 +471,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_CrossAmplitude != workScalar)
     {
       m_CrossAmplitude = workScalar;
-      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
+      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -456,7 +489,7 @@ bool BaseLogLikelihood::CheckModelParameters()
   if (m_SecondAmplitude > 1.0 - m_Epsilon)
     return false;
 
-  if (this->EvaluateAlphaConstraint())
+  if (this->EvaluateAlphaConstraint(m_FirstAlpha, m_SecondAlpha, m_CrossAlpha))
     return false;
 
   if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude)))

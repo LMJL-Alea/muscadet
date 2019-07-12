@@ -2,7 +2,11 @@
 
 void BaseIntegrand::Update(const double radius)
 {
-  m_Kernel = GetFourierKernel(radius);
+  m_Kernel.set_size(7);
+  m_Kernel.fill(0.0);
+  m_Kernel[0] = m_KFunction(radius, m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
+  m_Kernel[1] = m_KFunction(radius, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
+  m_Kernel[2] = m_KFunction(radius, m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
   this->RetrieveEigenvalues(m_Kernel);
 
   m_DiffValue = m_Kernel[0] - m_Kernel[2];
@@ -75,49 +79,4 @@ void BaseIntegrand::RetrieveEigenvalues(const arma::vec &kernelMatrix)
 
   m_LambdaMax = meanDiagonal + addOn;
   m_LambdaMin = meanDiagonal - addOn;
-}
-
-arma::vec GaussianIntegrand::GetFourierKernel(const double radius)
-{
-  arma::vec out(7);
-
-  double workValue = -1.0 * M_PI * M_PI * radius * radius;
-
-  // K11
-  out[0] = m_FirstIntensity * std::pow(m_FirstAlpha * std::sqrt(M_PI), (double)m_DomainDimension) * std::exp(workValue * m_FirstAlpha * m_FirstAlpha);
-  // K12
-  double tmpValue = std::pow(m_CrossAlpha * std::sqrt(M_PI), (double)m_DomainDimension) * std::exp(workValue * m_CrossAlpha * m_CrossAlpha);
-  out[1] = m_CrossIntensity * tmpValue;
-  // K22
-  out[2] = m_SecondIntensity * std::pow(m_SecondAlpha * std::sqrt(M_PI), (double)m_DomainDimension) * std::exp(workValue * m_SecondAlpha * m_SecondAlpha);
-  // D_a1 (K11)
-  out[3] = (m_DomainDimension + 2.0 * workValue * m_FirstAlpha * m_FirstAlpha) * out[0];
-  // D_a12 (K12)
-  out[4] = (m_DomainDimension + 2.0 * workValue * m_CrossAlpha * m_CrossAlpha) * out[1];
-  // D_a2 (K22)
-  out[5] = (m_DomainDimension + 2.0 * workValue * m_SecondAlpha * m_SecondAlpha) * out[2];
-  // D_tau (K12)
-  out[6] = tmpValue;
-
-  return out;
-}
-
-arma::vec BesselIntegrand::GetFourierKernel(const double radius)
-{
-  arma::vec out(7);
-  out.fill(0.0);
-
-  double workValue = 2.0 * M_PI *M_PI * radius * radius;
-
-  // K11
-  bool inSupport = (m_FirstAlpha * m_FirstAlpha * workValue < m_DomainDimension);
-  out[0] = (inSupport) ? m_FirstAmplitude : 0.0;
-  // K12
-  inSupport = (m_CrossAlpha * m_CrossAlpha * workValue < m_DomainDimension);
-  out[1] = (inSupport) ? m_CrossAmplitude : 0.0;
-  // K22
-  inSupport = (m_SecondAlpha * m_SecondAlpha * workValue < m_DomainDimension);
-  out[2] = (inSupport) ? m_SecondAmplitude : 0.0;
-
-  return out;
 }
