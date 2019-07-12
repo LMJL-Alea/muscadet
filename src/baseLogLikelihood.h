@@ -18,12 +18,12 @@ public:
     m_FirstAmplitude = 0.0;
     m_SecondAmplitude = 0.0;
     m_CrossAmplitude = 0.0;
-    m_EstimateFirstBValue = true;
-    m_EstimateSecondBValue = true;
-    m_EstimateCrossBValue = true;
-    m_EstimateFirstBetaValue = true;
-    m_EstimateSecondBetaValue = true;
-    m_EstimateCrossBetaValue = true;
+    m_EstimateFirstAmplitude = true;
+    m_EstimateSecondAmplitude = true;
+    m_EstimateCrossAmplitude = true;
+    m_EstimateFirstAlpha = true;
+    m_EstimateSecondAlpha = true;
+    m_EstimateCrossAlpha = true;
 
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
@@ -94,27 +94,18 @@ protected:
       const double amplitude,
       const double alpha) = 0;
   virtual double GetIntegral() = 0;
-  double GetLogDeterminant();
   virtual double RetrieveIntensityFromParameters(const double amplitude, const double alpha) = 0;
   virtual bool EvaluateAlphaConstraint() = 0;
 
   //! Generic variables used by all models and needed in each child class
   arma::vec m_GradientIntegral;
-  unsigned int m_DomainDimension;
-  unsigned int m_SampleSize;
-  arma::mat m_DistanceMatrix;
-  arma::uvec m_PointLabels;
-  arma::vec m_ConstraintVector;
-  bool m_Modified;
-  double m_DomainVolume;
 
+  unsigned int m_DomainDimension;
   double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
   double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
-  bool m_EstimateFirstBValue, m_EstimateCrossBValue, m_EstimateSecondBValue;
-  bool m_EstimateFirstBetaValue, m_EstimateCrossBetaValue, m_EstimateSecondBetaValue;
-
-  static const double m_Epsilon;
+  bool m_EstimateFirstAmplitude, m_EstimateCrossAmplitude, m_EstimateSecondAmplitude;
+  bool m_EstimateFirstAlpha, m_EstimateCrossAlpha, m_EstimateSecondAlpha;
 
 private:
   //! Helper functions for periodizing the domain
@@ -122,10 +113,19 @@ private:
   std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
+  double GetLogDeterminant();
 
   //! Generic variables used by all models but not needed in child classes
   double m_Integral, m_LogDeterminant;
   arma::vec m_GradientLogDeterminant;
   NeighborhoodType m_Neighborhood;
   bool m_UsePeriodicDomain;
+  unsigned int m_SampleSize;
+  arma::mat m_DistanceMatrix;
+  arma::uvec m_PointLabels;
+  arma::vec m_ConstraintVector;
+  bool m_Modified;
+  double m_DomainVolume;
+
+  static const double m_Epsilon;
 };

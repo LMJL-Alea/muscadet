@@ -131,22 +131,22 @@ unsigned int BaseLogLikelihood::GetNumberOfParameters()
 {
   unsigned int numParams = 0;
 
-  if (m_EstimateFirstBValue)
+  if (m_EstimateFirstAmplitude)
     ++numParams;
 
-  if (m_EstimateSecondBValue)
+  if (m_EstimateSecondAmplitude)
     ++numParams;
 
-  if (m_EstimateCrossBValue)
+  if (m_EstimateCrossAmplitude)
     ++numParams;
 
-  if (m_EstimateFirstBetaValue)
+  if (m_EstimateFirstAlpha)
     ++numParams;
 
-  if (m_EstimateSecondBetaValue)
+  if (m_EstimateSecondAlpha)
     ++numParams;
 
-  if (m_EstimateCrossBetaValue)
+  if (m_EstimateCrossAlpha)
     ++numParams;
 
   return numParams;
@@ -317,42 +317,42 @@ void BaseLogLikelihood::SetFirstAlpha(const double x)
 {
   m_FirstAlpha = x;
   m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
-  m_EstimateFirstBetaValue = false;
+  m_EstimateFirstAlpha = false;
 }
 
 void BaseLogLikelihood::SetSecondAlpha(const double x)
 {
   m_SecondAlpha = x;
   m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
-  m_EstimateSecondBetaValue = false;
+  m_EstimateSecondAlpha = false;
 }
 
 void BaseLogLikelihood::SetCrossAlpha(const double x)
 {
   m_CrossAlpha = x;
   m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
-  m_EstimateCrossBetaValue = false;
+  m_EstimateCrossAlpha = false;
 }
 
 void BaseLogLikelihood::SetFirstAmplitude(const double x)
 {
   m_FirstAmplitude = x;
   m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha);
-  m_EstimateFirstBValue = false;
+  m_EstimateFirstAmplitude = false;
 }
 
 void BaseLogLikelihood::SetSecondAmplitude(const double x)
 {
   m_SecondAmplitude = x;
   m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha);
-  m_EstimateSecondBValue = false;
+  m_EstimateSecondAmplitude = false;
 }
 
 void BaseLogLikelihood::SetCrossAmplitude(const double x)
 {
   m_CrossAmplitude = x;
   m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha);
-  m_EstimateCrossBValue = false;
+  m_EstimateCrossAmplitude = false;
 }
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
@@ -361,7 +361,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 
   unsigned int pos = 0;
 
-  if (m_EstimateFirstBetaValue)
+  if (m_EstimateFirstAlpha)
   {
     double workScalar = params[pos];
 
@@ -375,7 +375,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     ++pos;
   }
 
-  if (m_EstimateSecondBetaValue)
+  if (m_EstimateSecondAlpha)
   {
     double workScalar = params[pos];
 
@@ -389,7 +389,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     ++pos;
   }
 
-  if (m_EstimateCrossBetaValue)
+  if (m_EstimateCrossAlpha)
   {
     double workScalar = params[pos];
 
@@ -403,7 +403,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     ++pos;
   }
 
-  if (m_EstimateFirstBValue)
+  if (m_EstimateFirstAmplitude)
   {
     double workScalar = params[pos];
 
@@ -417,7 +417,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     ++pos;
   }
 
-  if (m_EstimateSecondBValue)
+  if (m_EstimateSecondAmplitude)
   {
     double workScalar = params[pos];
 
@@ -431,7 +431,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     ++pos;
   }
 
-  if (m_EstimateCrossBValue)
+  if (m_EstimateCrossAmplitude)
   {
     double workScalar = params[pos];
 
