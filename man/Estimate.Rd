@@ -34,3 +34,4 @@ params <- Estimate(X, fit1$lambda, fit2$lambda, fit1$alpha, fit2$alpha)
 # Verify parameters were recovered
 params
 }
+\keyword{internal}

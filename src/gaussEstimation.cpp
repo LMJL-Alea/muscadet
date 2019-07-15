@@ -9,7 +9,7 @@
 //'
 //' @return A vector with the estimated model parameters.
 //'
-//' @export
+//' @keywords internal
 //' @examples
 //' library(spatstat)
 //' # Simulate some data
@@ -101,7 +101,7 @@ arma::mat Estimate(
 }
 
 // [[Rcpp::export]]
-double Evaluate(
+double EvaluateGauss(
     const arma::vec &p,
     const arma::mat &X,
     const arma::uvec &labels,

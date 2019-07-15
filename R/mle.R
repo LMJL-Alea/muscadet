@@ -1,40 +1,106 @@
-#' @export
-mle_dpp <- function(X, labels, lb, ub, rho1, rho2, alpha1, alpha2) {
-  # optim(par = 0.5, fn = Evaluate, method = "L-BFGS-B", lower = 1e-4, upper = 1-1e-4,
-  #       X = X, labels = labels, lb = lb, ub = ub, rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2)
-  # optim(par = 0, fn = Evaluate, method = "L-BFGS-B", lower = -0.28, upper = 0.28,
-  #       X = X, labels = labels, lb = lb, ub = ub, rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2)
-  # optim(par = 0.02, fn = Evaluate, method = "L-BFGS-B", lower = 1e-4, upper = 0.053,
-  #       X = X, labels = labels, lb = lb, ub = ub, rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2)
-  optim(par = 0.035, fn = Evaluate, method = "L-BFGS-B", lower = 0.03, upper = 0.045,
-        X = X, labels = labels, lb = lb, ub = ub, rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2)
-}
+#' Maximum Likelihood Estimator of Stationary Bivariate DPP
+#'
+#' @param X An n x d matrix storing n observed points in R^d.
+#' @param labels An n-dimensional integer vector storing the labels of each
+#'   observed point.
+#' @param lb A d-dimensional numeric vector storing the lower bounds of the
+#'   spatial domain (default: \code{rep(-0.5, ncol(X))}).
+#' @param ub A d-dimensional numeric vector storing the upper bounds of the
+#'   spatial domain (default: \code{rep( 0.5, ncol(X))}).
+#' @param a1 Value of the first amplitude. If set to 0 (default), the parameter
+#'   is estimated.
+#' @param alpha1 Value of the first alpha If set to 0 (default), the parameter
+#'   is estimated.
+#' @param a2 Value of the second amplitude. If set to 0 (default), the parameter
+#'   is estimated.
+#' @param alpha2 Value of the second alpha If set to 0 (default), the parameter
+#'   is estimated.
+#' @param a12 Value of the cross amplitude. If set to 0 (default), the parameter
+#'   is estimated.
+#' @param alpha12 Value of the cross alpha If set to 0 (default), the parameter
+#'   is estimated.
+#'
+#' @return A list as output from \code{\link[stats]{optim}}.
+#' @name mle-dpp
+#'
+#' @examples
+NULL
 
+#' @rdname mle-dpp
 #' @export
-mle_dpp_bessel <- function(X, labels, lb, ub, a1 = 0, a2 = 0, a12 = 0, alpha1 = 0, alpha2 = 0, alpha12 = 0) {
-  d <- ncol(X)
-  # # rho_i
-  # optimise(f = EvaluateBessel, interval = c(1e-4, 1-1e-4),
-  #          X = X, labels = labels, lb = lb, ub = ub,
-  #          amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
-  #          alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
-  # alpha_i
-  optimise(f = EvaluateBessel, interval = c(1e-4, 0.053),
-           X = X, labels = labels, lb = lb, ub = ub,
-           amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
-           alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
-  # rho12
-  # optimise(f = EvaluateBessel, interval = c(-0.28, 0.28),
-  #          X = X, labels = labels, lb = lb, ub = ub,
-  #          amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
-  #          alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
-}
-
-#' @export
-test_eval <- function(p, X, labels, lb, ub, a1 = 0, a2 = 0, a12 = 0, alpha1 = 0, alpha2 = 0, alpha12 = 0) {
-  d <- ncol(X)
-  EvaluateBessel(p,
+mle_dpp_gauss <- function(X, labels,
+                          lb = rep(-0.5, ncol(X)),
+                          ub = rep( 0.5, ncol(X)),
+                          a1 = 0, alpha1 = 0,
+                          a2 = 0, alpha2 = 0,
+                          a12 = 0, alpha12 = 0) {
+  l <- build_params(a1, alpha1, a2, alpha2, a12, alpha12)
+  optim(par = l$x0, fn = EvaluateGauss, method = "L-BFGS-B", lower = l$lb, upper = l$ub,
         X = X, labels = labels, lb = lb, ub = ub,
         amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
         alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
+}
+
+#' @rdname mle-dpp
+#' @export
+mle_dpp_bessel <- function(X, labels,
+                           lb = rep(-0.5, ncol(X)),
+                           ub = rep( 0.5, ncol(X)),
+                           a1 = 0, alpha1 = 0,
+                           a2 = 0, alpha2 = 0,
+                           a12 = 0, alpha12 = 0) {
+  l <- build_params(a1, alpha1, a2, alpha2, a12, alpha12)
+  optim(par = l$x0, fn = EvaluateBessel, method = "L-BFGS-B", lower = l$lb, upper = l$ub,
+        X = X, labels = labels, lb = lb, ub = ub,
+        amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
+        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
+}
+
+build_params <- function(a1, alpha1, a2, alpha2, a12, alpha12) {
+  x0 <- NULL
+  lb <- NULL
+  ub <- NULL
+  if (alpha1 == 0) {
+    ilb <- 0.022
+    iub <- 0.03
+    x0 <- c(x0, (ilb + iub) / 2)
+    lb <- c(lb, ilb)
+    ub <- c(ub, iub)
+  }
+  if (alpha2 == 0) {
+    ilb <- 0.022
+    iub <- 0.03
+    x0 <- c(x0, (ilb + iub) / 2)
+    lb <- c(lb, ilb)
+    ub <- c(ub, iub)
+  }
+  if (alpha12 == 0) {
+    ilb <- 0.03
+    iub <- 0.04243
+    x0 <- c(x0, (ilb + iub) / 2)
+    lb <- c(lb, ilb)
+    ub <- c(ub, iub)
+  }
+  if (a1 == 0) {
+    ilb <- 0.1414
+    iub <- 0.2827
+    x0 <- c(x0, (ilb + iub) / 2)
+    lb <- c(lb, ilb)
+    ub <- c(ub, iub)
+  }
+  if (a2 == 0) {
+    ilb <- 0.1414
+    iub <- 0.2827
+    x0 <- c(x0, (ilb + iub) / 2)
+    lb <- c(lb, ilb)
+    ub <- c(ub, iub)
+  }
+  if (a12 == 0) {
+    ilb <- -0.2827
+    iub <-  0.2827
+    x0 <- c(x0, (ilb + iub) / 2)
+    lb <- c(lb, ilb)
+    ub <- c(ub, iub)
+  }
+  list(x0 = x0, lb = lb, ub = ub)
 }

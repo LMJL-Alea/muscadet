@@ -13,7 +13,7 @@ EvaluateBessel <- function(p, X, labels, lb, ub, amplitude1 = 0, amplitude2 = 0,
 #'
 #' @return A vector with the estimated model parameters.
 #'
-#' @export
+#' @keywords internal
 #' @examples
 #' library(spatstat)
 #' # Simulate some data
@@ -35,7 +35,7 @@ Estimate <- function(X, labels, lb, ub, amplitude1 = 0, amplitude2 = 0, amplitud
     .Call('_mediator_Estimate', PACKAGE = 'mediator', X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
 }
 
-Evaluate <- function(p, X, labels, lb, ub, amplitude1 = 0, amplitude2 = 0, amplitude12 = 0, alpha1 = 0, alpha2 = 0, alpha12 = 0) {
-    .Call('_mediator_Evaluate', PACKAGE = 'mediator', p, X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+EvaluateGauss <- function(p, X, labels, lb, ub, amplitude1 = 0, amplitude2 = 0, amplitude12 = 0, alpha1 = 0, alpha2 = 0, alpha12 = 0) {
+    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
 }
 

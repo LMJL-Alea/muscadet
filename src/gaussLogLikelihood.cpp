@@ -20,18 +20,17 @@ double GaussLogLikelihood::EvaluateLFunction(const double sqDist, const double i
 {
   const unsigned int N = 50;
 
-  double resVal = 0.0;
+  double sumVal = 0.0;
 
   for (unsigned int k = 1;k <= N;++k)
   {
     double tmpVal = std::pow((double)k, -(double)dimension / 2.0);
-    double expInValue = sqDist / ((double)k * alpha * alpha);
     tmpVal *= std::pow(amplitude, (double)k - 1.0);
-    tmpVal *= std::exp(-expInValue);
-    resVal += intensity * tmpVal;
+    tmpVal *= std::exp(-sqDist / ((double)k * alpha * alpha));
+    sumVal += tmpVal;
   }
 
-  return resVal;
+  return intensity * sumVal;
 }
 
 double GaussLogLikelihood::RetrieveIntensityFromParameters(const double amplitude, const double alpha, const unsigned int dimension)

@@ -48,9 +48,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Evaluate
-double Evaluate(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double amplitude1, const double amplitude2, const double amplitude12, const double alpha1, const double alpha2, const double alpha12);
-RcppExport SEXP _mediator_Evaluate(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP amplitude1SEXP, SEXP amplitude2SEXP, SEXP amplitude12SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP) {
+// EvaluateGauss
+double EvaluateGauss(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double amplitude1, const double amplitude2, const double amplitude12, const double alpha1, const double alpha2, const double alpha12);
+RcppExport SEXP _mediator_EvaluateGauss(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP amplitude1SEXP, SEXP amplitude2SEXP, SEXP amplitude12SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -65,7 +65,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha12(alpha12SEXP);
-    rcpp_result_gen = Rcpp::wrap(Evaluate(p, X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12));
+    rcpp_result_gen = Rcpp::wrap(EvaluateGauss(p, X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -73,7 +73,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 11},
     {"_mediator_Estimate", (DL_FUNC) &_mediator_Estimate, 10},
-    {"_mediator_Evaluate", (DL_FUNC) &_mediator_Evaluate, 11},
+    {"_mediator_EvaluateGauss", (DL_FUNC) &_mediator_EvaluateGauss, 11},
     {NULL, NULL, 0}
 };
 
