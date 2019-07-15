@@ -24,6 +24,26 @@
 #' @name mle-dpp
 #'
 #' @examples
+#' all <- bessel_tauSq0p5[[1]]
+#' X <- cbind(all$x, all$y)
+#' labels <- all$marks
+#' rho1 <- rho2 <- 100
+#' rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
+#' alpha1 <- alpha2 <- 0.03
+#' alpha12 <- 0.03
+#' d <- 2
+#' a1 <- rho1 * (2 * pi * alpha1 * alpha1 / d)^(d / 2) * gamma(d / 2 + 1)
+#' a2 <- rho2 * (2 * pi * alpha2 * alpha2 / d)^(d / 2) * gamma(d / 2 + 1)
+#' a12 <- rho12 * (2 * pi * alpha12 * alpha12 / d)^(d / 2) * gamma(d / 2 + 1)
+#' mle_dpp_bessel(
+#'   X = X,
+#'   labels = labels,
+#'   a1 = a1,
+#'   a2 = a2,
+#'   a12 = a12,
+#'   alpha2 = alpha2,
+#'   alpha12 = alpha12
+#' )
 NULL
 
 #' @rdname mle-dpp
