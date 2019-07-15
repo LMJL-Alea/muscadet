@@ -41,7 +41,6 @@
 #'   a1 = a1,
 #'   a2 = a2,
 #'   a12 = a12,
-#'   alpha2 = alpha2,
 #'   alpha12 = alpha12
 #' )
 NULL
@@ -55,10 +54,13 @@ mle_dpp_gauss <- function(X, labels,
                           a2 = 0, alpha2 = 0,
                           a12 = 0, alpha12 = 0) {
   l <- build_params(a1, alpha1, a2, alpha2, a12, alpha12)
-  optim(par = l$x0, fn = EvaluateGauss, method = "L-BFGS-B", lower = l$lb, upper = l$ub,
-        X = X, labels = labels, lb = lb, ub = ub,
-        amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
-        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
+  optim(
+    par = l$x0, fn = EvaluateGauss, method = "Nelder-Mead",
+    control = list(warn.1d.NelderMead = FALSE),
+    X = X, labels = labels, lb = lb, ub = ub,
+    amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
+    alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12
+  )
 }
 
 #' @rdname mle-dpp
@@ -70,10 +72,13 @@ mle_dpp_bessel <- function(X, labels,
                            a2 = 0, alpha2 = 0,
                            a12 = 0, alpha12 = 0) {
   l <- build_params(a1, alpha1, a2, alpha2, a12, alpha12)
-  optim(par = l$x0, fn = EvaluateBessel, method = "L-BFGS-B", lower = l$lb, upper = l$ub,
-        X = X, labels = labels, lb = lb, ub = ub,
-        amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
-        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12)
+  optim(
+    par = l$x0, fn = EvaluateBessel, method = "Nelder-Mead",
+    control = list(warn.1d.NelderMead = FALSE),
+    X = X, labels = labels, lb = lb, ub = ub,
+    amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
+    alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12
+  )
 }
 
 build_params <- function(a1, alpha1, a2, alpha2, a12, alpha12) {
