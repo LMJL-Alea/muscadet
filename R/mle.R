@@ -81,4 +81,11 @@ mle_dpp_bessel <- function(X, labels,
     amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
     alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12
   )
+
+  # nloptr::neldermead(
+  #   x0 = x0, fn = EvaluateBessel,
+  #   X = X, labels = labels, lb = lb, ub = ub,
+  #   amplitude1 = a1, amplitude2 = a2, amplitude12 = a12,
+  #   alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12
+  # )
 }

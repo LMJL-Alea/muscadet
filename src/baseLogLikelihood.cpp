@@ -123,48 +123,57 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
   m_FirstIntensity /= m_DomainVolume;
   m_SecondIntensity /= m_DomainVolume;
 
-  if (m_EstimateFirstAmplitude)
-    m_FirstAmplitude = 0.5;
+  bool paramsOk = false;
 
-  if (m_EstimateSecondAmplitude)
-    m_SecondAmplitude = 0.5;
-
-  unsigned int pos = 0;
-
-  if (m_EstimateFirstAlpha)
+  while (!paramsOk)
   {
-    m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
-    params[pos] = m_FirstAlpha;
-    ++pos;
-  }
+    double sample = arma::randu();
 
-  if (m_EstimateSecondAlpha)
-  {
-    m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
-    params[pos] = m_SecondAlpha;
-    ++pos;
-  }
+    if (m_EstimateFirstAmplitude)
+      m_FirstAmplitude = sample;
 
-  if (m_EstimateCrossAlpha)
-  {
-    params[pos] = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
-    ++pos;
-  }
+    if (m_EstimateSecondAmplitude)
+      m_SecondAmplitude = sample;
 
-  if (m_EstimateFirstAmplitude)
-  {
-    params[pos] = m_FirstAmplitude;
-    ++pos;
-  }
+    unsigned int pos = 0;
 
-  if (m_EstimateSecondAmplitude)
-  {
-    params[pos] = m_SecondAmplitude;
-    ++pos;
-  }
+    if (m_EstimateFirstAlpha)
+    {
+      m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
+      params[pos] = m_FirstAlpha;
+      ++pos;
+    }
 
-  if (m_EstimateCrossAmplitude)
-    params[pos] = 0.0;
+    if (m_EstimateSecondAlpha)
+    {
+      m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
+      params[pos] = m_SecondAlpha;
+      ++pos;
+    }
+
+    if (m_EstimateCrossAlpha)
+    {
+      params[pos] = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
+      ++pos;
+    }
+
+    if (m_EstimateFirstAmplitude)
+    {
+      params[pos] = m_FirstAmplitude;
+      ++pos;
+    }
+
+    if (m_EstimateSecondAmplitude)
+    {
+      params[pos] = m_SecondAmplitude;
+      ++pos;
+    }
+
+    if (m_EstimateCrossAmplitude)
+      params[pos] = 0.19;
+
+    paramsOk = this->CheckModelParameters();
+  }
 
   return params;
 }
