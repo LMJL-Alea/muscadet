@@ -16,21 +16,27 @@ bool GaussLogLikelihood::EvaluateAlphaConstraint(const double firstAlpha, const 
   return 2.0 * crossAlpha * crossAlpha < firstAlpha * firstAlpha + secondAlpha * secondAlpha;
 }
 
-double GaussLogLikelihood::EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha, const unsigned int dimension)
+double GaussLogLikelihood::EvaluateLFunction(
+    const double sqDist,
+    const double amplitude,
+    const double amplitude12,
+    const double alpha,
+    const double alpha12,
+    const double l12Value,
+    const unsigned int dimension)
 {
-  const unsigned int N = 50;
+  return 0.0;
+}
 
-  double sumVal = 0.0;
-
-  for (unsigned int k = 1;k <= N;++k)
-  {
-    double tmpVal = std::pow((double)k, -(double)dimension / 2.0);
-    tmpVal *= std::pow(amplitude, (double)k - 1.0);
-    tmpVal *= std::exp(-sqDist / ((double)k * alpha * alpha));
-    sumVal += tmpVal;
-  }
-
-  return intensity * sumVal;
+double GaussLogLikelihood::EvaluateL12Function(
+    const double sqDist,
+    const double amplitude1,
+    const double amplitude2,
+    const double amplitude12,
+    const double alpha12,
+    const unsigned int dimension)
+{
+  return 0.0;
 }
 
 double GaussLogLikelihood::RetrieveIntensityFromParameters(const double amplitude, const double alpha, const unsigned int dimension)

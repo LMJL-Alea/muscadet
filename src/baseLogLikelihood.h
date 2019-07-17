@@ -89,9 +89,18 @@ protected:
   //! Generic functions to be implemented in each child class
   virtual double EvaluateLFunction(
       const double sqDist,
-      const double intensity,
       const double amplitude,
+      const double amplitude12,
       const double alpha,
+      const double alpha12,
+      const double l12Value,
+      const unsigned int dimension) = 0;
+  virtual double EvaluateL12Function(
+      const double sqDist,
+      const double amplitude1,
+      const double amplitude2,
+      const double amplitude12,
+      const double alpha12,
       const unsigned int dimension) = 0;
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
@@ -107,6 +116,7 @@ protected:
       const double secondAlpha,
       const double crossAlpha) = 0;
   virtual KFunctionType GetKFunction() = 0;
+  double GetBesselJRatio(const double sqDist, const double alpha, const unsigned int dimension);
 
 private:
   //! Helper functions for periodizing the domain

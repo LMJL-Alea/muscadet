@@ -1,5 +1,7 @@
 #include "baseLogLikelihood.h"
 #include <boost/math/quadrature/gauss_kronrod.hpp>
+#include <boost/math/special_functions/bessel.hpp>
+#include <boost/math/special_functions/gamma.hpp>
 
 const double BaseLogLikelihood::m_Epsilon = 1.0e-4;
 
@@ -244,13 +246,14 @@ double BaseLogLikelihood::GetLogDeterminant()
     {
       double sqDist = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j);
       unsigned int workLabel = m_PointLabels[i] + m_PointLabels[j];
+      double tmpVal = this->EvaluateL12Function(sqDist, m_FirstAmplitude, m_SecondAmplitude, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
 
       if (workLabel == 2)
-        resVal = this->EvaluateLFunction(sqDist, m_FirstIntensity, m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
+        resVal = this->EvaluateLFunction(sqDist, m_FirstAmplitude, m_CrossAmplitude, m_FirstAlpha, m_CrossAlpha, tmpVal, m_DomainDimension);
       else if (workLabel == 3)
-        resVal = this->EvaluateLFunction(sqDist, m_CrossIntensity, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
+        resVal = tmpVal;
       else
-        resVal = this->EvaluateLFunction(sqDist, m_SecondIntensity, m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
+        resVal = this->EvaluateLFunction(sqDist, m_SecondAmplitude, m_CrossAmplitude, m_SecondAlpha, m_CrossAlpha, tmpVal, m_DomainDimension);
 
       lMatrix(i, j) = resVal;
       lMatrixDeriv1(i, j) = workValue1;
@@ -540,4 +543,15 @@ bool BaseLogLikelihood::CheckModelParameters()
     return false;
 
   return true;
+}
+
+double BaseLogLikelihood::GetBesselJRatio(const double sqDist, const double alpha, const unsigned int dimension)
+{
+  double order = (double)dimension / 2.0;
+  double tmpVal = std::sqrt(2.0 * (double)dimension * sqDist) / alpha;
+
+  if (tmpVal < std::sqrt(std::numeric_limits<double>::epsilon()))
+    return 1.0 / boost::math::tgamma(1.0 + order);
+
+  return boost::math::cyl_bessel_j(order, tmpVal) / std::pow(tmpVal / 2.0, order);
 }

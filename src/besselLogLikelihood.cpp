@@ -1,5 +1,4 @@
 #include "besselLogLikelihood.h"
-#include <boost/math/special_functions/bessel.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
 double BesselLogLikelihood::GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension)
@@ -19,17 +18,33 @@ bool BesselLogLikelihood::EvaluateAlphaConstraint(const double firstAlpha, const
   return crossAlpha < std::max(firstAlpha, secondAlpha);
 }
 
-double BesselLogLikelihood::EvaluateLFunction(const double sqDist, const double intensity, const double amplitude, const double alpha, const unsigned int dimension)
+double BesselLogLikelihood::EvaluateLFunction(
+    const double sqDist,
+    const double amplitude,
+    const double amplitude12,
+    const double alpha,
+    const double alpha12,
+    const double l12Value,
+    const unsigned int dimension)
 {
-  double tmpVal = std::sqrt(2.0 * dimension * sqDist) / alpha;
+  double denomValue = 1.0 - amplitude;
+  double firstTerm = std::pow((double)dimension / (2.0 * M_PI * alpha * alpha), (double)dimension / 2.0);
+  double secondTerm = this->GetBesselJRatio(sqDist, alpha, dimension);
+  return (amplitude12 * l12Value + amplitude * firstTerm * secondTerm) / denomValue;
+}
 
-  if (tmpVal < std::sqrt(std::numeric_limits<double>::epsilon()))
-    return intensity / (1.0 - amplitude);
-
-  double resVal = amplitude / (1.0 - amplitude);
-  resVal *= std::pow((double)dimension / (tmpVal * M_PI * alpha * alpha), (double)dimension / 2.0);
-  resVal *= boost::math::cyl_bessel_j((double)dimension / 2.0, tmpVal);
-  return resVal;
+double BesselLogLikelihood::EvaluateL12Function(
+    const double sqDist,
+    const double amplitude1,
+    const double amplitude2,
+    const double amplitude12,
+    const double alpha12,
+    const unsigned int dimension)
+{
+  double firstTerm = std::pow((double)dimension / (2.0 * M_PI * alpha12 * alpha12), (double)dimension / 2.0);
+  double secondTerm = amplitude12 / ((1.0 - amplitude1) * (1.0 - amplitude2) - amplitude12 * amplitude12);
+  double thirdTerm = this->GetBesselJRatio(sqDist, alpha12, dimension);
+  return firstTerm * secondTerm * thirdTerm;
 }
 
 double BesselLogLikelihood::RetrieveIntensityFromParameters(const double amplitude, const double alpha, const unsigned int dimension)
