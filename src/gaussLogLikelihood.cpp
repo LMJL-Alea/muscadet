@@ -37,3 +37,8 @@ double GaussLogLikelihood::RetrieveIntensityFromParameters(const double amplitud
 {
   return amplitude / std::pow(std::sqrt(M_PI) * alpha, (double)dimension);
 }
+
+double GaussLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, const double intensity, const unsigned int dimension)
+{
+  return std::pow(amplitude / intensity, 1.0 / (double)dimension) / std::sqrt(M_PI);
+}

@@ -39,3 +39,8 @@ double BesselLogLikelihood::RetrieveIntensityFromParameters(const double amplitu
   double denomValue = std::pow(inPowerValue, powerValue) * boost::math::tgamma(1.0 + powerValue);
   return amplitude / denomValue;
 }
+
+double BesselLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, const double intensity, const unsigned int dimension)
+{
+  return std::pow(amplitude / (intensity * boost::math::tgamma(1.0 + (double)dimension / 2.0)), 1.0 / (double)dimension) * std::sqrt((double)dimension / (2.0 * M_PI));
+}

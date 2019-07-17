@@ -7,12 +7,12 @@
 \title{Maximum Likelihood Estimator of Stationary Bivariate DPP}
 \usage{
 mle_dpp_gauss(X, labels, lb = rep(-0.5, ncol(X)), ub = rep(0.5,
-  ncol(X)), a1 = 0, alpha1 = 0, a2 = 0, alpha2 = 0, a12 = 0,
-  alpha12 = 0)
+  ncol(X)), a1 = NA, alpha1 = NA, a2 = NA, alpha2 = NA, a12 = NA,
+  alpha12 = NA)
 
 mle_dpp_bessel(X, labels, lb = rep(-0.5, ncol(X)), ub = rep(0.5,
-  ncol(X)), a1 = 0, alpha1 = 0, a2 = 0, alpha2 = 0, a12 = 0,
-  alpha12 = 0)
+  ncol(X)), a1 = NA, alpha1 = NA, a2 = NA, alpha2 = NA, a12 = NA,
+  alpha12 = NA)
 }
 \arguments{
 \item{X}{An n x d matrix storing n observed points in R^d.}

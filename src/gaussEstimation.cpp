@@ -28,58 +28,54 @@
 //' # Verify parameters were recovered
 //' params
 // [[Rcpp::export]]
-arma::mat Estimate(
+arma::mat EstimateGauss(
     const arma::mat &X,
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = 0,
-    const double amplitude2 = 0,
-    const double amplitude12 = 0,
-    const double alpha1 = 0,
-    const double alpha2 = 0,
-    const double alpha12 = 0)
+    const double amplitude1 = NA_REAL,
+    const double amplitude2 = NA_REAL,
+    const double amplitude12 = NA_REAL,
+    const double alpha1 = NA_REAL,
+    const double alpha2 = NA_REAL,
+    const double alpha12 = NA_REAL)
 {
   // Construct the objective function.
-  // GaussianLogLikelihood logLik;
   GaussLogLikelihood logLik;
+
   logLik.SetInputs(X, labels, lb, ub);
 
-  if (alpha1 > 0)
+  if (arma::is_finite(alpha1))
     logLik.SetFirstAlpha(alpha1);
 
-  if (amplitude1 > 0)
+  if (arma::is_finite(amplitude1))
     logLik.SetFirstAmplitude(amplitude1);
 
-  if (alpha2 > 0)
+  if (arma::is_finite(alpha2))
     logLik.SetSecondAlpha(alpha2);
 
-  if (amplitude2 > 0)
+  if (arma::is_finite(amplitude2))
     logLik.SetSecondAmplitude(amplitude2);
 
-  if (alpha12 > 0)
+  if (arma::is_finite(alpha12))
     logLik.SetCrossAlpha(alpha12);
 
-  if (amplitude12 > 0)
+  if (arma::is_finite(amplitude12))
     logLik.SetCrossAmplitude(amplitude12);
 
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
   // ens::AugLagrangian optimizer;
-  ens::DE optimizer;
+  // ens::DE optimizer;
   // ens::SPSA optimizer(0.1, 0.102, 0.16, 0.3, 100000, 1e-5);
-  // ens::ExponentialSchedule expSchedule;
-  // ens::SA<> optimizer(expSchedule);
+  ens::ExponentialSchedule expSchedule;
+  ens::SA<> optimizer(expSchedule);
   // ens::CNE optimizer(200, 10000, 0.2, 0.2, 0.3, 1e-5);
   // ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly within the
   // authorized search space.
-  // arma::mat params = logLik.GetInitialPoint(rho1, rho2, alpha1, alpha2);
-  arma::mat params(1, 1);
-  // params[0] = 1.0001 * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
-  // params[1] = 0.7;
-  params[0] = 0.2;
+  arma::mat params = logLik.GetInitialPoint();
 
   // Time the routine
   arma::wall_clock clock;
@@ -94,9 +90,6 @@ arma::mat Estimate(
   Rcpp::Rcout << "Estimation performed in " << clock.toc() << " seconds." << std::endl;
   Rcpp::Rcout << "Min: " << logLik.Evaluate(params) << std::endl;
 
-  // for (unsigned int i = 0;i < 3;++i)
-  //   params[i] = std::exp(params[i]);
-
   return params;
 }
 
@@ -107,37 +100,77 @@ double EvaluateGauss(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = 0,
-    const double amplitude2 = 0,
-    const double amplitude12 = 0,
-    const double alpha1 = 0,
-    const double alpha2 = 0,
-    const double alpha12 = 0)
+    const double amplitude1 = NA_REAL,
+    const double amplitude2 = NA_REAL,
+    const double amplitude12 = NA_REAL,
+    const double alpha1 = NA_REAL,
+    const double alpha2 = NA_REAL,
+    const double alpha12 = NA_REAL)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
+
   logLik.SetInputs(X, labels, lb, ub);
 
-  if (alpha1 > 0)
+  if (arma::is_finite(alpha1))
     logLik.SetFirstAlpha(alpha1);
 
-  if (amplitude1 > 0)
+  if (arma::is_finite(amplitude1))
     logLik.SetFirstAmplitude(amplitude1);
 
-  if (alpha2 > 0)
+  if (arma::is_finite(alpha2))
     logLik.SetSecondAlpha(alpha2);
 
-  if (amplitude2 > 0)
+  if (arma::is_finite(amplitude2))
     logLik.SetSecondAmplitude(amplitude2);
 
-  if (alpha12 > 0)
+  if (arma::is_finite(alpha12))
     logLik.SetCrossAlpha(alpha12);
 
-  if (amplitude12 > 0)
+  if (arma::is_finite(amplitude12))
     logLik.SetCrossAmplitude(amplitude12);
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)
     params[i] = p[i];
+
   return logLik.Evaluate(params);
+}
+
+// [[Rcpp::export]]
+arma::mat InitializeGauss(
+    const arma::mat &X,
+    const arma::uvec &labels,
+    const arma::vec &lb,
+    const arma::vec &ub,
+    const double amplitude1 = NA_REAL,
+    const double amplitude2 = NA_REAL,
+    const double amplitude12 = NA_REAL,
+    const double alpha1 = NA_REAL,
+    const double alpha2 = NA_REAL,
+    const double alpha12 = NA_REAL)
+{
+  // Construct the objective function.
+  GaussLogLikelihood logLik;
+  logLik.SetInputs(X, labels, lb, ub);
+
+  if (arma::is_finite(alpha1))
+    logLik.SetFirstAlpha(alpha1);
+
+  if (arma::is_finite(amplitude1))
+    logLik.SetFirstAmplitude(amplitude1);
+
+  if (arma::is_finite(alpha2))
+    logLik.SetSecondAlpha(alpha2);
+
+  if (arma::is_finite(amplitude2))
+    logLik.SetSecondAmplitude(amplitude2);
+
+  if (arma::is_finite(alpha12))
+    logLik.SetCrossAlpha(alpha12);
+
+  if (arma::is_finite(amplitude12))
+    logLik.SetCrossAmplitude(amplitude12);
+
+  return logLik.GetInitialPoint();
 }

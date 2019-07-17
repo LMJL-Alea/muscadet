@@ -101,29 +101,68 @@ void BaseLogLikelihood::SetInputs(
   // Rcpp::Rcout << "Point labels: " << m_PointLabels.as_row() << std::endl;
 }
 
-arma::mat BaseLogLikelihood::GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2)
+arma::mat BaseLogLikelihood::GetInitialPoint()
 {
   arma::mat params(this->GetNumberOfParameters(), 1);
 
-  // Initialize CrossAlpha to the maximum between FirstAlpha and
-  // SecondAlpha which automatically satisfies constraint #3
-  // double alpha12 = std::max(alpha1, alpha2);
-  double alpha12 = (1.0 + m_Epsilon) * std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
+  // Retrieve Poisson estimates of rho_1 and rho_2
+  m_FirstIntensity = 0.0;
+  m_SecondIntensity = 0.0;
 
-  // Finds lower and upper bounds for CrossIntensity and
-  // randomly sample within the corresponding interval
-  double amp1 = rho1 * std::pow(std::sqrt(M_PI) * alpha1, (double)m_DomainDimension);
-  double amp2 = rho2 * std::pow(std::sqrt(M_PI) * alpha2, (double)m_DomainDimension);
-  double amp12 = std::pow(std::sqrt(M_PI) * alpha12, (double)m_DomainDimension);
-  double ub = std::sqrt(amp1 * amp2) / amp12;
-  ub = std::min(ub, 2.0 * std::sqrt((1.0 - amp1) * (1.0 - amp2)) / amp12 - m_Epsilon);
-  Rcpp::Rcout << ub << std::endl;
-  double rho12 = ub * (2.0 * arma::randu() - 1.0);
+  for (unsigned int i = 0;i < m_SampleSize;++i)
+  {
+    if (m_PointLabels[i] == 1)
+      ++m_FirstIntensity;
 
-  params[0] = std::log(alpha1);
-  params[1] = std::log(alpha12);
-  params[2] = std::log(alpha2);
-  params[3] = rho12;
+    if (m_PointLabels[i] == 2)
+      ++m_SecondIntensity;
+  }
+
+  m_FirstIntensity /= m_DomainVolume;
+  m_SecondIntensity /= m_DomainVolume;
+
+  if (m_EstimateFirstAmplitude)
+    m_FirstAmplitude = 0.5;
+
+  if (m_EstimateSecondAmplitude)
+    m_SecondAmplitude = 0.5;
+
+  unsigned int pos = 0;
+
+  if (m_EstimateFirstAlpha)
+  {
+    m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
+    params[pos] = m_FirstAlpha;
+    ++pos;
+  }
+
+  if (m_EstimateSecondAlpha)
+  {
+    m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
+    params[pos] = m_SecondAlpha;
+    ++pos;
+  }
+
+  if (m_EstimateCrossAlpha)
+  {
+    params[pos] = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
+    ++pos;
+  }
+
+  if (m_EstimateFirstAmplitude)
+  {
+    params[pos] = m_FirstAmplitude;
+    ++pos;
+  }
+
+  if (m_EstimateSecondAmplitude)
+  {
+    params[pos] = m_SecondAmplitude;
+    ++pos;
+  }
+
+  if (m_EstimateCrossAmplitude)
+    params[pos] = 0.0;
 
   return params;
 }
@@ -271,6 +310,7 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 
 void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
 {
+  this->SetModelParameters(x);
   g.set_size(this->GetNumberOfParameters(), 1);
 
   bool validParams = this->CheckModelParameters();
@@ -279,8 +319,6 @@ void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
     g.fill(0.0);
     return;
   }
-
-  this->SetModelParameters(x);
 
   if (m_Modified)
   {
@@ -483,16 +521,22 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 
 bool BaseLogLikelihood::CheckModelParameters()
 {
-  if (m_FirstAmplitude > 1.0 - m_Epsilon)
+  if (m_FirstAmplitude > 1.0 - m_Epsilon || m_FirstAmplitude < m_Epsilon)
     return false;
 
-  if (m_SecondAmplitude > 1.0 - m_Epsilon)
+  if (m_SecondAmplitude > 1.0 - m_Epsilon || m_SecondAmplitude < m_Epsilon)
+    return false;
+
+  if (m_FirstAlpha < m_Epsilon)
+    return false;
+
+  if (m_SecondAlpha < m_Epsilon)
     return false;
 
   if (this->EvaluateAlphaConstraint(m_FirstAlpha, m_SecondAlpha, m_CrossAlpha))
     return false;
 
-  if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude)))
+  if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon))
     return false;
 
   return true;

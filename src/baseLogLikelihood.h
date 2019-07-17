@@ -9,15 +9,15 @@ public:
 
   BaseLogLikelihood()
   {
-    m_FirstAlpha = 1.0;
-    m_SecondAlpha = 1.0;
-    m_CrossAlpha = 1.0;
-    m_FirstIntensity = 0.0;
-    m_SecondIntensity = 0.0;
-    m_CrossIntensity = 0.0;
-    m_FirstAmplitude = 0.0;
-    m_SecondAmplitude = 0.0;
-    m_CrossAmplitude = 0.0;
+    m_FirstAlpha = NA_REAL;
+    m_SecondAlpha = NA_REAL;
+    m_CrossAlpha = NA_REAL;
+    m_FirstIntensity = NA_REAL;
+    m_SecondIntensity = NA_REAL;
+    m_CrossIntensity = NA_REAL;
+    m_FirstAmplitude = NA_REAL;
+    m_SecondAmplitude = NA_REAL;
+    m_CrossAmplitude = NA_REAL;
     m_EstimateFirstAmplitude = true;
     m_EstimateSecondAmplitude = true;
     m_EstimateCrossAmplitude = true;
@@ -42,7 +42,7 @@ public:
       const arma::vec &ub
   );
   void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
-  arma::mat GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2);
+  arma::mat GetInitialPoint();
 
   void SetFirstAlpha(const double x);
   void SetSecondAlpha(const double x);
@@ -97,6 +97,11 @@ protected:
       const double amplitude,
       const double alpha,
       const unsigned int dimension) = 0;
+  virtual double RetrieveAlphaFromParameters(
+      const double amplitude,
+      const double intensity,
+      const unsigned int dimension
+  ) = 0;
   virtual bool EvaluateAlphaConstraint(
       const double firstAlpha,
       const double secondAlpha,

@@ -27,7 +27,6 @@ public:
 
 private:
   double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
   unsigned int m_DomainDimension;
 
