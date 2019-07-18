@@ -67,7 +67,7 @@ mle_dpp_bessel(
   labels = labels,
   a1 = a1,
   a2 = a2,
-  a12 = a12,
-  alpha12 = alpha12
+  alpha1 = alpha1,
+  alpha2 = alpha2
 )
 }

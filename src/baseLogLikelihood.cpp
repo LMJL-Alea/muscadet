@@ -153,7 +153,8 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
 
     if (m_EstimateCrossAlpha)
     {
-      params[pos] = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
+      m_CrossAlpha = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
+      params[pos] = m_CrossAlpha;
       ++pos;
     }
 
@@ -170,7 +171,10 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
     }
 
     if (m_EstimateCrossAmplitude)
-      params[pos] = 0.19;
+    {
+      m_CrossAmplitude = 0.0;
+      params[pos] = m_CrossAmplitude;
+    }
 
     paramsOk = this->CheckModelParameters();
   }
