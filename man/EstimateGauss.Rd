@@ -4,9 +4,8 @@
 \alias{EstimateGauss}
 \title{Stationary Bivariate Gaussian DPP Estimator}
 \usage{
-EstimateGauss(X, labels, lb, ub, amplitude1 = NA_real_,
-  amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_,
-  alpha2 = NA_real_, alpha12 = NA_real_)
+EstimateGauss(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_,
+  alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE)
 }
 \arguments{
 \item{X}{A matrix of size n x (d+1) storing the points in R^d and their label in last column.}

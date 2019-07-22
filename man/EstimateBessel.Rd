@@ -4,9 +4,8 @@
 \alias{EstimateBessel}
 \title{Stationary Bivariate Bessel DPP Estimator}
 \usage{
-EstimateBessel(X, labels, lb, ub, amplitude1 = NA_real_,
-  amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_,
-  alpha2 = NA_real_, alpha12 = NA_real_)
+EstimateBessel(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_,
+  alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE)
 }
 \arguments{
 \item{X}{A matrix of size n x (d+1) storing the points in R^d and their label in last column.}
@@ -18,20 +17,23 @@ A vector with the estimated model parameters.
 This function estimates the parameters of a stationary bivariate Gaussian DPP from a set of observed points and labels.
 }
 \examples{
-library(spatstat)
-# Simulate some data
-m <- dppGauss(lambda = 100, alpha = 0.05, d = 2)
-X1 <- simulate(m)
-fit1 <- dppm(X1, dppGauss, method = "palm")$fitted$fixedpar
-X2 <- stats::simulate(m)
-fit2 <- dppm(X2, dppGauss, method = "palm")$fitted$fixedpar
-X1 <- cbind(X1$x, X1$y, rep(1, X1$n))
-X2 <- cbind(X2$x, X2$y, rep(2, X2$n))
-X <- rbind(X1, X2)
-
-# Run parameter estimation
-params <- Estimate(X, fit1$lambda, fit2$lambda, fit1$alpha, fit2$alpha)
-
-# Verify parameters were recovered
-params
+dpp <- bessel_tauSq0p5[[1]]
+X <- cbind(dpp$x, dpp$y)
+labels <- dpp$marks
+rho1 <- rho2 <- 100
+rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
+alpha1 <- alpha2 <- 0.03
+alpha12 <- 0.03
+d <- 2
+EstimateBessel(
+  X = X,
+  labels = labels,
+  lb = rep(-0.5, ncol(X)),
+  ub = rep( 0.5, ncol(X)),
+  rho1 = rho1,
+  rho2 = rho2,
+  alpha1 = alpha1,
+  alpha2 = alpha2,
+  estimate_alpha = FALSE
+)
 }

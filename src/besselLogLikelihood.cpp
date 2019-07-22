@@ -59,3 +59,9 @@ double BesselLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, 
 {
   return std::pow(amplitude / (intensity * boost::math::tgamma(1.0 + (double)dimension / 2.0)), 1.0 / (double)dimension) * std::sqrt((double)dimension / (2.0 * M_PI));
 }
+
+double BesselLogLikelihood::RetrieveAmplitudeFromParameters(const double intensity, const double alpha, const unsigned int dimension)
+{
+  double order = (double)dimension / 2.0;
+  return intensity * std::pow(M_PI * alpha * alpha / order, order) * boost::math::tgamma(1.0 + order);
+}

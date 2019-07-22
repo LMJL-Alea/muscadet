@@ -108,20 +108,20 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
   arma::mat params(this->GetNumberOfParameters(), 1);
 
   // Retrieve Poisson estimates of rho_1 and rho_2
-  m_FirstIntensity = 0.0;
-  m_SecondIntensity = 0.0;
+  double firstIntensity = 0.0;
+  double secondIntensity = 0.0;
 
   for (unsigned int i = 0;i < m_SampleSize;++i)
   {
     if (m_PointLabels[i] == 1)
-      ++m_FirstIntensity;
+      ++firstIntensity;
 
     if (m_PointLabels[i] == 2)
-      ++m_SecondIntensity;
+      ++secondIntensity;
   }
 
-  m_FirstIntensity /= m_DomainVolume;
-  m_SecondIntensity /= m_DomainVolume;
+  firstIntensity /= m_DomainVolume;
+  secondIntensity /= m_DomainVolume;
 
   bool paramsOk = false;
 
@@ -139,14 +139,14 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
 
     if (m_EstimateFirstAlpha)
     {
-      m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
+      m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, firstIntensity, m_DomainDimension);
       params[pos] = m_FirstAlpha;
       ++pos;
     }
 
     if (m_EstimateSecondAlpha)
     {
-      m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
+      m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, secondIntensity, m_DomainDimension);
       params[pos] = m_SecondAlpha;
       ++pos;
     }
@@ -154,6 +154,7 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
     if (m_EstimateCrossAlpha)
     {
       m_CrossAlpha = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
+      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
       params[pos] = m_CrossAlpha;
       ++pos;
     }
@@ -173,6 +174,7 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
     if (m_EstimateCrossAmplitude)
     {
       m_CrossAmplitude = 0.0;
+      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
       params[pos] = m_CrossAmplitude;
     }
 

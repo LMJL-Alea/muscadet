@@ -11,32 +11,35 @@
 #'
 #' @export
 #' @examples
-#' library(spatstat)
-#' # Simulate some data
-#' m <- dppGauss(lambda = 100, alpha = 0.05, d = 2)
-#' X1 <- simulate(m)
-#' fit1 <- dppm(X1, dppGauss, method = "palm")$fitted$fixedpar
-#' X2 <- stats::simulate(m)
-#' fit2 <- dppm(X2, dppGauss, method = "palm")$fitted$fixedpar
-#' X1 <- cbind(X1$x, X1$y, rep(1, X1$n))
-#' X2 <- cbind(X2$x, X2$y, rep(2, X2$n))
-#' X <- rbind(X1, X2)
-#'
-#' # Run parameter estimation
-#' params <- Estimate(X, fit1$lambda, fit2$lambda, fit1$alpha, fit2$alpha)
-#'
-#' # Verify parameters were recovered
-#' params
-EstimateBessel <- function(X, labels, lb, ub, amplitude1 = NA_real_, amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, alpha12 = NA_real_) {
-    .Call('_mediator_EstimateBessel', PACKAGE = 'mediator', X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+#' dpp <- bessel_tauSq0p5[[1]]
+#' X <- cbind(dpp$x, dpp$y)
+#' labels <- dpp$marks
+#' rho1 <- rho2 <- 100
+#' rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
+#' alpha1 <- alpha2 <- 0.03
+#' alpha12 <- 0.03
+#' d <- 2
+#' EstimateBessel(
+#'   X = X,
+#'   labels = labels,
+#'   lb = rep(-0.5, ncol(X)),
+#'   ub = rep( 0.5, ncol(X)),
+#'   rho1 = rho1,
+#'   rho2 = rho2,
+#'   alpha1 = alpha1,
+#'   alpha2 = alpha2,
+#'   estimate_alpha = FALSE
+#' )
+EstimateBessel <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_EstimateBessel', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
-EvaluateBessel <- function(p, X, labels, lb, ub, amplitude1 = NA_real_, amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, alpha12 = NA_real_) {
-    .Call('_mediator_EvaluateBessel', PACKAGE = 'mediator', p, X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+EvaluateBessel <- function(p, X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_EvaluateBessel', PACKAGE = 'mediator', p, X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
-InitializeBessel <- function(X, labels, lb, ub, amplitude1 = NA_real_, amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, alpha12 = NA_real_) {
-    .Call('_mediator_InitializeBessel', PACKAGE = 'mediator', X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+InitializeBessel <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_InitializeBessel', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
 #' Stationary Bivariate Gaussian DPP Estimator
@@ -65,15 +68,15 @@ InitializeBessel <- function(X, labels, lb, ub, amplitude1 = NA_real_, amplitude
 #'
 #' # Verify parameters were recovered
 #' params
-EstimateGauss <- function(X, labels, lb, ub, amplitude1 = NA_real_, amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, alpha12 = NA_real_) {
-    .Call('_mediator_EstimateGauss', PACKAGE = 'mediator', X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+EstimateGauss <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_EstimateGauss', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
-EvaluateGauss <- function(p, X, labels, lb, ub, amplitude1 = NA_real_, amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, alpha12 = NA_real_) {
-    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+EvaluateGauss <- function(p, X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
-InitializeGauss <- function(X, labels, lb, ub, amplitude1 = NA_real_, amplitude2 = NA_real_, amplitude12 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, alpha12 = NA_real_) {
-    .Call('_mediator_InitializeGauss', PACKAGE = 'mediator', X, labels, lb, ub, amplitude1, amplitude2, amplitude12, alpha1, alpha2, alpha12)
+InitializeGauss <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_InitializeGauss', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 

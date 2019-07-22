@@ -11,67 +11,70 @@
 //'
 //' @export
 //' @examples
-//' library(spatstat)
-//' # Simulate some data
-//' m <- dppGauss(lambda = 100, alpha = 0.05, d = 2)
-//' X1 <- simulate(m)
-//' fit1 <- dppm(X1, dppGauss, method = "palm")$fitted$fixedpar
-//' X2 <- stats::simulate(m)
-//' fit2 <- dppm(X2, dppGauss, method = "palm")$fitted$fixedpar
-//' X1 <- cbind(X1$x, X1$y, rep(1, X1$n))
-//' X2 <- cbind(X2$x, X2$y, rep(2, X2$n))
-//' X <- rbind(X1, X2)
-//'
-//' # Run parameter estimation
-//' params <- Estimate(X, fit1$lambda, fit2$lambda, fit1$alpha, fit2$alpha)
-//'
-//' # Verify parameters were recovered
-//' params
+//' dpp <- bessel_tauSq0p5[[1]]
+//' X <- cbind(dpp$x, dpp$y)
+//' labels <- dpp$marks
+//' rho1 <- rho2 <- 100
+//' rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
+//' alpha1 <- alpha2 <- 0.03
+//' alpha12 <- 0.03
+//' d <- 2
+//' EstimateBessel(
+//'   X = X,
+//'   labels = labels,
+//'   lb = rep(-0.5, ncol(X)),
+//'   ub = rep( 0.5, ncol(X)),
+//'   rho1 = rho1,
+//'   rho2 = rho2,
+//'   alpha1 = alpha1,
+//'   alpha2 = alpha2,
+//'   estimate_alpha = FALSE
+//' )
 // [[Rcpp::export]]
 arma::mat EstimateBessel(
     const arma::mat &X,
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = NA_REAL,
-    const double amplitude2 = NA_REAL,
-    const double amplitude12 = NA_REAL,
+    const double rho1 = NA_REAL,
+    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
     const double alpha2 = NA_REAL,
-    const double alpha12 = NA_REAL)
+    const bool estimate_alpha = true)
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-
   logLik.SetInputs(X, labels, lb, ub);
 
   if (arma::is_finite(alpha1))
-    logLik.SetFirstAlpha(alpha1);
+  {
+    if (!estimate_alpha)
+      logLik.SetFirstAlpha(alpha1);
 
-  if (arma::is_finite(amplitude1))
-    logLik.SetFirstAmplitude(amplitude1);
+    if (arma::is_finite(rho1))
+    {
+      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+      logLik.SetFirstAmplitude(a1);
+    }
+  }
 
   if (arma::is_finite(alpha2))
-    logLik.SetSecondAlpha(alpha2);
+  {
+    if (!estimate_alpha)
+      logLik.SetSecondAlpha(alpha2);
 
-  if (arma::is_finite(amplitude2))
-    logLik.SetSecondAmplitude(amplitude2);
+    if (arma::is_finite(rho2))
+    {
+      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+      logLik.SetSecondAmplitude(a2);
+    }
+  }
 
-  if (arma::is_finite(alpha12))
-    logLik.SetCrossAlpha(alpha12);
-
-  if (arma::is_finite(amplitude12))
-    logLik.SetCrossAmplitude(amplitude12);
-
-  // Create the Augmented Lagrangian optimizer with default parameters.
-  // The ens::L_BFGS is used internally.
-  // ens::AugLagrangian optimizer;
-  // ens::DE optimizer;
-  // ens::SPSA optimizer(0.1, 0.102, 0.16, 0.3, 100000, 1e-5);
+  // Create the optimizer.
+  // ens::DE optimizer(1000, 1000, 0.6, 0.8, 1e-5);
   ens::ExponentialSchedule expSchedule;
-  ens::SA<> optimizer(expSchedule);
+  ens::SA<> optimizer(expSchedule, 1000000, 1000., 1000, 100, 1e-10, 3, 1.5, 0.5, 0.3);
   // ens::CNE optimizer(200, 10000, 0.2, 0.2, 0.3, 1e-5);
-  // ens::L_BFGS optimizer;
 
   // Create a starting point for our optimization randomly within the
   // authorized search space.
@@ -100,35 +103,39 @@ double EvaluateBessel(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = NA_REAL,
-    const double amplitude2 = NA_REAL,
-    const double amplitude12 = NA_REAL,
+    const double rho1 = NA_REAL,
+    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
     const double alpha2 = NA_REAL,
-    const double alpha12 = NA_REAL)
+    const bool estimate_alpha = true)
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-
   logLik.SetInputs(X, labels, lb, ub);
 
   if (arma::is_finite(alpha1))
-    logLik.SetFirstAlpha(alpha1);
+  {
+    if (!estimate_alpha)
+      logLik.SetFirstAlpha(alpha1);
 
-  if (arma::is_finite(amplitude1))
-    logLik.SetFirstAmplitude(amplitude1);
+    if (arma::is_finite(rho1))
+    {
+      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+      logLik.SetFirstAmplitude(a1);
+    }
+  }
 
   if (arma::is_finite(alpha2))
-    logLik.SetSecondAlpha(alpha2);
+  {
+    if (!estimate_alpha)
+      logLik.SetSecondAlpha(alpha2);
 
-  if (arma::is_finite(amplitude2))
-    logLik.SetSecondAmplitude(amplitude2);
-
-  if (arma::is_finite(alpha12))
-    logLik.SetCrossAlpha(alpha12);
-
-  if (arma::is_finite(amplitude12))
-    logLik.SetCrossAmplitude(amplitude12);
+    if (arma::is_finite(rho2))
+    {
+      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+      logLik.SetSecondAmplitude(a2);
+    }
+  }
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)
@@ -143,34 +150,39 @@ arma::mat InitializeBessel(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = NA_REAL,
-    const double amplitude2 = NA_REAL,
-    const double amplitude12 = NA_REAL,
+    const double rho1 = NA_REAL,
+    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
     const double alpha2 = NA_REAL,
-    const double alpha12 = NA_REAL)
+    const bool estimate_alpha = true)
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
   if (arma::is_finite(alpha1))
-    logLik.SetFirstAlpha(alpha1);
+  {
+    if (!estimate_alpha)
+      logLik.SetFirstAlpha(alpha1);
 
-  if (arma::is_finite(amplitude1))
-    logLik.SetFirstAmplitude(amplitude1);
+    if (arma::is_finite(rho1))
+    {
+      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+      logLik.SetFirstAmplitude(a1);
+    }
+  }
 
   if (arma::is_finite(alpha2))
-    logLik.SetSecondAlpha(alpha2);
+  {
+    if (!estimate_alpha)
+      logLik.SetSecondAlpha(alpha2);
 
-  if (arma::is_finite(amplitude2))
-    logLik.SetSecondAmplitude(amplitude2);
-
-  if (arma::is_finite(alpha12))
-    logLik.SetCrossAlpha(alpha12);
-
-  if (arma::is_finite(amplitude12))
-    logLik.SetCrossAmplitude(amplitude12);
+    if (arma::is_finite(rho2))
+    {
+      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+      logLik.SetSecondAmplitude(a2);
+    }
+  }
 
   return logLik.GetInitialPoint();
 }

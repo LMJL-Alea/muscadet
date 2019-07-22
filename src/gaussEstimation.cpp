@@ -33,35 +33,39 @@ arma::mat EstimateGauss(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = NA_REAL,
-    const double amplitude2 = NA_REAL,
-    const double amplitude12 = NA_REAL,
+    const double rho1 = NA_REAL,
+    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
     const double alpha2 = NA_REAL,
-    const double alpha12 = NA_REAL)
+    const bool estimate_alpha = true)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
-
   logLik.SetInputs(X, labels, lb, ub);
 
   if (arma::is_finite(alpha1))
-    logLik.SetFirstAlpha(alpha1);
+  {
+    if (!estimate_alpha)
+      logLik.SetFirstAlpha(alpha1);
 
-  if (arma::is_finite(amplitude1))
-    logLik.SetFirstAmplitude(amplitude1);
+    if (arma::is_finite(rho1))
+    {
+      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+      logLik.SetFirstAmplitude(a1);
+    }
+  }
 
   if (arma::is_finite(alpha2))
-    logLik.SetSecondAlpha(alpha2);
+  {
+    if (!estimate_alpha)
+      logLik.SetSecondAlpha(alpha2);
 
-  if (arma::is_finite(amplitude2))
-    logLik.SetSecondAmplitude(amplitude2);
-
-  if (arma::is_finite(alpha12))
-    logLik.SetCrossAlpha(alpha12);
-
-  if (arma::is_finite(amplitude12))
-    logLik.SetCrossAmplitude(amplitude12);
+    if (arma::is_finite(rho2))
+    {
+      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+      logLik.SetSecondAmplitude(a2);
+    }
+  }
 
   // Create the Augmented Lagrangian optimizer with default parameters.
   // The ens::L_BFGS is used internally.
@@ -100,35 +104,39 @@ double EvaluateGauss(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = NA_REAL,
-    const double amplitude2 = NA_REAL,
-    const double amplitude12 = NA_REAL,
+    const double rho1 = NA_REAL,
+    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
     const double alpha2 = NA_REAL,
-    const double alpha12 = NA_REAL)
+    const bool estimate_alpha = true)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
-
   logLik.SetInputs(X, labels, lb, ub);
 
   if (arma::is_finite(alpha1))
-    logLik.SetFirstAlpha(alpha1);
+  {
+    if (!estimate_alpha)
+      logLik.SetFirstAlpha(alpha1);
 
-  if (arma::is_finite(amplitude1))
-    logLik.SetFirstAmplitude(amplitude1);
+    if (arma::is_finite(rho1))
+    {
+      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+      logLik.SetFirstAmplitude(a1);
+    }
+  }
 
   if (arma::is_finite(alpha2))
-    logLik.SetSecondAlpha(alpha2);
+  {
+    if (!estimate_alpha)
+      logLik.SetSecondAlpha(alpha2);
 
-  if (arma::is_finite(amplitude2))
-    logLik.SetSecondAmplitude(amplitude2);
-
-  if (arma::is_finite(alpha12))
-    logLik.SetCrossAlpha(alpha12);
-
-  if (arma::is_finite(amplitude12))
-    logLik.SetCrossAmplitude(amplitude12);
+    if (arma::is_finite(rho2))
+    {
+      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+      logLik.SetSecondAmplitude(a2);
+    }
+  }
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)
@@ -143,34 +151,39 @@ arma::mat InitializeGauss(
     const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
-    const double amplitude1 = NA_REAL,
-    const double amplitude2 = NA_REAL,
-    const double amplitude12 = NA_REAL,
+    const double rho1 = NA_REAL,
+    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
     const double alpha2 = NA_REAL,
-    const double alpha12 = NA_REAL)
+    const bool estimate_alpha = true)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
   if (arma::is_finite(alpha1))
-    logLik.SetFirstAlpha(alpha1);
+  {
+    if (!estimate_alpha)
+      logLik.SetFirstAlpha(alpha1);
 
-  if (arma::is_finite(amplitude1))
-    logLik.SetFirstAmplitude(amplitude1);
+    if (arma::is_finite(rho1))
+    {
+      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+      logLik.SetFirstAmplitude(a1);
+    }
+  }
 
   if (arma::is_finite(alpha2))
-    logLik.SetSecondAlpha(alpha2);
+  {
+    if (!estimate_alpha)
+      logLik.SetSecondAlpha(alpha2);
 
-  if (arma::is_finite(amplitude2))
-    logLik.SetSecondAmplitude(amplitude2);
-
-  if (arma::is_finite(alpha12))
-    logLik.SetCrossAlpha(alpha12);
-
-  if (arma::is_finite(amplitude12))
-    logLik.SetCrossAmplitude(amplitude12);
+    if (arma::is_finite(rho2))
+    {
+      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+      logLik.SetSecondAmplitude(a2);
+    }
+  }
 
   return logLik.GetInitialPoint();
 }

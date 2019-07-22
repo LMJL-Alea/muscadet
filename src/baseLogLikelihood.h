@@ -43,6 +43,19 @@ public:
   );
   void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
   arma::mat GetInitialPoint();
+  virtual double RetrieveIntensityFromParameters(
+      const double amplitude,
+      const double alpha,
+      const unsigned int dimension) = 0;
+  virtual double RetrieveAlphaFromParameters(
+      const double amplitude,
+      const double intensity,
+      const unsigned int dimension
+  ) = 0;
+  virtual double RetrieveAmplitudeFromParameters(
+      const double intensity,
+      const double alpha,
+      const unsigned int dimension) = 0;
 
   void SetFirstAlpha(const double x);
   void SetSecondAlpha(const double x);
@@ -102,15 +115,6 @@ protected:
       const double amplitude12,
       const double alpha12,
       const unsigned int dimension) = 0;
-  virtual double RetrieveIntensityFromParameters(
-      const double amplitude,
-      const double alpha,
-      const unsigned int dimension) = 0;
-  virtual double RetrieveAlphaFromParameters(
-      const double amplitude,
-      const double intensity,
-      const unsigned int dimension
-  ) = 0;
   virtual bool EvaluateAlphaConstraint(
       const double firstAlpha,
       const double secondAlpha,
