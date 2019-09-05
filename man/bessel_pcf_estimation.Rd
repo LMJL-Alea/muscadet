@@ -20,11 +20,9 @@ The estimated model parameters as a list.
 Estimation of Stationary Bivariate Bessel DPP via PCF
 }
 \examples{
-X <- X05list[[1]]
-bessel_pcf_estimation(X)
+tau <- 0.2
 
-tau <- sqrt(0.5)
-res <- lapply(X05list, bessel_pcf_estimation)
+res <- lapply(sim, bessel_pcf_estimation, tau_init = tau, type = "independent")
 temp <- unlist(res)
 par(mfrow = c(2, 2))
 boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
@@ -34,10 +32,9 @@ abline(h = 0.03)
 boxplot(temp[seq(5, 600, 6)], main = 'tau')
 abline(h = tau)
 boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-abline(h = 0.03)
+abline(h = 0.05)
 
-tau <- 0
-res <- lapply(X0list, bessel_pcf_estimation)
+res <- lapply(sim, bessel_pcf_estimation, tau_init = tau, type = "joint")
 temp <- unlist(res)
 par(mfrow = c(2, 2))
 boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
@@ -47,18 +44,5 @@ abline(h = 0.03)
 boxplot(temp[seq(5, 600, 6)], main = 'tau')
 abline(h = tau)
 boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-abline(h = 0.03)
-
-tau <- 1
-res <- lapply(X1list, bessel_pcf_estimation)
-temp <- unlist(res)
-par(mfrow = c(2, 2))
-boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
-abline(h = 0.03)
-boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
-abline(h = 0.03)
-boxplot(temp[seq(5, 600, 6)], main = 'tau')
-abline(h = tau)
-boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-abline(h = 0.03)
+abline(h = 0.05)
 }

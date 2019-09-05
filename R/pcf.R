@@ -8,11 +8,9 @@
 #' @export
 #'
 #' @examples
-#' X <- X05list[[1]]
-#' bessel_pcf_estimation(X)
+#' tau <- 0.2
 #'
-#' tau <- sqrt(0.5)
-#' res <- lapply(X05list, bessel_pcf_estimation)
+#' res <- lapply(sim, bessel_pcf_estimation, tau_init = tau, type = "independent")
 #' temp <- unlist(res)
 #' par(mfrow = c(2, 2))
 #' boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
@@ -22,10 +20,9 @@
 #' boxplot(temp[seq(5, 600, 6)], main = 'tau')
 #' abline(h = tau)
 #' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-#' abline(h = 0.03)
+#' abline(h = 0.05)
 #'
-#' tau <- 0
-#' res <- lapply(X0list, bessel_pcf_estimation)
+#' res <- lapply(sim, bessel_pcf_estimation, tau_init = tau, type = "joint")
 #' temp <- unlist(res)
 #' par(mfrow = c(2, 2))
 #' boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
@@ -35,20 +32,7 @@
 #' boxplot(temp[seq(5, 600, 6)], main = 'tau')
 #' abline(h = tau)
 #' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-#' abline(h = 0.03)
-#'
-#' tau <- 1
-#' res <- lapply(X1list, bessel_pcf_estimation)
-#' temp <- unlist(res)
-#' par(mfrow = c(2, 2))
-#' boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
-#' abline(h = 0.03)
-#' boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
-#' abline(h = 0.03)
-#' boxplot(temp[seq(5, 600, 6)], main = 'tau')
-#' abline(h = tau)
-#' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-#' abline(h = 0.03)
+#' abline(h = 0.05)
 bessel_pcf_estimation <- function(X, tau_init = 0.5, eta = 0.1, type = "joint") {
   Xs <- spatstat::split.ppp(X)
   d <- length(Xs)
@@ -77,15 +61,15 @@ bessel_pcf_estimation <- function(X, tau_init = 0.5, eta = 0.1, type = "joint") 
   funcontrast <- function(par) {
     tau <- par[1]
     alpha12 <- par[2]
-    # if (alpha12 < max(alpha1, alpha2) || tau^2 * alpha12^(2 * d) >= ub)
-    #   return(1e6)
+    if (alpha12 < max(alpha1, alpha2) || tau^2 * alpha12^(2 * d) >= ub)
+      return(1e6)
     sum((x12^0.5 - pcftheocross(par, r12)^0.5)^2)
   }
   alpha12 <- (1+eta) * max(alpha1, alpha2)
   tau <- tau_init
-  # while (tau^2 * alpha12^(2*d) >= ub) {
-  #   tau <- tau / sqrt(2)
-  # }
+  while (tau^2 * alpha12^(2*d) >= ub) {
+    tau <- tau / sqrt(2)
+  }
   fit12 <- stats::optim(
     par = c(tau, alpha12),
     fn = funcontrast,
@@ -132,14 +116,16 @@ bessel_pcf_estimation <- function(X, tau_init = 0.5, eta = 0.1, type = "joint") 
     alpha2 <- par[2]
     alpha12 <- par[3]
     tau <- par[4]
-    k1 <- rho1 * gamma(1 + d/2) * (2 * pi * alpha1^2)^(d/2)
-    k2 <- rho2 * gamma(1 + d/2) * (2 * pi * alpha2^2)^(d/2)
+    k1 <- rho1 * gamma(1 + d/2) * (2 * pi * alpha1^2 / d)^(d/2)
+    k2 <- rho2 * gamma(1 + d/2) * (2 * pi * alpha2^2 / d)^(d/2)
     ub <- alpha1^d * alpha2^d * min(1, (1 / k1 - 1) * (1 / k2 - 1))
-    # if (k1 >= 1 || k2 >= 1 ||
-    #     alpha12 < max(alpha1, alpha2) ||
-    #     tau^2 * alpha12^(2 * d) >= ub)
-    #   return(1e6)
-    sum((x1^0.5 - pcftheomarginal(alpha1, rc)^0.5)^2 + (x2^0.5 - pcftheomarginal(alpha2, rc)^0.5)^2 + 2 * (x12^0.5 - pcftheocross(c(tau, alpha12), rc)^0.5)^2)
+    if (k1 >= 1 || k2 >= 1 ||
+        alpha12 < max(alpha1, alpha2) ||
+        tau^2 * alpha12^(2 * d) >= ub)
+      return(1e6)
+    sum((x1^0.5 - pcftheomarginal(alpha1, rc)^0.5)^2 +
+          sum(x2^0.5 - pcftheomarginal(alpha2, rc)^0.5)^2 +
+          2 * sum(x12^0.5 - pcftheocross(c(tau, alpha12), rc)^0.5)^2)
   }
   joint_fit <- stats::optim(
     par = x0,
@@ -184,7 +170,7 @@ fit_marginal_model <- function(X, V, d) {
 mfunbessel <- function(r, alpha, d = 2) {
   order <- d / 2
   x <- sqrt(2 * d * r^2) / alpha
-  ifelse(r < sqrt(.Machine$double.eps), 1 / gamma(1 + order), 2^order * besselJ(x, order) / x^order)
+  ifelse(r < sqrt(.Machine$double.eps), 1 / gamma(1 + order), ifelse(x > 1e5, 0, 2^order * besselJ(x, order) / x^order))
 }
 
 pcftheomarginal <- function(par, r, d = 2, ...) {
