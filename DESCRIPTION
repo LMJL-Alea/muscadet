@@ -22,6 +22,7 @@ LinkingTo:
     Rcpp,
     BH
 Imports: 
-    Rcpp
+    Rcpp,
+    spatstat
 URL: https://github.com/astamm/mediator
 BugReports: https://github.com/astamm/mediator/issues
