@@ -4,14 +4,17 @@
 \alias{bessel_pcf_estimation}
 \title{Estimation of Stationary Bivariate Bessel DPP via PCF}
 \usage{
-bessel_pcf_estimation(X, tau_init = 0.5, eta = 0.1, type = "joint")
+bessel_pcf_estimation(X, bound = 1, type = "joint")
 }
 \arguments{
 \item{X}{A 2-dimensional marked \code{\link[spatstat]{ppp}} object.}
 
-\item{pcftheomarginal}{A function implementing the theoretical marginal PCF.}
+\item{bound}{A numeric scalar providing an upper bound for the cross-???
+parameter (default: 1).}
 
-\item{pcftheocross}{A function implementing the theoretical cross PCF.}
+\item{type}{A character scalar specifying whether PCF contrasts should be
+minimized jointly (default) or independently. The latter is faster but
+provides biased estimates.}
 }
 \value{
 The estimated model parameters as a list.
@@ -20,9 +23,7 @@ The estimated model parameters as a list.
 Estimation of Stationary Bivariate Bessel DPP via PCF
 }
 \examples{
-tau <- 0.2
-
-res <- lapply(sim, bessel_pcf_estimation, tau_init = tau, type = "independent")
+res <- lapply(sim, bessel_pcf_estimation, type = "independent")
 temp <- unlist(res)
 par(mfrow = c(2, 2))
 boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
@@ -30,11 +31,11 @@ abline(h = 0.03)
 boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
 abline(h = 0.03)
 boxplot(temp[seq(5, 600, 6)], main = 'tau')
-abline(h = tau)
+abline(h = 0.2)
 boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
 abline(h = 0.05)
 
-res <- lapply(sim, bessel_pcf_estimation, tau_init = tau, type = "joint")
+res <- lapply(sim, bessel_pcf_estimation, type = "joint")
 temp <- unlist(res)
 par(mfrow = c(2, 2))
 boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
@@ -42,7 +43,7 @@ abline(h = 0.03)
 boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
 abline(h = 0.03)
 boxplot(temp[seq(5, 600, 6)], main = 'tau')
-abline(h = tau)
+abline(h = 0.2)
 boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
 abline(h = 0.05)
 }
