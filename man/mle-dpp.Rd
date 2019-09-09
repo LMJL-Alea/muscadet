@@ -10,8 +10,8 @@ mle_dpp_gauss(X, labels, lb = rep(-0.5, ncol(X)), ub = rep(0.5,
   ncol(X)), rho1 = NA, alpha1 = NA, rho2 = NA, alpha2 = NA,
   estimate_alpha = TRUE)
 
-mle_dpp_bessel(X, labels, lb = rep(-0.5, ncol(X)), ub = rep(0.5,
-  ncol(X)), rho1 = NA, alpha1 = NA, rho2 = NA, alpha2 = NA,
+mle_dpp_bessel(X, lb = rep(-0.5, ncol(X)), ub = rep(0.5, ncol(X)),
+  rho1 = NA, alpha1 = NA, rho2 = NA, alpha2 = NA,
   estimate_alpha = TRUE)
 }
 \arguments{
@@ -48,21 +48,28 @@ A list as output from \code{\link[stats]{optim}}.
 Maximum Likelihood Estimator of Stationary Bivariate DPPs
 }
 \examples{
-dpp <- bessel_tauSq0p5[[1]]
-X <- cbind(dpp$x, dpp$y)
-labels <- dpp$marks
+dpp <- sim[[1]]
 rho1 <- rho2 <- 100
-rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
 alpha1 <- alpha2 <- 0.03
-alpha12 <- 0.03
+alpha12 <- 0.05
+tau <- 0.2
+rho12 <- tau * sqrt(rho1 * rho2)
 d <- 2
 mle_dpp_bessel(
   X = X,
-  labels = labels,
-  rho1 = rho1,
-  rho2 = rho2,
-  alpha1 = alpha1,
-  alpha2 = alpha2,
-  estimate_alpha = FALSE
+  lb = rep(0, ncol(X)),
+  ub = rep(1, ncol(X))
 )
+
+res <- lapply(sim, mle_dpp_bessel, lb = rep(0, ncol(X)), ub = rep(1, ncol(X)))
+temp <- unlist(res)
+par(mfrow = c(2, 2))
+boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
+abline(h = 0.03)
+boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
+abline(h = 0.03)
+boxplot(temp[seq(5, 600, 6)], main = 'tau')
+abline(h = 0.2)
+boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
+abline(h = 0.05)
 }

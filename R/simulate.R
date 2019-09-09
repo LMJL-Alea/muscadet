@@ -1,56 +1,3 @@
-#Matern
-mfun=function(r,alpha,nu){2^(1-nu)/gamma(nu)*(r/alpha)^nu*besselK(r/alpha,nu)}
-mfunspec=function(r,alpha,nu){4*pi*alpha^2*nu*(1+4*pi^2*alpha^2*r^2)^{-1-nu}}
-g=function(r,alpha,nu){ 1-mfun(r,alpha,nu)^2}
-g12=function(r,tau,alpha12,nu){1-tau^2*mfun(r,alpha12,nu)^2}
-alphamax=function(rho,nu){1/sqrt(4*pi*rho*nu)}
-Kspecdiag=function(r,rho1=100,rho2=100,alpha1=0.0044,alpha2=0.0044,nu1=10,nu2=10){diag(c(rho1*mfunspec(r,alpha1,nu1),rho2*mfunspec(r,alpha2,nu2)))}
-Kspecmatern=function(r,rho1=100,rho2=100,alpha1=0.0044,alpha2=0.0044,alpha12=0.0044,tau=0,nu1=10,nu2=10,nu12=10){
-  matrix(c(rho1*mfunspec(r,alpha1,nu1),tau*sqrt(rho1*rho2)*mfunspec(r,alpha12,nu12),tau*sqrt(rho1*rho2)*mfunspec(r,alpha12,nu12),rho2*mfunspec(r,alpha2,nu2)),2,2)
-}
-testtaumatern=function(tau,rho1,rho2,alpha1,alpha2,alpha12,nu1=10,nu2=10,nu12=10){
-  bound1<-alpha1*alpha2/alpha12^2
-  bound2<-sqrt(4*(alpha1*alpha2/alpha12^2)^2*(1/(4*pi*rho1*alpha1^2*nu1)-1)*(1/(4*pi*rho2*alpha2^2*nu2)-1))
-  if(tau>bound1 || tau>bound2 || 4*pi*rho1*alpha1^2*nu1>1 || 4*pi*rho2*alpha2^2*nu2>1 || alpha12<alpha1 || alpha12<alpha2 ){return(FALSE)}
-  else{return(TRUE)}}
-
-
-#Gauss
-ggauss=function(r,alpha,nu=10){ 1-exp(-2*r^2/alpha^2)}
-ggauss12=function(r,tau,alpha12,nu=10){1-tau^2*exp(-2*r^2/alpha12^2)}
-Kspecgauss=function(r,rho1=100,rho2=100,alpha1=0.03,alpha2=0.03,alpha12=0.03,tau=0){
-  matrix(c(rho1*alpha1^2*pi*exp(-pi^2*alpha1^2*r^2),tau*sqrt(rho1*rho2)*alpha12^2*pi*exp(-pi^2*alpha12^2*r^2),tau*sqrt(rho1*rho2)*alpha12^2*pi*exp(-pi^2*alpha12^2*r^2),rho2*alpha2^2*pi*exp(-pi^2*alpha2^2*r^2)),2,2)
-}
-validtaugauss=function(rho1=100,rho2=100,alpha1=0.03,alpha2=0.03,alpha12=0.03){
-  bound1<-alpha1*alpha2/alpha12^2
-  bound2<-sqrt(4*(alpha1*alpha2/alpha12^2)^2*(1/(pi*rho1*alpha1^2)-1)*(1/(pi*rho2*alpha2^2)-1))
-  return(paste("tau must be smaller than ", bound1," and ",bound2 ))
-}
-testtaugauss=function(tau,rho1,rho2,alpha1,alpha2,alpha12){
-  bound1<-alpha1*alpha2/alpha12^2
-  bound2<-sqrt(4*(alpha1*alpha2/alpha12^2)^2*(1/(pi*rho1*alpha1^2)-1)*(1/(pi*rho2*alpha2^2)-1))
-  if(tau>bound1 || tau>bound2 || pi*rho1*alpha1^2>1 || pi*rho2*alpha2^2>1 || alpha12^2<(alpha1^2+alpha2^2)/2){return(FALSE)}
-  else{return(TRUE)}}
-
-#Bessel
-mfunbessel=function(r,alpha){2*besselJ(2*r/alpha,1)/(2*r/alpha)}
-mfunspecbessel=function(r,alpha){ifelse(pi^2*alpha^2*r^2<1,pi*alpha^2,0)}
-gbessel=function(r,alpha,nu=10){ 1-mfunbessel(r,alpha)^2}
-gbessel12=function(r,tau,alpha12,nu=10){1-tau^2*mfunbessel(r,alpha12)^2}
-Kspecbessel=function(r,rho1=100,rho2=100,alpha1=0.0044,alpha2=0.0044,alpha12=0.0044,tau=0){
-  matrix(c(rho1*mfunspecbessel(r,alpha1),tau*sqrt(rho1*rho2)*mfunspecbessel(r,alpha12),tau*sqrt(rho1*rho2)*mfunspecbessel(r,alpha12),rho2*mfunspecbessel(r,alpha2)),2,2)
-}
-testtaubessel=function(tau,rho1,rho2,alpha1,alpha2,alpha12,nu1=10,nu2=10,nu12=10){
-  bound1<-alpha1*alpha2/alpha12^2
-  bound2<-sqrt(4*(alpha1*alpha2/alpha12^2)^2*(1/(rho1*pi*alpha1^2)-1)*(1/(rho2*pi*alpha2^2)-1))
-  if(tau>bound1 || tau>bound2 || rho1*pi*alpha1^2>1 || rho2*pi*alpha2^2>1 || alpha12<alpha1 || alpha12<alpha2 ){return(FALSE)}
-  else{return(TRUE)}}
-validtaubessel=function(rho1=100,rho2=100,alpha1=0.03,alpha2=0.03,alpha12=0.03){
-  bound1<-alpha1*alpha2/alpha12^2
-  bound2<-sqrt(4*(alpha1*alpha2/alpha12^2)^2*(1/(rho1*pi*alpha1^2)-1)*(1/(rho2*pi*alpha2^2)-1))
-  return(paste("tau must be smaller than ", bound1," and ",bound2 ))
-}
-
 #' Simulate points according to a bivariate DPP
 #'
 #' @param rho1 A numeric scalar specifying the intensity of the 1st DPP (default: 100).
@@ -70,8 +17,8 @@ validtaubessel=function(rho1=100,rho2=100,alpha1=0.03,alpha2=0.03,alpha12=0.03){
 #' @export
 #'
 #' @examples
-#' pp <- simdppxmatern(progress = 1, Kspec = "Kspecbessel", testtau = "testtaubessel")
-simdppxmatern <- function(
+#' pp <- rbidpp(progress = 1, Kspec = "Kspecbessel", testtau = "testtaubessel")
+rbidpp <- function(
   rho1 = 100, rho2 = 100, tau = 0.2,
   alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
   nu1 = 10, nu2 = 10, nu12 = 10,

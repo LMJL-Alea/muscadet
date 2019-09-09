@@ -22,23 +22,30 @@
 #' @name mle-dpp
 #'
 #' @examples
-#' dpp <- bessel_tauSq0p5[[1]]
-#' X <- cbind(dpp$x, dpp$y)
-#' labels <- dpp$marks
+#' dpp <- sim[[1]]
 #' rho1 <- rho2 <- 100
-#' rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
 #' alpha1 <- alpha2 <- 0.03
-#' alpha12 <- 0.03
+#' alpha12 <- 0.05
+#' tau <- 0.2
+#' rho12 <- tau * sqrt(rho1 * rho2)
 #' d <- 2
 #' mle_dpp_bessel(
 #'   X = X,
-#'   labels = labels,
-#'   rho1 = rho1,
-#'   rho2 = rho2,
-#'   alpha1 = alpha1,
-#'   alpha2 = alpha2,
-#'   estimate_alpha = FALSE
+#'   lb = rep(0, ncol(X)),
+#'   ub = rep(1, ncol(X))
 #' )
+#'
+#' res <- lapply(sim, mle_dpp_bessel, lb = rep(0, ncol(X)), ub = rep(1, ncol(X)))
+#' temp <- unlist(res)
+#' par(mfrow = c(2, 2))
+#' boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
+#' abline(h = 0.03)
+#' boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
+#' abline(h = 0.03)
+#' boxplot(temp[seq(5, 600, 6)], main = 'tau')
+#' abline(h = 0.2)
+#' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
+#' abline(h = 0.05)
 NULL
 
 #' @rdname mle-dpp
@@ -61,18 +68,51 @@ mle_dpp_gauss <- function(X, labels,
 
 #' @rdname mle-dpp
 #' @export
-mle_dpp_bessel <- function(X, labels,
+mle_dpp_bessel <- function(X,
                            lb = rep(-0.5, ncol(X)),
                            ub = rep( 0.5, ncol(X)),
                            rho1 = NA, alpha1 = NA,
                            rho2 = NA, alpha2 = NA,
                            estimate_alpha = TRUE) {
-  x0 <- InitializeBessel(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+  # x0 <- InitializeBessel(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+  labels <- X$marks
+  init <- bessel_pcf_estimation(X, type = "joint")
+  X <- cbind(X$x, X$y)
+  d <- ncol(X)
+  k1 <- init$rho1 * (2 * pi * init$alpha1^2 / d)^(d/2) * gamma(1 + d/2)
+  k2 <- init$rho2 * (2 * pi * init$alpha2^2 / d)^(d/2) * gamma(1 + d/2)
+  k12 <- init$tau * sqrt(init$rho1 * init$rho2) * (2 * pi * init$alpha12^2 / d)^(d/2) * gamma(1 + d/2)
 
-  optim(
-    par = x0, fn = EvaluateBessel, method = "Nelder-Mead",
-    control = list(warn.1d.NelderMead = FALSE),
+  x0 <- c(init$alpha1, init$alpha2, init$alpha12, k1, k2, k12)
+  # x0 <- c(init$alpha1, init$alpha2, init$alpha12, k12)
+
+  fit <- nloptr::neldermead(
+    x0 = x0, fn = EvaluateBessel,
     X = X, labels = labels, lb = lb, ub = ub,
     rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2, estimate_alpha = estimate_alpha
+  )
+  # fit <- nloptr::neldermead(
+  #   x0 = x0, fn = EvaluateBessel,
+  #   X = X, labels = labels, lb = lb, ub = ub,
+  #   rho1 = init$rho1, rho2 = init$rho2, alpha1 = alpha1, alpha2 = alpha2, estimate_alpha = estimate_alpha
+  # )
+
+  alpha1 <- fit$par[1]
+  alpha2 <- fit$par[2]
+  alpha12 <- fit$par[3]
+
+  rho1 <- fit$par[4] / gamma(1 + d/2) / (2 * pi * alpha1^2 / d)^(d/2)
+  rho2 <- fit$par[5] / gamma(1 + d/2) / (2 * pi * alpha2^2 / d)^(d/2)
+  rho12 <- fit$par[6] / gamma(1 + d/2) / (2 * pi * alpha12^2 / d)^(d/2)
+  # rho1 <- init$rho1
+  # rho2 <- init$rho2
+  # rho12 <- fit$par[4] / gamma(1 + d/2) / (2 * pi * alpha12^2 / d)^(d/2)
+
+  tau <- rho12 / sqrt(rho1 * rho2)
+
+  list(
+    rho1 = rho1, alpha1 = alpha1,
+    rho2 = rho2, alpha2 = alpha2,
+    tau = tau, alpha12 = alpha12
   )
 }

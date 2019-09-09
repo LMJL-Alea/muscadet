@@ -17,7 +17,7 @@ R <- 100
 sim <- list()
 for(i in 1:R){
   cat(i)
-  sim[[i]] <- simdppxmatern(rho1, rho2, alpha1, alpha2, alpha12, tau, progress = 1, Kspec = "Kspecbessel", testtau = "testtaubessel")
+  sim[[i]] <- rbidpp(rho1, rho2, alpha1, alpha2, alpha12, tau, progress = 1, Kspec = "Kspecbessel", testtau = "testtaubessel")
 }
 
 usethis::use_data(sim)
