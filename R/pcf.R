@@ -149,9 +149,9 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
     k2 <- get_k(rho2, alpha2, d)
     if (k12 >= get_k12_ub(k1, k2) | alpha12 < max(alpha1, alpha2))
       return(1e6)
-    sum((x1^0.5 - pcftheomarginal(alpha1, rc, d)^0.5)^2 +
-          sum(x2^0.5 - pcftheomarginal(alpha2, rc, d)^0.5)^2 +
-          sum(x12^0.5 - pcftheocross(c(k12, alpha12), rc, rho1, rho2, d)^0.5)^2)
+    sum((x1^0.5 - pcftheomarginal(alpha1, rc, d)^0.5)^2) +
+          sum((x2^0.5 - pcftheomarginal(alpha2, rc, d)^0.5)^2) +
+          sum((x12^0.5 - pcftheocross(c(k12, alpha12), rc, rho1, rho2, d)^0.5)^2)
   }
   lbs <- c(
     sqrt(.Machine$double.eps),
