@@ -73,7 +73,7 @@ arma::mat EstimateBessel(
   // Create the optimizer.
   // ens::DE optimizer(1000, 1000, 0.6, 0.8, 1e-5);
   ens::ExponentialSchedule expSchedule;
-  ens::SA<> optimizer(expSchedule, 1000000, 1000., 1000, 100, 1e-10, 3, 1.5, 0.5, 0.3);
+  ens::SA<> optimizer(expSchedule);//, 1000000, 1000., 1000, 100, 1e-10, 3, 1.5, 0.5, 0.3);
   // ens::CNE optimizer(200, 10000, 0.2, 0.2, 0.3, 1e-5);
 
   // Create a starting point for our optimization randomly within the
@@ -104,37 +104,24 @@ double EvaluateBessel(
     const arma::vec &lb,
     const arma::vec &ub,
     const double rho1 = NA_REAL,
-    const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
-    const double alpha2 = NA_REAL,
-    const bool estimate_alpha = true)
+    const double rho2 = NA_REAL,
+    const double alpha2 = NA_REAL)
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
-  if (arma::is_finite(alpha1))
+  if (arma::is_finite(rho1) && arma::is_finite(alpha1))
   {
-    if (!estimate_alpha)
-      logLik.SetFirstAlpha(alpha1);
-
-    if (arma::is_finite(rho1))
-    {
-      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
-      logLik.SetFirstAmplitude(a1);
-    }
+    double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
+    logLik.SetFirstAmplitude(a1);
   }
 
-  if (arma::is_finite(alpha2))
+  if (arma::is_finite(rho2) && arma::is_finite(alpha2))
   {
-    if (!estimate_alpha)
-      logLik.SetSecondAlpha(alpha2);
-
-    if (arma::is_finite(rho2))
-    {
-      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
-      logLik.SetSecondAmplitude(a2);
-    }
+    double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
+    logLik.SetSecondAmplitude(a2);
   }
 
   arma::mat params(p.n_elem, 1);

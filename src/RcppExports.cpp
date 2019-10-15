@@ -27,8 +27,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // EvaluateBessel
-double EvaluateBessel(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+double EvaluateBessel(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double alpha1, const double rho2, const double alpha2);
+RcppExport SEXP _mediator_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP alpha1SEXP, SEXP rho2SEXP, SEXP alpha2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -38,11 +38,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
+    Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(EvaluateBessel(p, X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha));
+    rcpp_result_gen = Rcpp::wrap(EvaluateBessel(p, X, labels, lb, ub, rho1, alpha1, rho2, alpha2));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -126,7 +125,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_EstimateBessel", (DL_FUNC) &_mediator_EstimateBessel, 9},
-    {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 10},
+    {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 9},
     {"_mediator_InitializeBessel", (DL_FUNC) &_mediator_InitializeBessel, 9},
     {"_mediator_EstimateGauss", (DL_FUNC) &_mediator_EstimateGauss, 9},
     {"_mediator_EvaluateGauss", (DL_FUNC) &_mediator_EvaluateGauss, 10},

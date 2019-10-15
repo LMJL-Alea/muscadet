@@ -4,13 +4,13 @@
 \alias{bessel_pcf_estimation}
 \title{Estimation of Stationary Bivariate Bessel DPP via PCF}
 \usage{
-bessel_pcf_estimation(X, bound = 1, type = "joint")
+bessel_pcf_estimation(X, init = NULL, type = "joint")
 }
 \arguments{
 \item{X}{A 2-dimensional marked \code{\link[spatstat]{ppp}} object.}
 
-\item{bound}{A numeric scalar providing an upper bound for the cross-???
-parameter (default: 1).}
+\item{init}{A list giving an initial guess at the parameters (default:
+\code{NULL}).}
 
 \item{type}{A character scalar specifying whether PCF contrasts should be
 minimized jointly (default) or independently. The latter is faster but

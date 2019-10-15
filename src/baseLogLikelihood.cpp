@@ -173,7 +173,7 @@ arma::mat BaseLogLikelihood::GetInitialPoint()
 
     if (m_EstimateCrossAmplitude)
     {
-      m_CrossAmplitude = 0.0;
+      m_CrossAmplitude = std::sqrt(std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon)) / 2.0;
       m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
       params[pos] = m_CrossAmplitude;
     }
@@ -534,7 +534,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     ++pos;
   }
 
-  Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
+  // Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
 }
 
 bool BaseLogLikelihood::CheckModelParameters()
@@ -552,6 +552,18 @@ bool BaseLogLikelihood::CheckModelParameters()
     return false;
 
   if (this->EvaluateAlphaConstraint(m_FirstAlpha, m_SecondAlpha, m_CrossAlpha))
+    return false;
+
+  // if (m_FirstAlpha > (double)m_DomainDimension * std::pow(m_DomainVolume, 2.0 / m_DomainDimension) / (2.0 * M_PI))
+  //   return false;
+  //
+  // if (m_SecondAlpha > (double)m_DomainDimension * std::pow(m_DomainVolume, 2.0 / m_DomainDimension) / (2.0 * M_PI))
+  //   return false;
+  //
+  // if (m_CrossAlpha > (double)m_DomainDimension * std::pow(m_DomainVolume, 2.0 / m_DomainDimension) / (2.0 * M_PI))
+  //   return false;
+
+  if (m_CrossAmplitude < 0)
     return false;
 
   if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon))

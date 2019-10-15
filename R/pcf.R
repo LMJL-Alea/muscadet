@@ -1,8 +1,8 @@
 #' Estimation of Stationary Bivariate Bessel DPP via PCF
 #'
 #' @param X A 2-dimensional marked \code{\link[spatstat]{ppp}} object.
-#' @param bound A numeric scalar providing an upper bound for the cross-???
-#'   parameter (default: 1).
+#' @param init A list giving an initial guess at the parameters (default:
+#'   \code{NULL}).
 #' @param type A character scalar specifying whether PCF contrasts should be
 #'   minimized jointly (default) or independently. The latter is faster but
 #'   provides biased estimates.
@@ -34,66 +34,94 @@
 #' abline(h = 0.2)
 #' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
 #' abline(h = 0.05)
-bessel_pcf_estimation <- function(X, bound = 1, type = "joint") {
+bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
   Xs <- spatstat::split.ppp(X)
   d <- length(Xs)
   X1 <- Xs[[1]]
   X2 <- Xs[[2]]
   V <- spatstat::volume(X$window)
-
-  # First marginal model
-  m1 <- fit_marginal_model(X1, V, d)
-  rho1 <- m1$rho
-  alpha1 <- m1$alpha
-  k1 <- m1$k
-
-  # Second marginal model
-  m2 <- fit_marginal_model(X2, V, d)
-  rho2 <- m2$rho
-  alpha2 <- m2$alpha
-  k2 <- m2$k
-
-  # Get a first guess at alpha12 and
-  # tau by minimizing cross-contrast
-  ub <- alpha1^d * alpha2^d * min(1, (1 / k1 - 1) * (1 / k2 - 1))
   pcf12 <- spatstat::pcfcross(X)
   x12 <- pcf12$iso[22:513]
   r12 <- pcf12$r[22:513]
-  funcontrast <- function(par) {
-    tau <- par[1]
-    alpha12 <- par[2]
-    if (alpha12 < max(alpha1, alpha2) || tau^2 * alpha12^(2 * d) >= ub)
-      return(1e6)
-    sum((x12^0.5 - pcftheocross(par, r12)^0.5)^2)
+
+  if (type == "individual") {
+    # First marginal model
+    rho1 <- alpha1 <- NULL
+    if (!is.null(init)) {
+      rho1 <- init$rho1
+      alpha1 <- ialpha1 <- init$alpha1
+      ik1 <- get_k(rho1, ialpha1, d)
+    }
+    m1 <- fit_marginal_model(X1, V, d, rho1, alpha1)
+    rho1 <- m1$rho
+    alpha1 <- m1$alpha
+    k1 <- m1$k
+
+    # Second marginal model
+    rho2 <- alpha2 <- NULL
+    if (!is.null(init)) {
+      rho2 <- init$rho2
+      alpha2 <- ialpha2 <- init$alpha2
+      ik2 <- get_k(rho2, ialpha2, d)
+    }
+    m2 <- fit_marginal_model(X2, V, d, rho2, alpha2)
+    rho2 <- m2$rho
+    alpha2 <- m2$alpha
+    k2 <- m2$k
+
+    # Cross contrast for tau and alpha12
+    funcontrast <- function(par) {
+      sum((x12^0.5 - pcftheocross(par, r12, rho1, rho2, d)^0.5)^2)
+    }
+    if (is.null(init)) {
+      lbs <- c(0, max(alpha1, alpha2))
+      ubs <- c(
+        get_k12_ub(k1, k2),
+        get_alpha_ub(sqrt(rho1 * rho2), d)
+      )
+      fit12 <- nloptr::directL(
+        fn = funcontrast,
+        lower = lbs,
+        upper = ubs,
+        original = TRUE
+      )
+      x0 <- fit12$par
+      fit12 <- nloptr::neldermead(
+        x0 = x0,
+        fn = funcontrast,
+        lower = lbs,
+        upper = ubs
+      )
+    } else {
+      k12 <- get_k(init$tau * sqrt(rho1 * rho2), init$alpha12, d)
+      x0 <- c(k12, init$alpha12)
+      fit12 <- nloptr::neldermead(
+        x0 = x0,
+        fn = funcontrast,
+        lower = c(0, max(ialpha1, ialpha2)),
+        upper = c(
+          get_k12_ub(ik1, ik2),
+          get_alpha_ub(sqrt(rho1 * rho2), d)
+        )
+      )
+    }
+
+    k12 <- fit12$par[1]
+    alpha12 <- fit12$par[2]
+    tau <- get_rho(k12, alpha12, d) / sqrt(rho1 * rho2)
+
+    return(list(
+      rho1 = rho1,
+      alpha1 = alpha1,
+      rho2 = rho2,
+      alpha2 = alpha2,
+      tau = tau,
+      alpha12 = alpha12
+    ))
   }
-  fit12 <- nloptr::direct(
-    fn = funcontrast,
-    lower = c(0, max(alpha1, alpha2)),
-    upper = c(1, bound)
-  )
-  fit12 <- nloptr::neldermead(
-    x0 = fit12$par,
-    fn = funcontrast,
-    lower = c(0, max(alpha1, alpha2)),
-    upper = c(1, Inf)
-  )
-  alpha12 <- fit12$par[2]
-  tau <- fit12$par[1]
 
-  independent_fit <- list(
-    rho1 = rho1,
-    alpha1 = alpha1,
-    rho2 = rho2,
-    alpha2 = alpha2,
-    tau = tau,
-    alpha12 = alpha12
-  )
-
-  if (type != "joint")
-    return(independent_fit)
-
-  # Prepare initialization for joint PCF estimation
-  x0 <- c(alpha1, alpha2, alpha12, tau)
+  rho1 <- X1$n / V
+  rho2 <- X2$n / V
 
   # Get empirical marginal PCFs
   pcf1 <- spatstat::pcf(X1)
@@ -116,24 +144,55 @@ bessel_pcf_estimation <- function(X, bound = 1, type = "joint") {
     alpha1 <- par[1]
     alpha2 <- par[2]
     alpha12 <- par[3]
-    tau <- par[4]
-    k1 <- rho1 * gamma(1 + d/2) * (2 * pi * alpha1^2 / d)^(d/2)
-    k2 <- rho2 * gamma(1 + d/2) * (2 * pi * alpha2^2 / d)^(d/2)
-    ub <- alpha1^d * alpha2^d * min(1, (1 / k1 - 1) * (1 / k2 - 1))
-    if (k1 >= 1 || k2 >= 1 ||
-        alpha12 < max(alpha1, alpha2) ||
-        tau^2 * alpha12^(2 * d) >= ub)
+    k12 <- par[4]
+    k1 <- get_k(rho1, alpha1, d)
+    k2 <- get_k(rho2, alpha2, d)
+    if (k12 >= get_k12_ub(k1, k2) | alpha12 < max(alpha1, alpha2))
       return(1e6)
-    sum((x1^0.5 - pcftheomarginal(alpha1, rc)^0.5)^2 +
-          sum(x2^0.5 - pcftheomarginal(alpha2, rc)^0.5)^2 +
-          2 * sum(x12^0.5 - pcftheocross(c(tau, alpha12), rc)^0.5)^2)
+    sum((x1^0.5 - pcftheomarginal(alpha1, rc, d)^0.5)^2 +
+          sum(x2^0.5 - pcftheomarginal(alpha2, rc, d)^0.5)^2 +
+          sum(x12^0.5 - pcftheocross(c(k12, alpha12), rc, rho1, rho2, d)^0.5)^2)
   }
+  lbs <- c(
+    sqrt(.Machine$double.eps),
+    sqrt(.Machine$double.eps),
+    sqrt(.Machine$double.eps),
+    0
+  )
+  ubs <- c(
+    get_alpha_ub(rho1, d),
+    get_alpha_ub(rho2, d),
+    get_alpha_ub(sqrt(rho1 * rho2), d),
+    1
+  )
+
+  if (is.null(init)) {
+    joint_fit <- nloptr::directL(
+      fn = joint_pcf,
+      lower = lbs,
+      upper = ubs,
+      original = TRUE
+    )
+    x0 <- joint_fit$par
+  } else {
+    x0 <- c(
+      init$alpha1,
+      init$alpha2,
+      init$alpha12,
+      get_k(init$tau * sqrt(init$rho1 * init$rho2), init$alpha12, d)
+    )
+  }
+
   joint_fit <- nloptr::neldermead(
     x0 = x0,
     fn = joint_pcf,
-    lower = c(sqrt(.Machine$double.eps), sqrt(.Machine$double.eps), max(alpha1, alpha2), 0),
-    upper = c(sqrt(d / (2*pi)) * (rho1 * gamma(1 + d/2))^(-1/d), sqrt(d / (2*pi)) * (rho2 * gamma(1 + d/2))^(-1/d), Inf, 1)
+    lower = lbs,
+    upper = ubs
   )
+
+  alpha12 <- joint_fit$par[3]
+  k12 <- joint_fit$par[4]
+  tau <- get_rho(k12, alpha12, d) / sqrt(rho1 * rho2)
 
   # Output estimated parameters
   list(
@@ -141,29 +200,45 @@ bessel_pcf_estimation <- function(X, bound = 1, type = "joint") {
     alpha1 = joint_fit$par[1],
     rho2 = rho2,
     alpha2 = joint_fit$par[2],
-    tau = joint_fit$par[4],
-    alpha12 = joint_fit$par[3]
+    tau = tau,
+    alpha12 = alpha12
   )
 }
 
-fit_marginal_model <- function(X, V, d) {
-  rho <- X$n / V
+fit_marginal_model <- function(X, V, d, rho = NULL, alpha = NULL) {
+  # Get initial values if not provided
+  ## rho
+  if (is.null(rho)) rho <- X$n / V
+  ## alpha
   alpha_lb <- sqrt(.Machine$double.eps)
-  alpha_ub <- spatstat::dppparbounds(
-    model = spatstat::dppBessel(lambda = rho, sigma = 0, d = d),
-    name = "alpha")[2]
-  alpha_init <- (alpha_lb + alpha_ub) / 2
-  fit <- spatstat::mincontrast(
-    observed = spatstat::pcf(X),
-    theoretical = pcftheomarginal,
-    startpar = alpha_init,
-    ctrl = list(q = 1/2, p = 2, rmin = 0.01),
-    method = "Brent",
+  alpha_ub <- get_alpha_ub(rho, d)
+  pcf <- spatstat::pcf(X)
+  x <- pcf$iso[22:513]
+  r <- pcf$r[22:513]
+  funcontrast <- function(par) {
+    sum((x^0.5 - pcftheomarginal(par, r, d)^0.5)^2)
+  }
+  if (is.null(alpha)) {
+    fit <- nloptr::directL(
+      fn = funcontrast,
+      lower = alpha_lb,
+      upper = alpha_ub,
+      original = TRUE
+    )
+    alpha_init <- fit$par
+  } else
+    alpha_init <- alpha
+
+  # Final fit
+  fit <- nloptr::neldermead(
+    x0 = alpha_init,
+    fn = funcontrast,
     lower = alpha_lb,
     upper = alpha_ub
   )
+
   alpha <- fit$par
-  k <- rho * gamma(d / 2 + 1) * (2 * pi * alpha^2 / d)^(d / 2)
+  k <- get_k(rho, alpha, d)
   list(rho = rho, alpha = alpha, k = k)
 }
 
@@ -183,6 +258,32 @@ pcftheomarginal <- function(par, r, d = 2, ...) {
   1 - mfunbessel(r, par, d = d)^2
 }
 
-pcftheocross <- function(par, r, d = 2) {
-  1 - par[1]^2 * mfunbessel(r, par[2], d = d)^2
+pcftheocross <- function(par, r, rho1, rho2, d = 2) {
+  k <- par[1]
+  alpha <- par[2]
+  tau2 <- get_rho(k, alpha, d)^2 / (rho1 * rho2)
+  1 - tau2 * mfunbessel(r, alpha, d = d)^2
+}
+
+get_k <- function(rho, alpha, d) {
+  rho * gamma(d / 2 + 1) * (2 * pi * alpha^2 / d)^(d / 2)
+}
+
+get_rho <- function(k, alpha, d) {
+  k / (gamma(d / 2 + 1) * (2 * pi * alpha^2 / d)^(d / 2))
+}
+
+get_alpha_ub <- function(rho, d = 2) {
+  spatstat::dppparbounds(
+    model = spatstat::dppBessel(
+      lambda = rho,
+      sigma = 0,
+      d = d
+    ),
+    name = "alpha"
+  )[2]
+}
+
+get_k12_ub <- function(k1, k2) {
+  ub <- sqrt(max(min(k1 * k2, (1 - k1) * (1 - k2)), 0))
 }
