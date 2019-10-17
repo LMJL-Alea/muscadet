@@ -69,50 +69,140 @@ mle_dpp_gauss <- function(X, labels,
 #' @rdname mle-dpp
 #' @export
 mle_dpp_bessel <- function(X,
-                           lb = rep(-0.5, ncol(X)),
-                           ub = rep( 0.5, ncol(X)),
-                           rho1 = NA, alpha1 = NA,
-                           rho2 = NA, alpha2 = NA,
-                           estimate_alpha = TRUE) {
-  # x0 <- InitializeBessel(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+                           lb = rep(0, ncol(X)),
+                           ub = rep(1, ncol(X)),
+                           estimate_rho = TRUE,
+                           init = NULL) {
   labels <- X$marks
-  init <- bessel_pcf_estimation(X, type = "joint")
+  if (is.null(init)) {
+    rho2 <- spatstat::intensity(X)
+    rho1 <- rho2[1]
+    rho2 <- rho2[2]
+  } else {
+    rho1 <- init$rho1
+    rho2 <- init$rho2
+  }
+  V <- spatstat::volume(X$window)
   X <- cbind(X$x, X$y)
   d <- ncol(X)
-  k1 <- init$rho1 * (2 * pi * init$alpha1^2 / d)^(d/2) * gamma(1 + d/2)
-  k2 <- init$rho2 * (2 * pi * init$alpha2^2 / d)^(d/2) * gamma(1 + d/2)
-  k12 <- init$tau * sqrt(init$rho1 * init$rho2) * (2 * pi * init$alpha12^2 / d)^(d/2) * gamma(1 + d/2)
 
-  x0 <- c(init$alpha1, init$alpha2, init$alpha12, k1, k2, k12)
-  # x0 <- c(init$alpha1, init$alpha2, init$alpha12, k12)
+  if (!estimate_rho | is.null(init)) {
+    lbs <- c(
+      sqrt(.Machine$double.eps),
+      sqrt(.Machine$double.eps),
+      0,
+      0
+    )
+    ubs <- c(
+      get_alpha_ub(rho1, d),
+      get_alpha_ub(rho2, d),
+      1,
+      1
+    )
+
+    # First, fit model with fixed rhos
+    # Grab a good initial position
+    if (is.null(init)) {
+      fit <- nloptr::directL(
+        fn = EvaluateBessel,
+        lower = lbs,
+        upper = ubs,
+        X = X, labels = labels, lb = lb, ub = ub,
+        rho1 = rho1, rho2 = rho2
+      )
+      x0 <- fit$par
+    } else {
+      x0 <- c(
+        init$alpha1,
+        init$alpha2,
+        get_k(init$tau * sqrt(rho1 * rho2), init$alpha12, d),
+        init$tau
+      )
+    }
+
+    fit <- nloptr::neldermead(
+      x0 = x0,
+      fn = EvaluateBessel,
+      lower = lbs,
+      upper = ubs,
+      X = X, labels = labels, lb = lb, ub = ub,
+      rho1 = rho1, rho2 = rho2
+    )
+
+    alpha1 <- fit$par[1]
+    alpha2 <- fit$par[2]
+    k12 <- fit$par[3]
+    tau <- fit$par[4]
+    alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
+
+    if (!estimate_rho) {
+      return(list(
+        rho1 = rho1,
+        alpha1 = alpha1,
+        rho2 = rho2,
+        alpha2 = alpha2,
+        tau = tau,
+        alpha12 = alpha12
+      ))
+    }
+  }
+
+  # Next, estimate also intensities
+  if (is.null(init)) {
+    x0 <- c(
+      alpha1,
+      alpha2,
+      k12,
+      get_k(rho1, alpha1, d),
+      get_k(rho2, alpha2, d),
+      tau
+    )
+  } else {
+    x0 <- c(
+      init$alpha1,
+      init$alpha2,
+      get_k(init$tau * sqrt(rho1 * rho2), init$alpha12, d),
+      get_k(rho1, init$alpha1, d),
+      get_k(rho2, init$alpha2, d),
+      init$tau
+    )
+  }
 
   fit <- nloptr::neldermead(
-    x0 = x0, fn = EvaluateBessel,
-    X = X, labels = labels, lb = lb, ub = ub,
-    rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2, estimate_alpha = estimate_alpha
+    x0 = x0,
+    fn = EvaluateBessel,
+    lower = c(
+      sqrt(.Machine$double.eps),
+      sqrt(.Machine$double.eps),
+      0,
+      sqrt(.Machine$double.eps),
+      sqrt(.Machine$double.eps),
+      0
+    ),
+    upper = c(
+      get_alpha_ub(1 / V, d),
+      get_alpha_ub(1 / V, d),
+      rep(1, 4)
+    ),
+    X = X, labels = labels, lb = lb, ub = ub
   )
-  # fit <- nloptr::neldermead(
-  #   x0 = x0, fn = EvaluateBessel,
-  #   X = X, labels = labels, lb = lb, ub = ub,
-  #   rho1 = init$rho1, rho2 = init$rho2, alpha1 = alpha1, alpha2 = alpha2, estimate_alpha = estimate_alpha
-  # )
 
   alpha1 <- fit$par[1]
   alpha2 <- fit$par[2]
-  alpha12 <- fit$par[3]
-
-  rho1 <- fit$par[4] / gamma(1 + d/2) / (2 * pi * alpha1^2 / d)^(d/2)
-  rho2 <- fit$par[5] / gamma(1 + d/2) / (2 * pi * alpha2^2 / d)^(d/2)
-  rho12 <- fit$par[6] / gamma(1 + d/2) / (2 * pi * alpha12^2 / d)^(d/2)
-  # rho1 <- init$rho1
-  # rho2 <- init$rho2
-  # rho12 <- fit$par[4] / gamma(1 + d/2) / (2 * pi * alpha12^2 / d)^(d/2)
-
-  tau <- rho12 / sqrt(rho1 * rho2)
+  k12 <- fit$par[3]
+  k1 <- fit$par[4]
+  k2 <- fit$par[5]
+  tau <- fit$par[6]
+  rho1 <- get_rho(k1, alpha1, d)
+  rho2 <- get_rho(k2, alpha2, d)
+  alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
 
   list(
-    rho1 = rho1, alpha1 = alpha1,
-    rho2 = rho2, alpha2 = alpha2,
-    tau = tau, alpha12 = alpha12
+    rho1 = rho1,
+    alpha1 = alpha1,
+    rho2 = rho2,
+    alpha2 = alpha2,
+    tau = tau,
+    alpha12 = alpha12
   )
 }

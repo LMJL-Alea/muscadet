@@ -18,6 +18,7 @@ public:
     m_FirstAmplitude = NA_REAL;
     m_SecondAmplitude = NA_REAL;
     m_CrossAmplitude = NA_REAL;
+    m_CrossCorrelation = NA_REAL;
     m_EstimateFirstAmplitude = true;
     m_EstimateSecondAmplitude = true;
     m_EstimateCrossAmplitude = true;
@@ -60,8 +61,8 @@ public:
   void SetFirstAlpha(const double x);
   void SetSecondAlpha(const double x);
   void SetCrossAlpha(const double x);
-  void SetFirstAmplitude(const double x);
-  void SetSecondAmplitude(const double x);
+  void SetFirstIntensity(const double x);
+  void SetSecondIntensity(const double x);
   void SetCrossAmplitude(const double x);
 
   // Return the objective function f(x) for the given x.
@@ -149,6 +150,7 @@ private:
   double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
   double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  double m_CrossCorrelation;
   bool m_EstimateFirstAmplitude, m_EstimateCrossAmplitude, m_EstimateSecondAmplitude;
   bool m_EstimateFirstAlpha, m_EstimateCrossAlpha, m_EstimateSecondAlpha;
 

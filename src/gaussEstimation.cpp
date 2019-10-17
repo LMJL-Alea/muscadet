@@ -51,7 +51,7 @@ arma::mat EstimateGauss(
     if (arma::is_finite(rho1))
     {
       double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
-      logLik.SetFirstAmplitude(a1);
+      // logLik.SetFirstAmplitude(a1);
     }
   }
 
@@ -63,7 +63,7 @@ arma::mat EstimateGauss(
     if (arma::is_finite(rho2))
     {
       double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
-      logLik.SetSecondAmplitude(a2);
+      // logLik.SetSecondAmplitude(a2);
     }
   }
 
@@ -122,7 +122,7 @@ double EvaluateGauss(
     if (arma::is_finite(rho1))
     {
       double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
-      logLik.SetFirstAmplitude(a1);
+      // logLik.SetFirstAmplitude(a1);
     }
   }
 
@@ -134,7 +134,7 @@ double EvaluateGauss(
     if (arma::is_finite(rho2))
     {
       double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
-      logLik.SetSecondAmplitude(a2);
+      // logLik.SetSecondAmplitude(a2);
     }
   }
 
@@ -169,7 +169,7 @@ arma::mat InitializeGauss(
     if (arma::is_finite(rho1))
     {
       double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
-      logLik.SetFirstAmplitude(a1);
+      // logLik.SetFirstAmplitude(a1);
     }
   }
 
@@ -181,7 +181,7 @@ arma::mat InitializeGauss(
     if (arma::is_finite(rho2))
     {
       double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
-      logLik.SetSecondAmplitude(a2);
+      // logLik.SetSecondAmplitude(a2);
     }
   }
 
