@@ -108,7 +108,8 @@ mle_dpp_bessel <- function(X,
         lower = lbs,
         upper = ubs,
         X = X, labels = labels, lb = lb, ub = ub,
-        rho1 = rho1, rho2 = rho2
+        rho1 = rho1, rho2 = rho2,
+        original = TRUE
       )
       x0 <- fit$par
     } else {

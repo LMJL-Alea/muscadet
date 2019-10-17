@@ -459,6 +459,12 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
       m_FirstAlpha = workScalar;
       if (!m_EstimateFirstAmplitude)
         m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
+      else
+      {
+        m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
+        m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
+        m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
+      }
       m_Modified = true;
     }
 
@@ -474,6 +480,12 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
       m_SecondAlpha = workScalar;
       if (!m_EstimateSecondAmplitude)
         m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, m_SecondAlpha, m_DomainDimension);
+      else
+      {
+        m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
+        m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
+        m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
+      }
       m_Modified = true;
     }
 
@@ -487,7 +499,6 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     if (m_CrossAmplitude != workScalar)
     {
       m_CrossAmplitude = workScalar;
-      m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
       m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
       m_Modified = true;
     }
@@ -503,6 +514,8 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     {
       m_FirstAmplitude = workScalar;
       m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
+      m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
+      m_CrossAlpha = m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -517,6 +530,8 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     {
       m_SecondAmplitude = workScalar;
       m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
+      m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
+      m_CrossAlpha = m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
       m_Modified = true;
     }
 
