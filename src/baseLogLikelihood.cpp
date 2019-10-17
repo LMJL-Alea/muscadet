@@ -211,7 +211,7 @@ unsigned int BaseLogLikelihood::GetNumberOfParameters()
 
 double BaseLogLikelihood::GetIntegral()
 {
-  typedef boost::math::quadrature::gauss_kronrod<double, 15> QuadratureType;
+  typedef boost::math::quadrature::gauss_kronrod<double, 61> QuadratureType;
   const double lBound = 0.0;
   const double uBound = std::numeric_limits<double>::infinity();
 
@@ -264,11 +264,11 @@ double BaseLogLikelihood::GetLogDeterminant()
       double tmpVal = this->EvaluateL12Function(sqDist, m_FirstAmplitude, m_SecondAmplitude, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
 
       if (workLabel == 2)
-        resVal = this->EvaluateLFunction(sqDist, m_FirstAmplitude, m_CrossAmplitude, m_FirstAlpha, m_CrossAlpha, tmpVal, m_DomainDimension);
+        resVal = this->EvaluateLFunction(sqDist, m_FirstAmplitude, m_CrossAmplitude, m_FirstAlpha, tmpVal, m_DomainDimension);
       else if (workLabel == 3)
         resVal = tmpVal;
       else
-        resVal = this->EvaluateLFunction(sqDist, m_SecondAmplitude, m_CrossAmplitude, m_SecondAlpha, m_CrossAlpha, tmpVal, m_DomainDimension);
+        resVal = this->EvaluateLFunction(sqDist, m_SecondAmplitude, m_CrossAmplitude, m_SecondAlpha, tmpVal, m_DomainDimension);
 
       lMatrix(i, j) = resVal;
       lMatrixDeriv1(i, j) = workValue1;
@@ -515,7 +515,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
       m_FirstAmplitude = workScalar;
       m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
       m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-      m_CrossAlpha = m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
+      m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -531,7 +531,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
       m_SecondAmplitude = workScalar;
       m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
       m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-      m_CrossAlpha = m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
+      m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
       m_Modified = true;
     }
 
@@ -574,6 +574,9 @@ double BaseLogLikelihood::GetBesselJRatio(const double sqDist, const double alph
 
   if (tmpVal < std::sqrt(std::numeric_limits<double>::epsilon()))
     return 1.0 / boost::math::tgamma(1.0 + order);
+
+  if (tmpVal > 1.0e5)
+    return std::pow(2.0, order) * std::sqrt(2.0 / M_PI) * std::cos(tmpVal - alpha * M_PI / 2.0 - M_PI / 4.0) / std::pow(tmpVal, 0.5 + order);
 
   return boost::math::cyl_bessel_j(order, tmpVal) / std::pow(tmpVal / 2.0, order);
 }

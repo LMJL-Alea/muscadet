@@ -21,7 +21,6 @@ double GaussLogLikelihood::EvaluateLFunction(
     const double amplitude,
     const double amplitude12,
     const double alpha,
-    const double alpha12,
     const double l12Value,
     const unsigned int dimension)
 {
