@@ -44,11 +44,19 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
   x12 <- pcf12$iso[22:513]
   r12 <- pcf12$r[22:513]
 
+  # Set rho1 and rho2
+  if (is.null(init)) {
+    rho1 <- X1$n / V
+    rho2 <- X2$n / V
+  } else {
+    rho1 <- init$rho1
+    rho2 <- init$rho2
+  }
+
   if (type == "individual") {
     # First marginal model
-    rho1 <- alpha1 <- NULL
+    alpha1 <- NULL
     if (!is.null(init)) {
-      rho1 <- init$rho1
       alpha1 <- ialpha1 <- init$alpha1
       ik1 <- get_k(rho1, ialpha1, d)
     }
@@ -58,9 +66,8 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
     k1 <- m1$k
 
     # Second marginal model
-    rho2 <- alpha2 <- NULL
+    alpha2 <- NULL
     if (!is.null(init)) {
-      rho2 <- init$rho2
       alpha2 <- ialpha2 <- init$alpha2
       ik2 <- get_k(rho2, ialpha2, d)
     }
@@ -119,9 +126,6 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
       alpha12 = alpha12
     ))
   }
-
-  rho1 <- X1$n / V
-  rho2 <- X2$n / V
 
   # Get empirical marginal PCFs
   pcf1 <- spatstat::pcf(X1)
