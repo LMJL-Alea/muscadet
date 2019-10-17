@@ -78,13 +78,18 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
 
     # Cross contrast for tau and alpha12
     funcontrast <- function(par) {
-      sum((x12^0.5 - pcftheocross(par, r12, rho1, rho2, d)^0.5)^2)
+      k12 <- par[1]
+      tau <- par[2]
+      alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
+      if (alpha12 <= max(alpha1, alpha2))
+        return(1e6)
+      sum((x12^0.5 - pcftheocross(c(k12, alpha12), r12, rho1, rho2, d)^0.5)^2)
     }
     if (is.null(init)) {
-      lbs <- c(0, max(alpha1, alpha2))
+      lbs <- c(0, 0)
       ubs <- c(
         get_k12_ub(k1, k2),
-        get_alpha_ub(sqrt(rho1 * rho2), d)
+        1
       )
       fit12 <- nloptr::directL(
         fn = funcontrast,
@@ -101,21 +106,21 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
       )
     } else {
       k12 <- get_k(init$tau * sqrt(rho1 * rho2), init$alpha12, d)
-      x0 <- c(k12, init$alpha12)
+      x0 <- c(k12, init$tau)
       fit12 <- nloptr::neldermead(
         x0 = x0,
         fn = funcontrast,
-        lower = c(0, max(ialpha1, ialpha2)),
+        lower = c(0, 0),
         upper = c(
           get_k12_ub(ik1, ik2),
-          get_alpha_ub(sqrt(rho1 * rho2), d)
+          1
         )
       )
     }
 
     k12 <- fit12$par[1]
-    alpha12 <- fit12$par[2]
-    tau <- get_rho(k12, alpha12, d) / sqrt(rho1 * rho2)
+    tau <- fit12$par[2]
+    alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
 
     return(list(
       rho1 = rho1,
@@ -147,8 +152,9 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
   joint_pcf <- function(par) {
     alpha1 <- par[1]
     alpha2 <- par[2]
-    alpha12 <- par[3]
-    k12 <- par[4]
+    k12 <- par[3]
+    tau <- par[4]
+    alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
     k1 <- get_k(rho1, alpha1, d)
     k2 <- get_k(rho2, alpha2, d)
     if (k12 >= get_k12_ub(k1, k2) | alpha12 < max(alpha1, alpha2))
@@ -160,13 +166,13 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
   lbs <- c(
     sqrt(.Machine$double.eps),
     sqrt(.Machine$double.eps),
-    sqrt(.Machine$double.eps),
+    0,
     0
   )
   ubs <- c(
     get_alpha_ub(rho1, d),
     get_alpha_ub(rho2, d),
-    get_alpha_ub(sqrt(rho1 * rho2), d),
+    1,
     1
   )
 
@@ -182,8 +188,8 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
     x0 <- c(
       init$alpha1,
       init$alpha2,
-      init$alpha12,
-      get_k(init$tau * sqrt(init$rho1 * init$rho2), init$alpha12, d)
+      get_k(init$tau * sqrt(init$rho1 * init$rho2), init$alpha12, d),
+      init$tau
     )
   }
 
@@ -194,9 +200,9 @@ bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
     upper = ubs
   )
 
-  alpha12 <- joint_fit$par[3]
-  k12 <- joint_fit$par[4]
-  tau <- get_rho(k12, alpha12, d) / sqrt(rho1 * rho2)
+  k12 <- joint_fit$par[3]
+  tau <- joint_fit$par[4]
+  alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
 
   # Output estimated parameters
   list(
@@ -290,4 +296,9 @@ get_alpha_ub <- function(rho, d = 2) {
 
 get_k12_ub <- function(k1, k2) {
   ub <- sqrt(max(min(k1 * k2, (1 - k1) * (1 - k2)), 0))
+}
+
+get_alpha12 <- function(tau, k12, rho1, rho2, d) {
+  if (tau < sqrt(.Machine$double.eps)) return(sqrt(.Machine$double.eps))
+  (k12 / (tau * sqrt(rho1 * rho2) * (2 * pi / d)^(d / 2) * gamma(1 + d / 2)))^(1 / d)
 }
