@@ -295,7 +295,7 @@ get_alpha_ub <- function(rho, d = 2) {
 }
 
 get_k12_ub <- function(k1, k2) {
-  ub <- sqrt(max(min(k1 * k2, (1 - k1) * (1 - k2)), 0))
+  sqrt(max(min(k1 * k2, (1 - k1) * (1 - k2)), 0))
 }
 
 get_alpha12 <- function(tau, k12, rho1, rho2, d) {

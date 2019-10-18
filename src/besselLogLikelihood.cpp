@@ -48,16 +48,18 @@ double BesselLogLikelihood::EvaluateL12Function(
 
 double BesselLogLikelihood::RetrieveIntensityFromParameters(const double amplitude, const double alpha, const unsigned int dimension)
 {
-  double inPowerValue = 2.0 * M_PI * alpha * alpha / dimension;
-  double powerValue = (double)dimension / 2.0;
-  double denomValue = std::pow(inPowerValue, powerValue) * boost::math::tgamma(1.0 + powerValue);
+  double order = (double)dimension / 2.0;
+  double inPowerValue = M_PI * alpha * alpha / order;
+  double denomValue = std::pow(inPowerValue, order) * boost::math::tgamma(1.0 + order);
   return amplitude / denomValue;
 }
 
 double BesselLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, const double intensity, const unsigned int dimension)
 {
-  if (intensity < 1e-8) return 1e-8;
-  return std::pow(amplitude / (intensity * boost::math::tgamma(1.0 + (double)dimension / 2.0)), 1.0 / (double)dimension) * std::sqrt((double)dimension / (2.0 * M_PI));
+  if (intensity < std::sqrt(std::numeric_limits<double>::epsilon()))
+    return std::sqrt(std::numeric_limits<double>::epsilon());
+  double order = (double)dimension / 2.0;
+  return std::pow(amplitude / (intensity * boost::math::tgamma(1.0 + order)), 2.0 * order) * std::sqrt(order / M_PI);
 }
 
 double BesselLogLikelihood::RetrieveAmplitudeFromParameters(const double intensity, const double alpha, const unsigned int dimension)

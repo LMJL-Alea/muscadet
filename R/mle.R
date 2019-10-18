@@ -87,6 +87,7 @@ mle_dpp_bessel <- function(X,
   d <- ncol(X)
 
   if (!estimate_rho | is.null(init)) {
+    # par is (alpha1, alpha2, k12, tau)
     lbs <- c(
       sqrt(.Machine$double.eps),
       sqrt(.Machine$double.eps),
@@ -149,6 +150,7 @@ mle_dpp_bessel <- function(X,
   }
 
   # Next, estimate also intensities
+  # par is now alpha1, alpha2, k12, k1, k2, tau
   if (is.null(init)) {
     x0 <- c(
       alpha1,
@@ -183,7 +185,10 @@ mle_dpp_bessel <- function(X,
     upper = c(
       get_alpha_ub(1 / V, d),
       get_alpha_ub(1 / V, d),
-      rep(1, 4)
+      1,
+      1 - 1e-4,
+      1 - 1e-4,
+      1
     ),
     X = X, labels = labels, lb = lb, ub = ub
   )
