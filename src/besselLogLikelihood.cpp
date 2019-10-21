@@ -4,7 +4,7 @@
 double BesselLogLikelihood::GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension)
 {
   double workValue = 2.0 * M_PI *M_PI * radius * radius;
-  bool inSupport = (alpha * alpha * workValue < dimension);
+  bool inSupport = (alpha * alpha * workValue < (double)dimension);
   return (inSupport) ? amplitude : 0.0;
 }
 
