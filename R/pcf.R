@@ -299,6 +299,7 @@ get_k12_ub <- function(k1, k2) {
 }
 
 get_alpha12 <- function(tau, k12, rho1, rho2, d) {
-  if (tau < sqrt(.Machine$double.eps)) return(sqrt(.Machine$double.eps))
-  (k12 / (tau * sqrt(rho1 * rho2) * (2 * pi / d)^(d / 2) * gamma(1 + d / 2)))^(1 / d)
+  rho12 <- tau * sqrt(rho1 * rho2)
+  if (rho12 < 0.001) return(sqrt(.Machine$double.eps))
+  (k12 / (rho12 * (2 * pi / d)^(d / 2) * gamma(1 + d / 2)))^(1 / d)
 }

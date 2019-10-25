@@ -106,105 +106,15 @@ void BaseLogLikelihood::SetInputs(
 arma::mat BaseLogLikelihood::GetInitialPoint()
 {
   arma::mat params(this->GetNumberOfParameters(), 1);
-
-  // Retrieve Poisson estimates of rho_1 and rho_2
-  double firstIntensity = 0.0;
-  double secondIntensity = 0.0;
-
-  for (unsigned int i = 0;i < m_SampleSize;++i)
-  {
-    if (m_PointLabels[i] == 1)
-      ++firstIntensity;
-
-    if (m_PointLabels[i] == 2)
-      ++secondIntensity;
-  }
-
-  firstIntensity /= m_DomainVolume;
-  secondIntensity /= m_DomainVolume;
-
-  bool paramsOk = false;
-
-  while (!paramsOk)
-  {
-    double sample = arma::randu();
-
-    if (m_EstimateFirstAmplitude)
-      m_FirstAmplitude = sample;
-
-    if (m_EstimateSecondAmplitude)
-      m_SecondAmplitude = sample;
-
-    unsigned int pos = 0;
-
-    if (m_EstimateFirstAlpha)
-    {
-      m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, firstIntensity, m_DomainDimension);
-      params[pos] = m_FirstAlpha;
-      ++pos;
-    }
-
-    if (m_EstimateSecondAlpha)
-    {
-      m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, secondIntensity, m_DomainDimension);
-      params[pos] = m_SecondAlpha;
-      ++pos;
-    }
-
-    if (m_EstimateCrossAlpha)
-    {
-      m_CrossAlpha = std::max(m_FirstAlpha, m_SecondAlpha) + 0.01;
-      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
-      params[pos] = m_CrossAlpha;
-      ++pos;
-    }
-
-    if (m_EstimateFirstAmplitude)
-    {
-      params[pos] = m_FirstAmplitude;
-      ++pos;
-    }
-
-    if (m_EstimateSecondAmplitude)
-    {
-      params[pos] = m_SecondAmplitude;
-      ++pos;
-    }
-
-    if (m_EstimateCrossAmplitude)
-    {
-      m_CrossAmplitude = std::sqrt(std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon)) / 2.0;
-      m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
-      params[pos] = m_CrossAmplitude;
-    }
-
-    paramsOk = this->CheckModelParameters();
-  }
-
   return params;
 }
 
 unsigned int BaseLogLikelihood::GetNumberOfParameters()
 {
-  unsigned int numParams = 0;
+  unsigned int numParams = 4;
 
-  if (m_EstimateFirstAmplitude)
-    ++numParams;
-
-  if (m_EstimateSecondAmplitude)
-    ++numParams;
-
-  if (m_EstimateCrossAmplitude)
-    ++numParams;
-
-  if (m_EstimateFirstAlpha)
-    ++numParams;
-
-  if (m_EstimateSecondAlpha)
-    ++numParams;
-
-  if (m_EstimateCrossAlpha)
-    ++numParams;
+  if (m_EstimateIntensities)
+    numParams += 2;
 
   return numParams;
 }
@@ -219,7 +129,7 @@ double BaseLogLikelihood::GetIntegral()
   integrand.SetKFunction(this->GetKFunction());
   integrand.SetFirstAlpha(m_FirstAlpha);
   integrand.SetSecondAlpha(m_SecondAlpha);
-  integrand.SetCrossAlpha(m_CrossAlpha);
+  integrand.SetInverseCrossAlpha(m_InverseCrossAlpha);
   integrand.SetFirstAmplitude(m_FirstAmplitude);
   integrand.SetSecondAmplitude(m_SecondAmplitude);
   integrand.SetCrossAmplitude(m_CrossAmplitude);
@@ -261,7 +171,7 @@ double BaseLogLikelihood::GetLogDeterminant()
     {
       double sqDist = m_DistanceMatrix(i, j) * m_DistanceMatrix(i, j);
       unsigned int workLabel = m_PointLabels[i] + m_PointLabels[j];
-      double tmpVal = this->EvaluateL12Function(sqDist, m_FirstAmplitude, m_SecondAmplitude, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
+      double tmpVal = this->EvaluateL12Function(sqDist, m_FirstAmplitude, m_SecondAmplitude, m_CrossAmplitude, m_InverseCrossAlpha, m_DomainDimension);
 
       if (workLabel == 2)
         resVal = this->EvaluateLFunction(sqDist, m_FirstAmplitude, m_CrossAmplitude, m_FirstAlpha, tmpVal, m_DomainDimension);
@@ -302,10 +212,6 @@ double BaseLogLikelihood::GetLogDeterminant()
 double BaseLogLikelihood::Evaluate(const arma::mat& x)
 {
   this->SetModelParameters(x);
-
-  bool validParams = this->CheckModelParameters();
-  if (!validParams)
-    return DBL_MAX;
 
   if (m_Modified)
   {
@@ -402,181 +308,130 @@ void BaseLogLikelihood::GradientConstraint(const size_t i, const arma::mat& x, a
   g.fill(0.0);
 }
 
-void BaseLogLikelihood::SetFirstAlpha(const double x)
+void BaseLogLikelihood::SetIntensities(const double rho1, const double rho2)
 {
-  m_FirstAlpha = x;
-  m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
-  m_EstimateFirstAlpha = false;
-}
-
-void BaseLogLikelihood::SetSecondAlpha(const double x)
-{
-  m_SecondAlpha = x;
-  m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
-  m_EstimateSecondAlpha = false;
-}
-
-void BaseLogLikelihood::SetCrossAlpha(const double x)
-{
-  m_CrossAlpha = x;
-  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
-  m_EstimateCrossAlpha = false;
-}
-
-void BaseLogLikelihood::SetFirstIntensity(const double x)
-{
-  m_FirstIntensity = x;
-  m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
-  m_EstimateFirstAmplitude = false;
-}
-
-void BaseLogLikelihood::SetSecondIntensity(const double x)
-{
-  m_SecondIntensity = x;
-  m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, m_SecondAlpha, m_DomainDimension);
-  m_EstimateSecondAmplitude = false;
-}
-
-void BaseLogLikelihood::SetCrossAmplitude(const double x)
-{
-  m_CrossAmplitude = x;
-  m_CrossIntensity = this->RetrieveIntensityFromParameters(m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
-  m_EstimateCrossAmplitude = false;
+  m_FirstIntensity = rho1;
+  m_SecondIntensity = rho2;
+  m_EstimateIntensities = false;
 }
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 {
   m_Modified = false;
-
   unsigned int pos = 0;
+  double workScalar = 0.0;
 
-  if (m_EstimateFirstAlpha)
+  // Set k1
+  workScalar = params[pos];
+
+  if (m_FirstAmplitude != workScalar)
   {
-    double workScalar = params[pos];
-
-    if (m_FirstAlpha != workScalar)
-    {
-      m_FirstAlpha = workScalar;
-      if (!m_EstimateFirstAmplitude)
-        m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
-      else
-      {
-        m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
-        m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-        m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
-      }
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateSecondAlpha)
-  {
-    double workScalar = params[pos];
-
-    if (m_SecondAlpha != workScalar)
-    {
-      m_SecondAlpha = workScalar;
-      if (!m_EstimateSecondAmplitude)
-        m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, m_SecondAlpha, m_DomainDimension);
-      else
-      {
-        m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
-        m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-        m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
-      }
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateCrossAlpha)
-  {
-    double workScalar = params[pos];
-
-    if (m_CrossAmplitude != workScalar)
-    {
-      m_CrossAmplitude = workScalar;
-      m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
-  }
-
-  if (m_EstimateFirstAmplitude)
-  {
-    double workScalar = params[pos];
-
-    if (m_FirstAmplitude != workScalar)
-    {
-      m_FirstAmplitude = workScalar;
+    m_FirstAmplitude = workScalar;
+    if (!m_EstimateIntensities)
+      m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
+    else
       m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
-      m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-      m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
+    m_Modified = true;
   }
 
-  if (m_EstimateSecondAmplitude)
-  {
-    double workScalar = params[pos];
+  ++pos;
 
-    if (m_SecondAmplitude != workScalar)
-    {
-      m_SecondAmplitude = workScalar;
+  // Set k2
+  workScalar = params[pos];
+
+  if (m_SecondAmplitude != workScalar)
+  {
+    m_SecondAmplitude = workScalar;
+    if (!m_EstimateIntensities)
+      m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
+    else
       m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
-      m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-      m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
-      m_Modified = true;
-    }
-
-    ++pos;
+    m_Modified = true;
   }
 
-  if (m_EstimateCrossAmplitude)
+  ++pos;
+
+  // Set k12star
+  workScalar = params[pos];
+
+  if (m_NormalizedCrossAmplitude != workScalar)
   {
-    double workScalar = params[pos];
+    m_NormalizedCrossAmplitude = workScalar;
+    double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
+    upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
+    upperBound = std::max(upperBound, 0.0);
+    upperBound = std::sqrt(upperBound);
+    m_CrossAmplitude = m_NormalizedCrossAmplitude * upperBound;
+    m_Modified = true;
+  }
 
-    if (m_CrossCorrelation != workScalar)
+  ++pos;
+
+  // Set beta12
+  workScalar = params[pos];
+
+  if (m_CrossBeta != workScalar)
+  {
+    m_CrossBeta = workScalar;
+    m_Modified = true;
+  }
+
+  ++pos;
+
+  // Set alpha_i_star
+  if (m_EstimateIntensities)
+  {
+    double gammaValue = boost::math::tgamma(1.0 + (double)m_DomainDimension / 2.0);
+    double upperBound = std::pow(m_DomainVolume / gammaValue, 1.0 / (double)m_DomainDimension);
+    upperBound /= std::sqrt(2.0 * M_PI / (double)m_DomainDimension);
+
+    workScalar = params[pos];
+
+    if (m_NormalizedFirstAlpha != workScalar)
     {
-      m_CrossCorrelation = workScalar;
-      m_CrossIntensity = m_CrossCorrelation * std::sqrt(m_FirstIntensity * m_SecondIntensity);
-      m_CrossAlpha = this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
+      m_NormalizedFirstAlpha = workScalar;
+      m_FirstAlpha = m_NormalizedFirstAlpha * upperBound;
       m_Modified = true;
     }
 
     ++pos;
+
+    workScalar = params[pos];
+
+    if (m_NormalizedSecondAlpha != workScalar)
+    {
+      m_NormalizedSecondAlpha = workScalar;
+      m_SecondAlpha = m_NormalizedSecondAlpha * upperBound;
+      m_Modified = true;
+    }
   }
+
+  m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaUpperBound();
 
   // Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
 }
 
 bool BaseLogLikelihood::CheckModelParameters()
 {
-  if (this->EvaluateAlphaConstraint(m_FirstAlpha, m_SecondAlpha, m_CrossAlpha))
-    return false;
-
-  if (m_CrossAmplitude * m_CrossAmplitude > std::min(m_FirstAmplitude * m_SecondAmplitude, (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon))
-    return false;
-
   return true;
 }
 
-double BaseLogLikelihood::GetBesselJRatio(const double sqDist, const double alpha, const unsigned int dimension)
+double BaseLogLikelihood::GetBesselJRatio(const double sqDist, const double alpha, const unsigned int dimension, const bool cross)
 {
+  // if cross is true, alpha is in fact its inverse
   double order = (double)dimension / 2.0;
-  double tmpVal = std::sqrt(2.0 * (double)dimension * sqDist) / alpha;
+  double tmpVal = (cross) ? alpha : 1.0 / alpha;
+  tmpVal *= std::sqrt(2.0 * (double)dimension * sqDist);
 
   if (tmpVal < std::sqrt(std::numeric_limits<double>::epsilon()))
     return 1.0 / boost::math::tgamma(1.0 + order);
 
   if (tmpVal > 1.0e5)
-    return std::pow(2.0, order) * std::sqrt(2.0 / M_PI) * std::cos(tmpVal - alpha * M_PI / 2.0 - M_PI / 4.0) / std::pow(tmpVal, 0.5 + order);
+  {
+    double resVal = (cross) ? std::cos(tmpVal - M_PI / (2.0 * alpha) - M_PI / 4.0) : std::cos(tmpVal - alpha * M_PI / 2.0 - M_PI / 4.0);
+    resVal *= (std::pow(2.0, order) * std::sqrt(2.0 / M_PI)  / std::pow(tmpVal, 0.5 + order));
+    return resVal;
+  }
 
   return boost::math::cyl_bessel_j(order, tmpVal) / std::pow(tmpVal / 2.0, order);
 }

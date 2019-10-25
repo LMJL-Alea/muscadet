@@ -46,30 +46,6 @@ arma::mat EstimateBessel(
   BesselLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
-  if (arma::is_finite(alpha1))
-  {
-    if (!estimate_alpha)
-      logLik.SetFirstAlpha(alpha1);
-
-    if (arma::is_finite(rho1))
-    {
-      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
-      // logLik.SetFirstAmplitude(a1);
-    }
-  }
-
-  if (arma::is_finite(alpha2))
-  {
-    if (!estimate_alpha)
-      logLik.SetSecondAlpha(alpha2);
-
-    if (arma::is_finite(rho2))
-    {
-      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
-      // logLik.SetSecondAmplitude(a2);
-    }
-  }
-
   // Create the optimizer.
   // ens::DE optimizer(1000, 1000, 0.6, 0.8, 1e-5);
   ens::ExponentialSchedule expSchedule;
@@ -110,11 +86,8 @@ double EvaluateBessel(
   BesselLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
 
-  if (arma::is_finite(rho1))
-    logLik.SetFirstIntensity(rho1);
-
-  if (arma::is_finite(rho2))
-    logLik.SetSecondIntensity(rho2);
+  if (arma::is_finite(rho1) & arma::is_finite(rho2))
+    logLik.SetIntensities(rho1, rho2);
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)
@@ -138,30 +111,5 @@ arma::mat InitializeBessel(
   // Construct the objective function.
   BesselLogLikelihood logLik;
   logLik.SetInputs(X, labels, lb, ub);
-
-  if (arma::is_finite(alpha1))
-  {
-    if (!estimate_alpha)
-      logLik.SetFirstAlpha(alpha1);
-
-    if (arma::is_finite(rho1))
-    {
-      double a1 = logLik.RetrieveAmplitudeFromParameters(rho1, alpha1, X.n_cols);
-      // logLik.SetFirstAmplitude(a1);
-    }
-  }
-
-  if (arma::is_finite(alpha2))
-  {
-    if (!estimate_alpha)
-      logLik.SetSecondAlpha(alpha2);
-
-    if (arma::is_finite(rho2))
-    {
-      double a2 = logLik.RetrieveAmplitudeFromParameters(rho2, alpha2, X.n_cols);
-      // logLik.SetSecondAmplitude(a2);
-    }
-  }
-
   return logLik.GetInitialPoint();
 }

@@ -21,10 +21,10 @@ private:
       const double amplitude1,
       const double amplitude2,
       const double amplitude12,
-      const double alpha12,
+      const double alpha12inv,
       const unsigned int dimension
   );
-  bool EvaluateAlphaConstraint(const double firstAlpha, const double secondAlpha, const double crossAlpha);
-  static double GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension);
+  double GetCrossAlphaUpperBound();
+  static double GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension, const bool cross = false);
   KFunctionType GetKFunction();
 };

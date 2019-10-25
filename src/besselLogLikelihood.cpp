@@ -1,10 +1,11 @@
 #include "besselLogLikelihood.h"
 #include <boost/math/special_functions/gamma.hpp>
 
-double BesselLogLikelihood::GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension)
+double BesselLogLikelihood::GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension, const bool cross)
 {
-  double workValue = 2.0 * M_PI *M_PI * radius * radius;
-  bool inSupport = (alpha * alpha * workValue < (double)dimension);
+  // if cross is true, alpha is its inverse
+  double workValue = std::sqrt(2.0 / (double)dimension) * M_PI * radius;
+  bool inSupport = (cross) ? (workValue < alpha) : (alpha * workValue < 1.0);
   return (inSupport) ? amplitude : 0.0;
 }
 
@@ -13,9 +14,9 @@ BesselLogLikelihood::KFunctionType BesselLogLikelihood::GetKFunction()
   return this->GetFourierKernel;
 }
 
-bool BesselLogLikelihood::EvaluateAlphaConstraint(const double firstAlpha, const double secondAlpha, const double crossAlpha)
+double BesselLogLikelihood::GetCrossAlphaUpperBound()
 {
-  return crossAlpha < std::max(firstAlpha, secondAlpha);
+  return std::max(this->GetFirstAlpha(), this->GetSecondAlpha());
 }
 
 double BesselLogLikelihood::EvaluateLFunction(
@@ -37,12 +38,12 @@ double BesselLogLikelihood::EvaluateL12Function(
     const double amplitude1,
     const double amplitude2,
     const double amplitude12,
-    const double alpha12,
+    const double alpha12inv,
     const unsigned int dimension)
 {
-  double firstTerm = std::pow((double)dimension / (2.0 * M_PI * alpha12 * alpha12), (double)dimension / 2.0);
+  double firstTerm = std::pow((double)dimension * alpha12inv * alpha12inv / (2.0 * M_PI), (double)dimension / 2.0);
   double secondTerm = amplitude12 / ((1.0 - amplitude1) * (1.0 - amplitude2) - amplitude12 * amplitude12);
-  double thirdTerm = this->GetBesselJRatio(sqDist, alpha12, dimension);
+  double thirdTerm = this->GetBesselJRatio(sqDist, alpha12inv, dimension, true);
   return firstTerm * secondTerm * thirdTerm;
 }
 
@@ -56,7 +57,8 @@ double BesselLogLikelihood::RetrieveIntensityFromParameters(const double amplitu
 
 double BesselLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, const double intensity, const unsigned int dimension)
 {
-  if (intensity < std::sqrt(std::numeric_limits<double>::epsilon()))
+  double lim = 0.001; // std::sqrt(std::numeric_limits<double>::epsilon())
+  if (intensity < lim)
     return std::sqrt(std::numeric_limits<double>::epsilon());
   double order = (double)dimension / 2.0;
   double gamma = boost::math::tgamma(1.0 + order);

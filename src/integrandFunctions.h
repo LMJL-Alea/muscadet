@@ -5,14 +5,14 @@
 class BaseIntegrand
 {
 public:
-  typedef std::function<double(const double, const double, const double, const unsigned int)> KFunctionType;
+  typedef std::function<double(const double, const double, const double, const unsigned int, const bool)> KFunctionType;
 
   BaseIntegrand() {}
   ~BaseIntegrand() {}
 
   void SetKFunction(const KFunctionType f) {m_KFunction = f;}
   void SetFirstAlpha(const double x) {m_FirstAlpha = x;}
-  void SetCrossAlpha(const double x) {m_CrossAlpha = x;}
+  void SetInverseCrossAlpha(const double x) {m_InverseCrossAlpha = x;}
   void SetSecondAlpha(const double x) {m_SecondAlpha = x;}
   void SetFirstAmplitude(const double x) {m_FirstAmplitude = x;}
   void SetCrossAmplitude(const double x) {m_CrossAmplitude = x;}
@@ -26,7 +26,7 @@ public:
   double GetDerivativeWRTCrossIntensity(const double radius);
 
 private:
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
+  double m_FirstAlpha, m_InverseCrossAlpha, m_SecondAlpha;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
   unsigned int m_DomainDimension;
 

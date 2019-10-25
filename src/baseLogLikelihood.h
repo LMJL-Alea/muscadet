@@ -11,20 +11,12 @@ public:
   {
     m_FirstAlpha = NA_REAL;
     m_SecondAlpha = NA_REAL;
-    m_CrossAlpha = NA_REAL;
     m_FirstIntensity = NA_REAL;
     m_SecondIntensity = NA_REAL;
-    m_CrossIntensity = NA_REAL;
     m_FirstAmplitude = NA_REAL;
     m_SecondAmplitude = NA_REAL;
     m_CrossAmplitude = NA_REAL;
-    m_CrossCorrelation = NA_REAL;
-    m_EstimateFirstAmplitude = true;
-    m_EstimateSecondAmplitude = true;
-    m_EstimateCrossAmplitude = true;
-    m_EstimateFirstAlpha = true;
-    m_EstimateSecondAlpha = true;
-    m_EstimateCrossAlpha = true;
+    m_EstimateIntensities = true;
 
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
@@ -58,12 +50,7 @@ public:
       const double alpha,
       const unsigned int dimension) = 0;
 
-  void SetFirstAlpha(const double x);
-  void SetSecondAlpha(const double x);
-  void SetCrossAlpha(const double x);
-  void SetFirstIntensity(const double x);
-  void SetSecondIntensity(const double x);
-  void SetCrossAmplitude(const double x);
+  void SetIntensities(const double rho1, const double rho2);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -113,20 +100,28 @@ protected:
       const double amplitude1,
       const double amplitude2,
       const double amplitude12,
-      const double alpha12,
+      const double alpha12inv,
       const unsigned int dimension) = 0;
-  virtual bool EvaluateAlphaConstraint(
-      const double firstAlpha,
-      const double secondAlpha,
-      const double crossAlpha) = 0;
+  virtual double GetCrossAlphaUpperBound() = 0;
   virtual KFunctionType GetKFunction() = 0;
-  double GetBesselJRatio(const double sqDist, const double alpha, const unsigned int dimension);
+  double GetBesselJRatio(
+      const double sqDist,
+      const double alpha,
+      const unsigned int dimension,
+      const bool cross = false
+  );
+  double GetFirstAlpha() {return m_FirstAlpha;}
+  double GetSecondAlpha() {return m_SecondAlpha;}
 
 private:
   //! Helper functions for periodizing the domain
   unsigned int GetNumberOfParameters();
   void SetNeighborhood(const unsigned int n);
-  std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
+  std::vector<arma::rowvec> GetTrialVectors(
+      const arma::rowvec &x,
+      const arma::vec &lb,
+      const arma::vec &ub
+  );
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
   double GetIntegral();
@@ -146,12 +141,13 @@ private:
 
   //! Generic variables used by all models and needed in each child class
   unsigned int m_DomainDimension;
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
+  double m_FirstAlpha, m_SecondAlpha;
+  double m_CrossBeta, m_NormalizedFirstAlpha, m_NormalizedSecondAlpha;
+  double m_FirstIntensity, m_SecondIntensity;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
-  double m_CrossCorrelation;
-  bool m_EstimateFirstAmplitude, m_EstimateCrossAmplitude, m_EstimateSecondAmplitude;
-  bool m_EstimateFirstAlpha, m_EstimateCrossAlpha, m_EstimateSecondAlpha;
+  double m_NormalizedCrossAmplitude;
+  double m_InverseCrossAlpha;
+  bool m_EstimateIntensities;
 
   static const double m_Epsilon;
 };

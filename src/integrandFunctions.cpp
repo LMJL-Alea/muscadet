@@ -4,9 +4,9 @@ void BaseIntegrand::Update(const double radius)
 {
   m_Kernel.set_size(7);
   m_Kernel.fill(0.0);
-  m_Kernel[0] = m_KFunction(radius, m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
-  m_Kernel[1] = m_KFunction(radius, m_CrossAmplitude, m_CrossAlpha, m_DomainDimension);
-  m_Kernel[2] = m_KFunction(radius, m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
+  m_Kernel[0] = m_KFunction(radius, m_FirstAmplitude, m_FirstAlpha, m_DomainDimension, false);
+  m_Kernel[1] = m_KFunction(radius, m_CrossAmplitude, m_InverseCrossAlpha, m_DomainDimension, true);
+  m_Kernel[2] = m_KFunction(radius, m_SecondAmplitude, m_SecondAlpha, m_DomainDimension, false);
   this->RetrieveEigenvalues(m_Kernel);
 
   m_DiffValue = m_Kernel[0] - m_Kernel[2];
