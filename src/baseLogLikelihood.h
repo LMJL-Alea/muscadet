@@ -9,13 +9,12 @@ public:
 
   BaseLogLikelihood()
   {
-    m_FirstAlpha = NA_REAL;
-    m_SecondAlpha = NA_REAL;
-    m_FirstIntensity = NA_REAL;
-    m_SecondIntensity = NA_REAL;
     m_FirstAmplitude = NA_REAL;
     m_SecondAmplitude = NA_REAL;
-    m_CrossAmplitude = NA_REAL;
+    m_NormalizedCrossAmplitude = NA_REAL;
+    m_CrossBeta = NA_REAL;
+    m_NormalizedFirstAlpha = NA_REAL;
+    m_NormalizedSecondAlpha = NA_REAL;
     m_EstimateIntensities = true;
 
     m_DomainDimension = 1;
@@ -102,7 +101,7 @@ protected:
       const double amplitude12,
       const double alpha12inv,
       const unsigned int dimension) = 0;
-  virtual double GetCrossAlphaUpperBound() = 0;
+  virtual double GetCrossAlphaLowerBound() = 0;
   virtual KFunctionType GetKFunction() = 0;
   double GetBesselJRatio(
       const double sqDist,

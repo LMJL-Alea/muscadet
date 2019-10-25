@@ -24,7 +24,13 @@ private:
       const double alpha12inv,
       const unsigned int dimension
   );
-  double GetCrossAlphaUpperBound();
-  static double GetFourierKernel(const double radius, const double amplitude, const double alpha, const unsigned int dimension, const bool cross = false);
+  double GetCrossAlphaLowerBound();
+  static double GetFourierKernel(
+      const double radius,
+      const double amplitude,
+      const double alpha,
+      const unsigned int dimension,
+      const bool cross
+  );
   KFunctionType GetKFunction();
 };

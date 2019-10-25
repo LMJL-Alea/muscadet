@@ -14,7 +14,7 @@ BesselLogLikelihood::KFunctionType BesselLogLikelihood::GetKFunction()
   return this->GetFourierKernel;
 }
 
-double BesselLogLikelihood::GetCrossAlphaUpperBound()
+double BesselLogLikelihood::GetCrossAlphaLowerBound()
 {
   return std::max(this->GetFirstAlpha(), this->GetSecondAlpha());
 }

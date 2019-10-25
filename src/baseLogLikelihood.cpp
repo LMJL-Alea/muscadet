@@ -406,7 +406,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     }
   }
 
-  m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaUpperBound();
+  m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
 
   // Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
 }

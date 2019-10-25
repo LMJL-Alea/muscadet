@@ -185,14 +185,14 @@ mle_dpp_bessel <- function(X,
       #   X = X, labels = labels, lb = lb, ub = ub,
       #   rho1 = rho1, rho2 = rho2
       # )
-      # fit <- RcppDE::DEoptim(
-      #   lower = lbs,
-      #   upper = ubs,
-      #   fn = EvaluateBessel,
-      #   X = X, labels = labels, lb = lb, ub = ub,
-      #   rho1 = rho1, rho2 = rho2
-      # )$optim
-      # fit$par <- fit$bestmem
+      fit <- RcppDE::DEoptim(
+        lower = lbs,
+        upper = ubs,
+        fn = EvaluateBessel,
+        X = X, labels = labels, lb = lb, ub = ub,
+        rho1 = rho1, rho2 = rho2
+      )$optim
+      fit$par <- fit$bestmem
       # fit <- DEoptimR::JDEoptim(
       #   lower = lbs,
       #   upper = ubs,
