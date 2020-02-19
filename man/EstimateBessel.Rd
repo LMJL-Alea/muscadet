@@ -4,8 +4,17 @@
 \alias{EstimateBessel}
 \title{Stationary Bivariate Bessel DPP Estimator}
 \usage{
-EstimateBessel(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_,
-  alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE)
+EstimateBessel(
+  X,
+  labels,
+  lb,
+  ub,
+  rho1 = NA_real_,
+  rho2 = NA_real_,
+  alpha1 = NA_real_,
+  alpha2 = NA_real_,
+  estimate_alpha = TRUE
+)
 }
 \arguments{
 \item{X}{A matrix of size n x (d+1) storing the points in R^d and their label in last column.}

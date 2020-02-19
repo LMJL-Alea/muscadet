@@ -328,17 +328,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   {
     m_FirstAmplitude = workScalar;
     if (!m_EstimateIntensities)
-    {
       m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
-      m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
-    }
-    else
-      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
-    double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
-    upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
-    upperBound = std::max(upperBound, 0.0);
-    upperBound = std::sqrt(upperBound);
-    m_CrossAmplitude = m_NormalizedCrossAmplitude * upperBound;
     m_Modified = true;
   }
 
@@ -351,17 +341,7 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   {
     m_SecondAmplitude = workScalar;
     if (!m_EstimateIntensities)
-    {
       m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
-      m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
-    }
-    else
-      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
-    double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
-    upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
-    upperBound = std::max(upperBound, 0.0);
-    upperBound = std::sqrt(upperBound);
-    m_CrossAmplitude = m_NormalizedCrossAmplitude * upperBound;
     m_Modified = true;
   }
 
@@ -373,13 +353,14 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   if (m_NormalizedCrossAmplitude != workScalar)
   {
     m_NormalizedCrossAmplitude = workScalar;
-    double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
-    upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
-    upperBound = std::max(upperBound, 0.0);
-    upperBound = std::sqrt(upperBound);
-    m_CrossAmplitude = m_NormalizedCrossAmplitude * upperBound;
     m_Modified = true;
   }
+
+  // double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
+  // upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
+  // upperBound = std::max(upperBound, 0.0);
+  // upperBound = std::sqrt(upperBound);
+  // m_CrossAmplitude = 0.55555555 * upperBound;
 
   ++pos;
 
@@ -389,9 +370,10 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
   if (m_CrossBeta != workScalar)
   {
     m_CrossBeta = workScalar;
-    m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
     m_Modified = true;
   }
+
+  // m_InverseCrossAlpha = 0.6;
 
   ++pos;
 
@@ -408,8 +390,6 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     {
       m_NormalizedFirstAlpha = workScalar;
       m_FirstAlpha = m_NormalizedFirstAlpha * upperBound;
-      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
-      m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
       m_Modified = true;
     }
 
@@ -421,13 +401,26 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
     {
       m_NormalizedSecondAlpha = workScalar;
       m_SecondAlpha = m_NormalizedSecondAlpha * upperBound;
-      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
-      m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
       m_Modified = true;
     }
   }
 
-  // Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
+  if (m_Modified)
+  {
+    m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
+    double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
+    upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
+    upperBound = std::max(upperBound, 0.0);
+    upperBound = std::sqrt(upperBound);
+    m_CrossAmplitude = m_NormalizedCrossAmplitude * upperBound;
+    if (m_EstimateIntensities)
+    {
+      m_FirstIntensity = this->RetrieveIntensityFromParameters(m_FirstAmplitude, m_FirstAlpha, m_DomainDimension);
+      m_SecondIntensity = this->RetrieveIntensityFromParameters(m_SecondAmplitude, m_SecondAlpha, m_DomainDimension);
+    }
+  }
+
+  // Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_InverseCrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_FirstAmplitude << " " << m_SecondAmplitude << " " << m_CrossAmplitude << std::endl;
 }
 
 bool BaseLogLikelihood::CheckModelParameters()
@@ -445,12 +438,12 @@ double BaseLogLikelihood::GetBesselJRatio(const double sqDist, const double alph
   if (tmpVal < std::sqrt(std::numeric_limits<double>::epsilon()))
     return 1.0 / boost::math::tgamma(1.0 + order);
 
-  if (tmpVal > 1.0e5)
-  {
-    double resVal = (cross) ? std::cos(tmpVal - M_PI / (2.0 * alpha) - M_PI / 4.0) : std::cos(tmpVal - alpha * M_PI / 2.0 - M_PI / 4.0);
-    resVal *= (std::pow(2.0, order) * std::sqrt(2.0 / M_PI)  / std::pow(tmpVal, 0.5 + order));
-    return resVal;
-  }
+  // if (tmpVal > 1.0e5)
+  // {
+  //   double resVal = (cross) ? std::cos(tmpVal - M_PI / (2.0 * alpha) - M_PI / 4.0) : std::cos(tmpVal - alpha * M_PI / 2.0 - M_PI / 4.0);
+  //   resVal *= (std::pow(2.0, order) * std::sqrt(2.0 / M_PI)  / std::pow(tmpVal, 0.5 + order));
+  //   return resVal;
+  // }
 
   return boost::math::cyl_bessel_j(order, tmpVal) / std::pow(tmpVal / 2.0, order);
 }

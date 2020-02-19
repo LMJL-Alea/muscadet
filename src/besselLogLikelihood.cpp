@@ -57,12 +57,12 @@ double BesselLogLikelihood::RetrieveIntensityFromParameters(const double amplitu
 
 double BesselLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, const double intensity, const unsigned int dimension)
 {
-  double lim = 0.001; // std::sqrt(std::numeric_limits<double>::epsilon())
-  if (intensity < lim)
-    return std::sqrt(std::numeric_limits<double>::epsilon());
+  // double lim = 0.001; // std::sqrt(std::numeric_limits<double>::epsilon())
+  // if (intensity < lim)
+  //   return std::sqrt(std::numeric_limits<double>::epsilon());
   double order = (double)dimension / 2.0;
-  double gamma = boost::math::tgamma(1.0 + order);
-  return std::pow(amplitude / (intensity * gamma), 1.0 / (2.0 * order)) * std::sqrt(order / M_PI);
+  double gammaValue = boost::math::tgamma(1.0 + order);
+  return std::pow(amplitude / (intensity * gammaValue), 1.0 / (2.0 * order)) * std::sqrt(order / M_PI);
 }
 
 double BesselLogLikelihood::RetrieveAmplitudeFromParameters(const double intensity, const double alpha, const unsigned int dimension)

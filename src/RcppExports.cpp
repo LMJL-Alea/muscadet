@@ -62,11 +62,49 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cost_function
+double cost_function(const Rcpp::NumericVector& parameters, const Rcpp::NumericVector& pcfValues, const Rcpp::NumericVector& distanceValues, const double intensity, const unsigned int dimension);
+RcppExport SEXP _mediator_cost_function(SEXP parametersSEXP, SEXP pcfValuesSEXP, SEXP distanceValuesSEXP, SEXP intensitySEXP, SEXP dimensionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type parameters(parametersSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type pcfValues(pcfValuesSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type distanceValues(distanceValuesSEXP);
+    Rcpp::traits::input_parameter< const double >::type intensity(intensitySEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type dimension(dimensionSEXP);
+    rcpp_result_gen = Rcpp::wrap(cost_function(parameters, pcfValues, distanceValues, intensity, dimension));
+    return rcpp_result_gen;
+END_RCPP
+}
+// import_vec1
+void import_vec1(const Rcpp::NumericVector& x);
+RcppExport SEXP _mediator_import_vec1(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
+    import_vec1(x);
+    return R_NilValue;
+END_RCPP
+}
+// import_vec2
+void import_vec2(const arma::vec& x);
+RcppExport SEXP _mediator_import_vec2(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type x(xSEXP);
+    import_vec2(x);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_EstimateBessel", (DL_FUNC) &_mediator_EstimateBessel, 9},
     {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 7},
     {"_mediator_InitializeBessel", (DL_FUNC) &_mediator_InitializeBessel, 9},
+    {"_mediator_cost_function", (DL_FUNC) &_mediator_cost_function, 5},
+    {"_mediator_import_vec1", (DL_FUNC) &_mediator_import_vec1, 1},
+    {"_mediator_import_vec2", (DL_FUNC) &_mediator_import_vec2, 1},
     {NULL, NULL, 0}
 };
 

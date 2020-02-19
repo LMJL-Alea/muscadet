@@ -6,12 +6,26 @@
 \alias{mle_dpp_bessel}
 \title{Maximum Likelihood Estimator of Stationary Bivariate DPPs}
 \usage{
-mle_dpp_gauss(X, labels, lb = rep(-0.5, ncol(X)), ub = rep(0.5,
-  ncol(X)), rho1 = NA, alpha1 = NA, rho2 = NA, alpha2 = NA,
-  estimate_alpha = TRUE)
+mle_dpp_gauss(
+  X,
+  labels,
+  lb = rep(-0.5, ncol(X)),
+  ub = rep(0.5, ncol(X)),
+  rho1 = NA,
+  alpha1 = NA,
+  rho2 = NA,
+  alpha2 = NA,
+  estimate_alpha = TRUE
+)
 
-mle_dpp_bessel(X, nlopt = "neldermead", lb = rep(0, ncol(X)),
-  ub = rep(1, ncol(X)), estimate_rho = TRUE, init = NULL)
+mle_dpp_bessel(
+  X,
+  nlopt = "neldermead",
+  lb = rep(0, ncol(X)),
+  ub = rep(1, ncol(X)),
+  estimate_rho = TRUE,
+  init = NULL
+)
 }
 \arguments{
 \item{X}{An n x d matrix storing n observed points in R^d.}
