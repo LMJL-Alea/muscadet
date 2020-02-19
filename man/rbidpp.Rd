@@ -4,9 +4,20 @@
 \alias{rbidpp}
 \title{Simulate points according to a bivariate DPP}
 \usage{
-rbidpp(rho1 = 100, rho2 = 100, tau = 0.2, alpha1 = 0.03,
-  alpha2 = 0.03, alpha12 = 0.05, nu1 = 10, nu2 = 10, nu12 = 10,
-  progress = 0, Kspec = "Kspecmatern", testtau = "testtaumatern")
+rbidpp(
+  rho1 = 100,
+  rho2 = 100,
+  tau = 0.2,
+  alpha1 = 0.03,
+  alpha2 = 0.03,
+  alpha12 = 0.05,
+  nu1 = 10,
+  nu2 = 10,
+  nu12 = 10,
+  progress = 0,
+  Kspec = "Kspecmatern",
+  testtau = "testtaumatern"
+)
 }
 \arguments{
 \item{rho1}{A numeric scalar specifying the intensity of the 1st DPP (default: 100).}
