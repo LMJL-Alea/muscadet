@@ -22,7 +22,7 @@ compute_gamma <- function(beta, r, y, gamma_max, rho1, rho2) {
   gamma
 }
 
-#' Estimation of Stationary Bivariate 2-dimensional Gaussian DPP via PCF
+#' Estimation of Stationary Bivariate 2-dimensional DPP
 #'
 #' @param X a \code{\link[spatstat]{ppp}} object storing the point pattern.
 #' @param rmin_alpha The lower bound on distances that should be taken into
@@ -51,7 +51,14 @@ compute_gamma <- function(beta, r, y, gamma_max, rho1, rho2) {
 #' abline(h = 0.035, col = "red")
 #' boxplot(res$tau)
 #' abline(h = 0.5, col = "red")
-gauss_pcf_estimation <- function(X, rmin_alpha = 1, rmin_alpha12 = 1, rmin_tau = 31, tau_min = 0.1, p = 0.2) {
+estimate <- function(X,
+                     model = "Gauss",
+                     method = "PCF",
+                     rmin_alpha = 1,
+                     rmin_alpha12 = 1,
+                     rmin_tau = 31,
+                     tau_min = 0.1,
+                     p = 0.2) {
   Xs <- spatstat::split.ppp(X)
 
   # First estimate marginal intensities
@@ -118,14 +125,18 @@ gauss_pcf_estimation <- function(X, rmin_alpha = 1, rmin_alpha12 = 1, rmin_tau =
     rho2 = rho2
   )
 
-  list(
-    rho1 = rho1,
-    rho2 = rho2,
-    alpha1 = alpha1,
-    alpha2 = alpha2,
-    alpha12 = 1 / sqrt(beta),
-    tau = sqrt(gamma / (rho1 * rho2)) * beta / pi
-  )
+  if (method == "PCF")
+    return(list(
+      rho1 = rho1,
+      rho2 = rho2,
+      alpha1 = alpha1,
+      alpha2 = alpha2,
+      alpha12 = 1 / sqrt(beta),
+      tau = sqrt(gamma / (rho1 * rho2)) * beta / pi
+    ))
+
+  # Code for MLE
+
 }
 
 #' Estimation of Stationary Bivariate Bessel DPP via PCF

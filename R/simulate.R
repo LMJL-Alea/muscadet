@@ -1,10 +1,10 @@
 #' @export
-rbidppn <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
-                    alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
-                    nu1 = 10, nu2 = 10, nu12 = 10,
-                    progress = TRUE,
-                    Kspec="Kspecmatern",
-                    testtau="testtaumatern")
+simulate <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
+                     alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
+                     nu1 = 10, nu2 = 10, nu12 = 10,
+                     progress = TRUE,
+                     Kspec = "Kspecmatern",
+                     testtau = "testtaumatern")
 {
   set.seed(seed)
   future::plan(future::multiprocess)
