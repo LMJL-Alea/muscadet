@@ -42,18 +42,3 @@ InitializeBessel <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_
     .Call('_mediator_InitializeBessel', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
-#' @export
-cost_function <- function(parameters, pcfValues, distanceValues, intensity, dimension = 2L) {
-    .Call('_mediator_cost_function', PACKAGE = 'mediator', parameters, pcfValues, distanceValues, intensity, dimension)
-}
-
-#' @export
-import_vec1 <- function(x) {
-    invisible(.Call('_mediator_import_vec1', PACKAGE = 'mediator', x))
-}
-
-#' @export
-import_vec2 <- function(x) {
-    invisible(.Call('_mediator_import_vec2', PACKAGE = 'mediator', x))
-}
-

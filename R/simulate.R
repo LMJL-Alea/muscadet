@@ -1,27 +1,6 @@
-#' @export
-simulate <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
-                     alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
-                     nu1 = 10, nu2 = 10, nu12 = 10,
-                     progress = TRUE,
-                     Kspec = "Kspecmatern",
-                     testtau = "testtaumatern")
-{
-  set.seed(seed)
-  future::plan(future::multiprocess)
-  furrr::future_map(
-    .x = 1:n,
-    .f = ~ rbidpp(
-      rho1 = rho1, rho2 = rho2, tau = tau,
-      alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
-      nu1 = nu1, nu2 = nu2, nu12 = n12,
-      progress = 0, Kspec = Kspec, testtau = testtau
-    ),
-    .progress = progress
-  )
-}
-
-#' Simulate points according to a bivariate DPP
+#' Random generation of point patterns from a cross-type DPP
 #'
+#' @param n Number of samples to draw (default: \code{1L}).
 #' @param rho1 A numeric scalar specifying the intensity of the 1st DPP (default: 100).
 #' @param rho2 A numeric scalar specifying the intensity of the 2nd DPP (default: 100).
 #' @param tau A numeric scalar specifying the cross-correlation (default: 0.2).
@@ -39,7 +18,48 @@ simulate <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
 #' @export
 #'
 #' @examples
-#' pp <- rbidpp(progress = 1, Kspec = "Kspecbessel", testtau = "testtaubessel")
+#' pp <- simulate()
+simulate <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
+                     alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
+                     nu1 = 10, nu2 = 10, nu12 = 10,
+                     progress = TRUE,
+                     Kspec = "Kspecmatern",
+                     testtau = "testtaumatern")
+{
+  set.seed(seed)
+
+  if (n == 1) return(rbidpp(
+    rho1 = rho1, rho2 = rho2, tau = tau,
+    alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
+    nu1 = nu1, nu2 = nu2, nu12 = n12,
+    progress = 0, Kspec = Kspec, testtau = testtau
+  ))
+
+  if (requireNamespace("furrr", quietly = TRUE)) {
+    future::plan(future::multiprocess)
+    furrr::future_map(
+      .x = 1:n,
+      .f = ~ rbidpp(
+        rho1 = rho1, rho2 = rho2, tau = tau,
+        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
+        nu1 = nu1, nu2 = nu2, nu12 = n12,
+        progress = 0, Kspec = Kspec, testtau = testtau
+      ),
+      .progress = progress
+    )
+  } else {
+    purrr::map(
+      .x = 1:n,
+      .f = ~ rbidpp(
+        rho1 = rho1, rho2 = rho2, tau = tau,
+        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
+        nu1 = nu1, nu2 = nu2, nu12 = n12,
+        progress = 0, Kspec = Kspec, testtau = testtau
+      )
+    )
+  }
+}
+
 rbidpp <- function(
   rho1 = 100, rho2 = 100, tau = 0.2,
   alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
