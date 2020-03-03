@@ -13,11 +13,12 @@ estimate(
   rmin_tau = 31,
   tau_min = 0.1,
   p = 0.2,
-  divisor_alpha = "d",
-  divisor_alpha12 = "d",
-  bw_alpha = "SJ",
-  bw_alpha12 = "SJ",
-  use_polar_coordinates = TRUE
+  divisor_marginal = "d",
+  divisor_cross = "d",
+  bw_marginal = "SJ",
+  bw_cross = "SJ",
+  use_polar_marginal = TRUE,
+  use_polar_cross = TRUE
 )
 }
 \arguments{
