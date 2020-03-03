@@ -1,7 +1,8 @@
-contr_marginal <- function(alpha, r, y, p = 0.5, q = 2) {
+contr_marginal <- function(alpha, r, y, p = 0.5, q = 2, use_polar_coordinates = TRUE) {
   yobs <- y^p
   ypred <- (1 - exp(-2 * (r / alpha)^2))^p
-  sum(c(0, diff(r)) * abs(yobs - ypred)^q * r)
+  if (use_polar_coordinates) return(sum(c(0, diff(r)) * abs(yobs - ypred)^q * r))
+  sum(c(0, diff(r)) * abs(yobs - ypred)^q)
 }
 
 contr_beta <- function(beta, r, y, gamma_max, rho1, rho2) {
@@ -62,7 +63,8 @@ estimate <- function(X,
                      divisor_alpha = "d",
                      divisor_alpha12 = "d",
                      bw_alpha = "SJ",
-                     bw_alpha12 = "SJ") {
+                     bw_alpha12 = "SJ",
+                     use_polar_coordinates = TRUE) {
   Xs <- spatstat::split.ppp(X)
 
   # First estimate marginal intensities
@@ -80,7 +82,8 @@ estimate <- function(X,
     interval = c(alpha_lb, alpha_ub),
     r = pcfemp$r[rmin_alpha:512],
     y = pcfemp$iso[rmin_alpha:512],
-    p = p
+    p = p,
+    use_polar_coordinates = use_polar_coordinates
   )$minimum
 
   # Estimate alpha2
@@ -93,7 +96,8 @@ estimate <- function(X,
     interval = c(alpha_lb, alpha_ub),
     r = pcfemp$r[rmin_alpha:512],
     y = pcfemp$iso[rmin_alpha:512],
-    p = p
+    p = p,
+    use_polar_coordinates = use_polar_coordinates
   )$minimum
 
   # Set bounds for cross parameters

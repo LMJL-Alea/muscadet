@@ -16,7 +16,8 @@ estimate(
   divisor_alpha = "d",
   divisor_alpha12 = "d",
   bw_alpha = "SJ",
-  bw_alpha12 = "SJ"
+  bw_alpha12 = "SJ",
+  use_polar_coordinates = TRUE
 )
 }
 \arguments{
