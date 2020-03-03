@@ -12,7 +12,11 @@ estimate(
   rmin_alpha12 = 1,
   rmin_tau = 31,
   tau_min = 0.1,
-  p = 0.2
+  p = 0.2,
+  divisor_alpha = "d",
+  divisor_alpha12 = "d",
+  bw_alpha = "SJ",
+  bw_alpha12 = "SJ"
 )
 }
 \arguments{
@@ -42,7 +46,7 @@ A list with the estimated model parameters in the following order:
 Estimation of Stationary Bivariate 2-dimensional DPP
 }
 \examples{
-res <- purrr::map_df(sim_gauss5, gauss_pcf_estimation)
+res <- purrr::map_df(sim_gauss5, estimate)
 boxplot(res$alpha1)
 abline(h = 0.03, col = "red")
 boxplot(res$alpha2)

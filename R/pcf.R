@@ -42,7 +42,7 @@ compute_gamma <- function(beta, r, y, gamma_max, rho1, rho2) {
 #' @export
 #'
 #' @examples
-#' res <- purrr::map_df(sim_gauss5, gauss_pcf_estimation)
+#' res <- purrr::map_df(sim_gauss5, estimate)
 #' boxplot(res$alpha1)
 #' abline(h = 0.03, col = "red")
 #' boxplot(res$alpha2)
@@ -58,7 +58,11 @@ estimate <- function(X,
                      rmin_alpha12 = 1,
                      rmin_tau = 31,
                      tau_min = 0.1,
-                     p = 0.2) {
+                     p = 0.2,
+                     divisor_alpha = "d",
+                     divisor_alpha12 = "d",
+                     bw_alpha = "SJ",
+                     bw_alpha12 = "SJ") {
   Xs <- spatstat::split.ppp(X)
 
   # First estimate marginal intensities
@@ -67,7 +71,7 @@ estimate <- function(X,
   rho2 <- as.numeric(rho2[2])
 
   # Estimate alpha1
-  pcfemp <- spatstat::pcf(Xs[[1]], bw = "SJ", divisor = "d")
+  pcfemp <- spatstat::pcf(Xs[[1]], bw = bw_alpha, divisor = divisor_alpha)
   alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(lambda = rho1, d = 2))
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
   alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
@@ -80,7 +84,7 @@ estimate <- function(X,
   )$minimum
 
   # Estimate alpha2
-  pcfemp <- spatstat::pcf(Xs[[2]], bw = "SJ", divisor = "d")
+  pcfemp <- spatstat::pcf(Xs[[2]], bw = bw_alpha, divisor = divisor_alpha)
   alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(lambda = rho2, d = 2))
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
   alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
@@ -96,7 +100,7 @@ estimate <- function(X,
   # We estimate
   # - beta = 1 / alpha12^2
   # - gamma = tau^2 rho1 rho2 pi^2 alpha12^4
-  pcfemp <- spatstat::pcfcross(X, bw = "SJ", divisor = "d")
+  pcfemp <- spatstat::pcfcross(X, bw = bw_alpha12, divisor = divisor_alpha12)
   k1 <- rho1 * pi * alpha1^2 # Model dependent
   k2 <- rho2 * pi * alpha2^2 # Model dependent
   gamma_max <- min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps))
