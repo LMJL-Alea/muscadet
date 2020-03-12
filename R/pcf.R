@@ -116,17 +116,17 @@ compute_gamma_alt <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coord
 estimate <- function(X,
                      model = "Gauss",
                      method = "PCF",
-                     rmin_alpha = 1,
-                     rmin_alpha12 = 1,
-                     rmin_tau = 31,
+                     rmin_alpha = 22,
+                     rmin_alpha12 = 22,
+                     rmin_tau = 22,
                      tau_min = 0.1,
-                     p = 0.2,
+                     p = 0.5,
                      divisor_marginal = "d",
                      divisor_cross = "d",
                      bw_marginal = "SJ",
                      bw_cross = "SJ",
-                     use_polar_marginal = TRUE,
-                     use_polar_cross = TRUE) {
+                     use_polar_marginal = FALSE,
+                     use_polar_cross = FALSE) {
   Xs <- spatstat::split.ppp(X)
 
   # First estimate marginal intensities
@@ -229,17 +229,6 @@ estimate <- function(X,
     interval = c(beta_min, beta_max)
   )$minimum
 
-  tau <- sqrt(gamma / (rho1 * rho2)) * beta / pi
-
-  if (tau < sqrt(.Machine$double.eps)) return(list(
-    rho1 = rho1,
-    rho2 = rho2,
-    alpha1 = alpha1,
-    alpha2 = alpha2,
-    alpha12 = NA,
-    tau = 0
-  ))
-
   if (method == "PCF")
     return(list(
       rho1 = rho1,
@@ -247,7 +236,7 @@ estimate <- function(X,
       alpha1 = alpha1,
       alpha2 = alpha2,
       alpha12 = 1 / sqrt(beta),
-      tau = tau
+      tau = sqrt(gamma / (rho1 * rho2)) * beta / pi
     ))
 
   # Code for MLE

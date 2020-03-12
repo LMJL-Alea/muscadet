@@ -8,17 +8,17 @@ estimate(
   X,
   model = "Gauss",
   method = "PCF",
-  rmin_alpha = 1,
-  rmin_alpha12 = 1,
-  rmin_tau = 31,
+  rmin_alpha = 22,
+  rmin_alpha12 = 22,
+  rmin_tau = 22,
   tau_min = 0.1,
-  p = 0.2,
+  p = 0.5,
   divisor_marginal = "d",
   divisor_cross = "d",
   bw_marginal = "SJ",
   bw_cross = "SJ",
-  use_polar_marginal = TRUE,
-  use_polar_cross = TRUE
+  use_polar_marginal = FALSE,
+  use_polar_cross = FALSE
 )
 }
 \arguments{
