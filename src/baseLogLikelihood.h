@@ -1,45 +1,55 @@
-#pragma once
-
+#include "integrandFunctions.h"
 #include <RcppEnsmallen.h>
 
 class BaseLogLikelihood
 {
 public:
   typedef std::vector  <std::vector <int> > NeighborhoodType;
+  typedef BaseIntegrand::KFunctionType KFunctionType;
 
   BaseLogLikelihood()
   {
+    m_FirstAmplitude = NA_REAL;
+    m_SecondAmplitude = NA_REAL;
+    m_NormalizedCrossAmplitude = NA_REAL;
+    m_CrossBeta = NA_REAL;
+    m_NormalizedFirstAlpha = NA_REAL;
+    m_NormalizedSecondAlpha = NA_REAL;
+    m_EstimateIntensities = true;
+
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
     m_UsePeriodicDomain = true;
     m_Modified = true;
-    m_FirstAlpha = 0.0;
-    m_CrossAlpha = 0.0;
-    m_SecondAlpha = 0.0;
-    m_FirstIntensity = 0.0;
-    m_CrossIntensity = 0.0;
-    m_SecondIntensity = 0.0;
-    m_FirstAmplitude = 0.0;
-    m_CrossAmplitude = 0.0;
-    m_SecondAmplitude = 0.0;
     m_Integral = 0.0;
     m_LogDeterminant = 0.0;
-    m_GradientIntegral.set_size(4);
-    m_GradientLogDeterminant.set_size(4);
   }
 
   ~BaseLogLikelihood() {}
 
   void SetInputs(
       const arma::mat &points,
-      const arma::vec &labels,
+      const arma::uvec &labels,
       const arma::vec &lb,
-      const arma::vec &ub,
-      const double rho1,
-      const double rho2
+      const arma::vec &ub
   );
   void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
-  arma::mat GetInitialPoint(const double rho1, const double rho2, const double alpha1, const double alpha2);
+  arma::mat GetInitialPoint();
+  virtual double RetrieveIntensityFromParameters(
+      const double amplitude,
+      const double alpha,
+      const unsigned int dimension) = 0;
+  virtual double RetrieveAlphaFromParameters(
+      const double amplitude,
+      const double intensity,
+      const unsigned int dimension
+  ) = 0;
+  virtual double RetrieveAmplitudeFromParameters(
+      const double intensity,
+      const double alpha,
+      const unsigned int dimension) = 0;
+
+  void SetIntensities(const double rho1, const double rho2);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -77,34 +87,66 @@ public:
 
 protected:
   //! Generic functions to be implemented in each child class
-  virtual void SetModelParameters(const arma::mat &params) = 0;
-  virtual bool CheckModelParameters() = 0;
-  virtual double GetIntegral() = 0;
-  virtual double GetLogDeterminant() = 0;
-
-  //! Generic variables used by all models and needed in each child class
-  arma::vec m_GradientIntegral, m_GradientLogDeterminant;
-  unsigned int m_DomainDimension;
-  unsigned int m_SampleSize;
-  arma::mat m_DistanceMatrix;
-  arma::vec m_PointLabels;
-  arma::vec m_ConstraintVector;
-  bool m_Modified;
-
-  //! Variables specific to the Gaussian kernel
-  double m_FirstAlpha, m_CrossAlpha, m_SecondAlpha;
-  double m_FirstIntensity, m_CrossIntensity, m_SecondIntensity;
-  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  virtual double EvaluateLFunction(
+      const double sqDist,
+      const double amplitude,
+      const double amplitude12,
+      const double alpha,
+      const double l12Value,
+      const unsigned int dimension) = 0;
+  virtual double EvaluateL12Function(
+      const double sqDist,
+      const double amplitude1,
+      const double amplitude2,
+      const double amplitude12,
+      const double alpha12inv,
+      const unsigned int dimension) = 0;
+  virtual double GetCrossAlphaLowerBound() = 0;
+  virtual KFunctionType GetKFunction() = 0;
+  double GetBesselJRatio(
+      const double sqDist,
+      const double alpha,
+      const unsigned int dimension,
+      const bool cross = false
+  );
+  double GetFirstAlpha() {return m_FirstAlpha;}
+  double GetSecondAlpha() {return m_SecondAlpha;}
 
 private:
   //! Helper functions for periodizing the domain
+  unsigned int GetNumberOfParameters();
   void SetNeighborhood(const unsigned int n);
-  std::vector<arma::rowvec> GetTrialVectors(const arma::rowvec &x, const arma::vec &lb, const arma::vec &ub);
+  std::vector<arma::rowvec> GetTrialVectors(
+      const arma::rowvec &x,
+      const arma::vec &lb,
+      const arma::vec &ub
+  );
+  void SetModelParameters(const arma::mat &params);
+  bool CheckModelParameters();
+  double GetIntegral();
+  double GetLogDeterminant();
 
   //! Generic variables used by all models but not needed in child classes
-  double m_DomainVolume;
   double m_Integral, m_LogDeterminant;
-  arma::vec m_DomainLowerBounds, m_DomainUpperBounds;
+  arma::vec m_GradientIntegral, m_GradientLogDeterminant;
   NeighborhoodType m_Neighborhood;
   bool m_UsePeriodicDomain;
+  unsigned int m_SampleSize;
+  arma::mat m_DistanceMatrix;
+  arma::uvec m_PointLabels;
+  arma::vec m_ConstraintVector;
+  bool m_Modified;
+  double m_DomainVolume;
+
+  //! Generic variables used by all models and needed in each child class
+  unsigned int m_DomainDimension;
+  double m_FirstAlpha, m_SecondAlpha;
+  double m_CrossBeta, m_NormalizedFirstAlpha, m_NormalizedSecondAlpha;
+  double m_FirstIntensity, m_SecondIntensity;
+  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  double m_NormalizedCrossAmplitude;
+  double m_InverseCrossAlpha;
+  bool m_EstimateIntensities;
+
+  static const double m_Epsilon;
 };

@@ -15,13 +15,16 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
 LinkingTo:
     RcppEnsmallen,
     RcppArmadillo,
     Rcpp,
     BH
 Imports: 
-    Rcpp
+    Rcpp,
+    spatstat
 URL: https://github.com/astamm/mediator
 BugReports: https://github.com/astamm/mediator/issues
+Suggests: 
+    furrr
