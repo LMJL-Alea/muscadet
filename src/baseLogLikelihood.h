@@ -1,12 +1,11 @@
-#include "integrandFunctions.h"
-#include <RcppEnsmallen.h>
+#ifndef BASELOGLIKELIHOOD_H
+#define BASELOGLIKELIHOOD_H
+
+#include <RcppArmadillo.h>
 
 class BaseLogLikelihood
 {
 public:
-  typedef std::vector  <std::vector <int> > NeighborhoodType;
-  typedef BaseIntegrand::KFunctionType KFunctionType;
-
   BaseLogLikelihood()
   {
     m_FirstAmplitude = NA_REAL;
@@ -19,7 +18,7 @@ public:
 
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
-    m_UsePeriodicDomain = true;
+    m_TruncationIndex = 50;
     m_Modified = true;
     m_Integral = 0.0;
     m_LogDeterminant = 0.0;
@@ -33,7 +32,6 @@ public:
       const arma::vec &lb,
       const arma::vec &ub
   );
-  void SetUsePeriodicDomain(const bool x) {m_UsePeriodicDomain = x;}
   arma::mat GetInitialPoint();
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
@@ -87,56 +85,39 @@ public:
 
 protected:
   //! Generic functions to be implemented in each child class
-  virtual double EvaluateLFunction(
-      const double sqDist,
-      const double amplitude,
-      const double amplitude12,
-      const double alpha,
-      const double l12Value,
-      const unsigned int dimension) = 0;
-  virtual double EvaluateL12Function(
-      const double sqDist,
-      const double amplitude1,
-      const double amplitude2,
-      const double amplitude12,
-      const double alpha12inv,
-      const unsigned int dimension) = 0;
   virtual double GetCrossAlphaLowerBound() = 0;
-  virtual KFunctionType GetKFunction() = 0;
+  virtual double GetK11Value(const double squaredNorm) = 0;
+  virtual double GetK12Value(const double squaredNorm) = 0;
+  virtual double GetK22Value(const double squaredNorm) = 0;
   double GetBesselJRatio(
       const double sqDist,
       const double alpha,
       const unsigned int dimension,
       const bool cross = false
   );
+  double GetFirstAmplitude() {return m_FirstAmplitude;}
+  double GetSecondAmplitude() {return m_SecondAmplitude;}
+  double GetCrossAmplitude() {return m_CrossAmplitude;}
   double GetFirstAlpha() {return m_FirstAlpha;}
   double GetSecondAlpha() {return m_SecondAlpha;}
+  double GetCrossAlpha() {return m_CrossAlpha;}
 
 private:
-  //! Helper functions for periodizing the domain
   unsigned int GetNumberOfParameters();
-  void SetNeighborhood(const unsigned int n);
-  std::vector<arma::rowvec> GetTrialVectors(
-      const arma::rowvec &x,
-      const arma::vec &lb,
-      const arma::vec &ub
-  );
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
-  double GetIntegral();
-  double GetLogDeterminant();
 
-  //! Generic variables used by all models but not needed in child classes
   double m_Integral, m_LogDeterminant;
   arma::vec m_GradientIntegral, m_GradientLogDeterminant;
-  NeighborhoodType m_Neighborhood;
-  bool m_UsePeriodicDomain;
   unsigned int m_SampleSize;
   arma::mat m_DistanceMatrix;
   arma::uvec m_PointLabels;
   arma::vec m_ConstraintVector;
   bool m_Modified;
   double m_DomainVolume;
+  arma::vec m_DeltaDiagonal;
+  int m_TruncationIndex;
+  arma::mat m_DataPoints;
 
   //! Generic variables used by all models and needed in each child class
   unsigned int m_DomainDimension;
@@ -145,8 +126,10 @@ private:
   double m_FirstIntensity, m_SecondIntensity;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
   double m_NormalizedCrossAmplitude;
-  double m_InverseCrossAlpha;
+  double m_InverseCrossAlpha, m_CrossAlpha;
   bool m_EstimateIntensities;
 
   static const double m_Epsilon;
 };
+
+#endif /* BASELOGLIKELIHOOD_H */

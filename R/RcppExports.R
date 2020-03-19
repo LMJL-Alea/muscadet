@@ -42,3 +42,46 @@ InitializeBessel <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_
     .Call('_mediator_InitializeBessel', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
+#' Stationary Bivariate Gaussian DPP Estimator
+#'
+#' This function estimates the parameters of a stationary bivariate Gaussian
+#' DPP from a set of observed points and labels.
+#'
+#' @param X A matrix of size n x (d+1) storing the points in R^d and their label in last column.
+#'
+#' @return A vector with the estimated model parameters.
+#'
+#' @export
+#' @examples
+#' dpp <- sim_gauss5[[1]]
+#' X <- cbind(dpp$x, dpp$y)
+#' labels <- dpp$marks
+#' rho1 <- rho2 <- 100
+#' rho12 <- sqrt(0.5 * sqrt(rho1 * rho2)
+#' alpha1 <- alpha2 <- 0.03
+#' alpha12 <- 0.03
+#' d <- 2
+#' EstimateGauss(
+#'   X = X,
+#'   labels = labels,
+#'   lb = rep(-0.5, ncol(X)),
+#'   ub = rep( 0.5, ncol(X)),
+#'   rho1 = rho1,
+#'   rho2 = rho2,
+#'   alpha1 = alpha1,
+#'   alpha2 = alpha2,
+#'   estimate_alpha = FALSE
+#' )
+EstimateGauss <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_EstimateGauss', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+}
+
+#' @export
+EvaluateGauss <- function(p, X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_) {
+    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, labels, lb, ub, rho1, rho2)
+}
+
+InitializeGauss <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
+    .Call('_mediator_InitializeGauss', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+}
+

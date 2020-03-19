@@ -1,9 +1,9 @@
-#ifndef BESSELLOGLIKELIHOOD_H
-#define BESSELLOGLIKELIHOOD_H
+#ifndef GAUSSLOGLIKELIHOOD_H
+#define GAUSSLOGLIKELIHOOD_H
 
 #include "baseLogLikelihood.h"
 
-class BesselLogLikelihood : public BaseLogLikelihood
+class GaussLogLikelihood : public BaseLogLikelihood
 {
 public:
   double RetrieveIntensityFromParameters(
@@ -29,4 +29,4 @@ private:
   double GetK22Value(const double squaredNorm);
 };
 
-#endif /* BESSELLOGLIKELIHOOD_H */
+#endif /* GAUSSLOGLIKELIHOOD_H */
