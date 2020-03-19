@@ -33,9 +33,9 @@
 // [[Rcpp::export]]
 arma::mat EstimateBessel(
     const arma::mat &X,
-    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
+    const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
@@ -44,7 +44,7 @@ arma::mat EstimateBessel(
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetInputs(X, lb, ub, labels);
 
   // Create the optimizer.
   // ens::DE optimizer(1000, 1000, 0.6, 0.8, 1e-5);
@@ -76,15 +76,15 @@ arma::mat EstimateBessel(
 double EvaluateBessel(
     const arma::vec &p,
     const arma::mat &X,
-    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
+    const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL)
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetInputs(X, lb, ub, labels);
 
   if (arma::is_finite(rho1) & arma::is_finite(rho2))
     logLik.SetIntensities(rho1, rho2);
@@ -99,9 +99,9 @@ double EvaluateBessel(
 // [[Rcpp::export]]
 arma::mat InitializeBessel(
     const arma::mat &X,
-    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
+    const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
@@ -110,6 +110,6 @@ arma::mat InitializeBessel(
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetInputs(X, lb, ub, labels);
   return logLik.GetInitialPoint();
 }

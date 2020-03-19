@@ -6,9 +6,9 @@
 \usage{
 EstimateGauss(
   X,
-  labels,
   lb,
   ub,
+  labels = NULL,
   rho1 = NA_real_,
   rho2 = NA_real_,
   alpha1 = NA_real_,

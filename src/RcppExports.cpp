@@ -8,112 +8,112 @@
 using namespace Rcpp;
 
 // EstimateBessel
-arma::mat EstimateBessel(const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_EstimateBessel(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+arma::mat EstimateBessel(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
+RcppExport SEXP _mediator_EstimateBessel(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimateBessel(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha));
+    rcpp_result_gen = Rcpp::wrap(EstimateBessel(X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha));
     return rcpp_result_gen;
 END_RCPP
 }
 // EvaluateBessel
-double EvaluateBessel(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2);
-RcppExport SEXP _mediator_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
+double EvaluateBessel(const arma::vec& p, const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2);
+RcppExport SEXP _mediator_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type p(pSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    rcpp_result_gen = Rcpp::wrap(EvaluateBessel(p, X, labels, lb, ub, rho1, rho2));
+    rcpp_result_gen = Rcpp::wrap(EvaluateBessel(p, X, lb, ub, labels, rho1, rho2));
     return rcpp_result_gen;
 END_RCPP
 }
 // InitializeBessel
-arma::mat InitializeBessel(const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_InitializeBessel(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+arma::mat InitializeBessel(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
+RcppExport SEXP _mediator_InitializeBessel(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(InitializeBessel(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha));
+    rcpp_result_gen = Rcpp::wrap(InitializeBessel(X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha));
     return rcpp_result_gen;
 END_RCPP
 }
 // EstimateGauss
-arma::mat EstimateGauss(const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_EstimateGauss(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+arma::mat EstimateGauss(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
+RcppExport SEXP _mediator_EstimateGauss(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimateGauss(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha));
+    rcpp_result_gen = Rcpp::wrap(EstimateGauss(X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha));
     return rcpp_result_gen;
 END_RCPP
 }
 // EvaluateGauss
-double EvaluateGauss(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2);
-RcppExport SEXP _mediator_EvaluateGauss(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
+double EvaluateGauss(const arma::vec& p, const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2);
+RcppExport SEXP _mediator_EvaluateGauss(SEXP pSEXP, SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type p(pSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    rcpp_result_gen = Rcpp::wrap(EvaluateGauss(p, X, labels, lb, ub, rho1, rho2));
+    rcpp_result_gen = Rcpp::wrap(EvaluateGauss(p, X, lb, ub, labels, rho1, rho2));
     return rcpp_result_gen;
 END_RCPP
 }
 // InitializeGauss
-arma::mat InitializeGauss(const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_InitializeGauss(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+arma::mat InitializeGauss(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
+RcppExport SEXP _mediator_InitializeGauss(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(InitializeGauss(X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha));
+    rcpp_result_gen = Rcpp::wrap(InitializeGauss(X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha));
     return rcpp_result_gen;
 END_RCPP
 }

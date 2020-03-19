@@ -19,6 +19,7 @@ public:
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
     m_TruncationIndex = 50;
+    m_NumberOfMarks = 2;
     m_Modified = true;
     m_Integral = 0.0;
     m_LogDeterminant = 0.0;
@@ -28,9 +29,9 @@ public:
 
   void SetInputs(
       const arma::mat &points,
-      const arma::uvec &labels,
       const arma::vec &lb,
-      const arma::vec &ub
+      const arma::vec &ub,
+      const Rcpp::Nullable<arma::uvec> &labels = R_NilValue
   );
   arma::mat GetInitialPoint();
   virtual double RetrieveIntensityFromParameters(
@@ -47,7 +48,8 @@ public:
       const double alpha,
       const unsigned int dimension) = 0;
 
-  void SetIntensities(const double rho1, const double rho2);
+  void SetIntensities(const double rho1, const double rho2 = NA_REAL);
+  void SetNumberOfMarks(const unsigned int n);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -101,6 +103,7 @@ protected:
   double GetFirstAlpha() {return m_FirstAlpha;}
   double GetSecondAlpha() {return m_SecondAlpha;}
   double GetCrossAlpha() {return m_CrossAlpha;}
+  unsigned int GetDomainDimension() {return m_DomainDimension;}
 
 private:
   unsigned int GetNumberOfParameters();
@@ -118,6 +121,7 @@ private:
   arma::vec m_DeltaDiagonal;
   int m_TruncationIndex;
   arma::mat m_DataPoints;
+  unsigned int m_NumberOfMarks;
 
   //! Generic variables used by all models and needed in each child class
   unsigned int m_DomainDimension;

@@ -34,9 +34,9 @@
 // [[Rcpp::export]]
 arma::mat EstimateGauss(
     const arma::mat &X,
-    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
+    const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
@@ -45,7 +45,7 @@ arma::mat EstimateGauss(
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetInputs(X, lb, ub, labels);
 
   // Create the optimizer.
   // ens::DE optimizer(1000, 1000, 0.6, 0.8, 1e-5);
@@ -78,17 +78,17 @@ arma::mat EstimateGauss(
 double EvaluateGauss(
     const arma::vec &p,
     const arma::mat &X,
-    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
+    const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetInputs(X, lb, ub, labels);
 
-  if (arma::is_finite(rho1) & arma::is_finite(rho2))
+  if (arma::is_finite(rho1))
     logLik.SetIntensities(rho1, rho2);
 
   arma::mat params(p.n_elem, 1);
@@ -101,9 +101,9 @@ double EvaluateGauss(
 // [[Rcpp::export]]
 arma::mat InitializeGauss(
     const arma::mat &X,
-    const arma::uvec &labels,
     const arma::vec &lb,
     const arma::vec &ub,
+    const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL,
     const double alpha1 = NA_REAL,
@@ -112,6 +112,6 @@ arma::mat InitializeGauss(
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
-  logLik.SetInputs(X, labels, lb, ub);
+  logLik.SetInputs(X, lb, ub, labels);
   return logLik.GetInitialPoint();
 }
