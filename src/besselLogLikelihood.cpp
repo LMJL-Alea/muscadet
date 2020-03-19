@@ -29,15 +29,24 @@ double BesselLogLikelihood::GetCrossAlphaLowerBound()
 
 double BesselLogLikelihood::GetK11Value(const double squaredNorm)
 {
+  double alphaValue = this->GetFirstAlpha();
+  if (2.0 * M_PI * M_PI * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
+    return this->GetFirstAmplitude();
   return 0.0;
 }
 
 double BesselLogLikelihood::GetK12Value(const double squaredNorm)
 {
+  double alphaValue = this->GetCrossAlpha();
+  if (2.0 * M_PI * M_PI * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
+    return this->GetCrossAmplitude();
   return 0.0;
 }
 
 double BesselLogLikelihood::GetK22Value(const double squaredNorm)
 {
+  double alphaValue = this->GetSecondAlpha();
+  if (2.0 * M_PI * M_PI * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
+    return this->GetSecondAmplitude();
   return 0.0;
 }
