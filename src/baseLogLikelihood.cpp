@@ -1,6 +1,4 @@
 #include "baseLogLikelihood.h"
-#include <boost/math/special_functions/bessel.hpp>
-#include <boost/math/special_functions/gamma.hpp>
 
 const double BaseLogLikelihood::m_Epsilon = 1.0e-4;
 
@@ -258,7 +256,9 @@ void BaseLogLikelihood::SetIntensities(const double rho1, const double rho2)
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 {
-  m_Modified = false;
+  if (m_Modified)
+    return;
+
   unsigned int pos = 0;
   double workScalar = 0.0;
 
@@ -369,24 +369,4 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 bool BaseLogLikelihood::CheckModelParameters()
 {
   return true;
-}
-
-double BaseLogLikelihood::GetBesselJRatio(const double sqDist, const double alpha, const unsigned int dimension, const bool cross)
-{
-  // if cross is true, alpha is in fact its inverse
-  double order = (double)dimension / 2.0;
-  double tmpVal = (cross) ? alpha : 1.0 / alpha;
-  tmpVal *= std::sqrt(2.0 * (double)dimension * sqDist);
-
-  if (tmpVal < std::sqrt(std::numeric_limits<double>::epsilon()))
-    return 1.0 / boost::math::tgamma(1.0 + order);
-
-  // if (tmpVal > 1.0e5)
-  // {
-  //   double resVal = (cross) ? std::cos(tmpVal - M_PI / (2.0 * alpha) - M_PI / 4.0) : std::cos(tmpVal - alpha * M_PI / 2.0 - M_PI / 4.0);
-  //   resVal *= (std::pow(2.0, order) * std::sqrt(2.0 / M_PI)  / std::pow(tmpVal, 0.5 + order));
-  //   return resVal;
-  // }
-
-  return boost::math::cyl_bessel_j(order, tmpVal) / std::pow(tmpVal / 2.0, order);
 }

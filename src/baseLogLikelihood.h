@@ -15,6 +15,7 @@ public:
     m_NormalizedFirstAlpha = NA_REAL;
     m_NormalizedSecondAlpha = NA_REAL;
     m_EstimateIntensities = true;
+    m_Modified = false;
 
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
@@ -49,7 +50,6 @@ public:
       const unsigned int dimension) = 0;
 
   void SetIntensities(const double rho1, const double rho2 = NA_REAL);
-  void SetNumberOfMarks(const unsigned int n);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -91,12 +91,6 @@ protected:
   virtual double GetK11Value(const double squaredNorm) = 0;
   virtual double GetK12Value(const double squaredNorm) = 0;
   virtual double GetK22Value(const double squaredNorm) = 0;
-  double GetBesselJRatio(
-      const double sqDist,
-      const double alpha,
-      const unsigned int dimension,
-      const bool cross = false
-  );
   double GetFirstAmplitude() {return m_FirstAmplitude;}
   double GetSecondAmplitude() {return m_SecondAmplitude;}
   double GetCrossAmplitude() {return m_CrossAmplitude;}
