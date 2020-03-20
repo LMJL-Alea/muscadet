@@ -77,8 +77,8 @@ EstimateGauss <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_r
 }
 
 #' @export
-EvaluateGauss <- function(p, X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_) {
-    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, lb, ub, labels, rho1, rho2)
+EvaluateGauss <- function(p, X, lb, ub, N = 50L, native_params = TRUE, labels = NULL, rho1 = NA_real_, rho2 = NA_real_) {
+    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, lb, ub, N, native_params, labels, rho1, rho2)
 }
 
 InitializeGauss <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {

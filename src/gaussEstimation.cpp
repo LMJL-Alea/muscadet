@@ -80,6 +80,8 @@ double EvaluateGauss(
     const arma::mat &X,
     const arma::vec &lb,
     const arma::vec &ub,
+    const int N = 50,
+    const bool native_params = true,
     const Rcpp::Nullable<arma::uvec> &labels = R_NilValue,
     const double rho1 = NA_REAL,
     const double rho2 = NA_REAL)
@@ -87,6 +89,7 @@ double EvaluateGauss(
   // Construct the objective function.
   GaussLogLikelihood logLik;
   logLik.SetInputs(X, lb, ub, labels);
+  logLik.SetTruncationIndex(N);
 
   if (arma::is_finite(rho1))
     logLik.SetIntensities(rho1, rho2);

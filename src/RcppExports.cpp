@@ -82,8 +82,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // EvaluateGauss
-double EvaluateGauss(const arma::vec& p, const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2);
-RcppExport SEXP _mediator_EvaluateGauss(SEXP pSEXP, SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
+double EvaluateGauss(const arma::vec& p, const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const int N, const bool native_params, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2);
+RcppExport SEXP _mediator_EvaluateGauss(SEXP pSEXP, SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP NSEXP, SEXP native_paramsSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,10 +91,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
+    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const bool >::type native_params(native_paramsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    rcpp_result_gen = Rcpp::wrap(EvaluateGauss(p, X, lb, ub, labels, rho1, rho2));
+    rcpp_result_gen = Rcpp::wrap(EvaluateGauss(p, X, lb, ub, N, native_params, labels, rho1, rho2));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -123,7 +125,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 7},
     {"_mediator_InitializeBessel", (DL_FUNC) &_mediator_InitializeBessel, 9},
     {"_mediator_EstimateGauss", (DL_FUNC) &_mediator_EstimateGauss, 9},
-    {"_mediator_EvaluateGauss", (DL_FUNC) &_mediator_EvaluateGauss, 7},
+    {"_mediator_EvaluateGauss", (DL_FUNC) &_mediator_EvaluateGauss, 9},
     {"_mediator_InitializeGauss", (DL_FUNC) &_mediator_InitializeGauss, 9},
     {NULL, NULL, 0}
 };

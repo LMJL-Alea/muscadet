@@ -63,11 +63,10 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 
   if (m_Modified)
   {
-    arma::vec kVector(m_DomainDimension);
+    arma::ivec kVector(m_DomainDimension);
     arma::vec eigenValues(m_NumberOfMarks);
     arma::mat eigenVectors(m_NumberOfMarks, m_NumberOfMarks);
     arma::mat lMatrix(m_NumberOfMarks, m_NumberOfMarks);
-    lMatrix.fill(0.0);
     m_Integral = 0.0;
     arma::mat lDataMatrix(m_SampleSize, m_SampleSize);
     lDataMatrix.fill(0.0);
@@ -103,19 +102,21 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 
       // Now focus on the log determinant part
 
-      double z1Value = std::sqrt(2.0 * dValue * (k22Value - k11Value + dValue));
-      eigenVectors(0, 0) = (m_NumberOfMarks == 1) ? 1.0 : 2.0 * k12Value / z1Value;
+      eigenVectors(0, 0) = 1.0;
 
       if (m_NumberOfMarks == 2)
       {
-        eigenVectors(1, 0) = (k22Value - k11Value + dValue) / z1Value;
-        double z2Value = std::sqrt(2.0 * dValue * (k11Value - k22Value + dValue));
-        eigenVectors(0, 1) = 2.0 * k12Value / z2Value;
-        eigenVectors(1, 1) = (k22Value - k11Value - dValue) / z2Value;
+        double mValue = (-k11Value + k22Value + dValue) / (2.0 * k12Value);
+        double mValueDeriv = std::sqrt(1.0 + mValue * mValue);
+        eigenVectors(0, 0) = 1.0 / mValueDeriv;
+        eigenVectors(1, 0) = mValue / mValueDeriv;
+        eigenVectors(0, 1) = -mValue / mValueDeriv;
+        eigenVectors(1, 1) = 1.0 / mValueDeriv;
       }
 
       // Compute first summation (which does not depend on either eigenvectors or data)
       // and matrix involved in log det that does not depend on data
+      lMatrix.fill(0.0);
       for (unsigned int k = 0;k < m_NumberOfMarks;++k)
       {
         m_Integral += std::log(1.0 - eigenValues[k]);
@@ -256,11 +257,9 @@ void BaseLogLikelihood::SetIntensities(const double rho1, const double rho2)
 
 void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 {
-  if (m_Modified)
-    return;
-
   unsigned int pos = 0;
   double workScalar = 0.0;
+  m_Modified = false;
 
   // Set k1
   workScalar = params[pos];
@@ -369,4 +368,16 @@ void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
 bool BaseLogLikelihood::CheckModelParameters()
 {
   return true;
+}
+
+arma::mat BaseLogLikelihood::TransformParameters(const arma::vec &p)
+{
+  arma::mat params(this->GetNumberOfParameters(), 1);
+
+  // Assumes p stores rho1, alpha1, rho2, alpha2, tau, alpha12
+
+  // k11
+  // params[0] =
+
+  return params;
 }

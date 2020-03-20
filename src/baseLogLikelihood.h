@@ -15,11 +15,10 @@ public:
     m_NormalizedFirstAlpha = NA_REAL;
     m_NormalizedSecondAlpha = NA_REAL;
     m_EstimateIntensities = true;
-    m_Modified = false;
 
     m_DomainDimension = 1;
     m_DomainVolume = 1.0;
-    m_TruncationIndex = 50;
+    m_TruncationIndex = 100;
     m_NumberOfMarks = 2;
     m_Modified = true;
     m_Integral = 0.0;
@@ -50,6 +49,8 @@ public:
       const unsigned int dimension) = 0;
 
   void SetIntensities(const double rho1, const double rho2 = NA_REAL);
+  void SetTruncationIndex(const int index) {m_TruncationIndex = index;}
+  arma::mat TransformParameters(const arma::vec &p);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
