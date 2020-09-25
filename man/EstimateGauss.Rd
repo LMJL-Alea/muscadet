@@ -5,15 +5,19 @@
 \title{Stationary Bivariate Gaussian DPP Estimator}
 \usage{
 EstimateGauss(
-  X,
-  lb,
-  ub,
+  points,
+  alpha1,
+  rho1 = NULL,
+  alpha2 = NULL,
+  rho2 = NULL,
+  alpha12 = NULL,
+  tau = NULL,
+  lower_bound = NULL,
+  upper_bound = NULL,
   labels = NULL,
-  rho1 = NA_real_,
-  rho2 = NA_real_,
-  alpha1 = NA_real_,
-  alpha2 = NA_real_,
-  estimate_alpha = TRUE
+  N = 50L,
+  estimate_intensities = FALSE,
+  use_verbose = FALSE
 )
 }
 \arguments{

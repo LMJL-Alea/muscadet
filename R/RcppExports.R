@@ -31,15 +31,15 @@
 #'   estimate_alpha = FALSE
 #' )
 EstimateBessel <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call('_mediator_EstimateBessel', PACKAGE = 'mediator', X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
+    .Call(`_mediator_EstimateBessel`, X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
 EvaluateBessel <- function(p, X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_) {
-    .Call('_mediator_EvaluateBessel', PACKAGE = 'mediator', p, X, lb, ub, labels, rho1, rho2)
+    .Call(`_mediator_EvaluateBessel`, p, X, lb, ub, labels, rho1, rho2)
 }
 
 InitializeBessel <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call('_mediator_InitializeBessel', PACKAGE = 'mediator', X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
+    .Call(`_mediator_InitializeBessel`, X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
 #' Stationary Bivariate Gaussian DPP Estimator
@@ -72,16 +72,27 @@ InitializeBessel <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = N
 #'   alpha2 = alpha2,
 #'   estimate_alpha = FALSE
 #' )
-EstimateGauss <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call('_mediator_EstimateGauss', PACKAGE = 'mediator', X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
+EstimateGauss <- function(points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE, use_verbose = FALSE) {
+    .Call(`_mediator_EstimateGauss`, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose)
 }
 
 #' @export
-EvaluateGauss <- function(p, X, lb, ub, N = 50L, native_params = TRUE, labels = NULL, rho1 = NA_real_, rho2 = NA_real_) {
-    .Call('_mediator_EvaluateGauss', PACKAGE = 'mediator', p, X, lb, ub, N, native_params, labels, rho1, rho2)
+EvaluateGauss <- function(points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE) {
+    .Call(`_mediator_EvaluateGauss`, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities)
 }
 
-InitializeGauss <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call('_mediator_InitializeGauss', PACKAGE = 'mediator', X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
+#' @export
+InitializeGauss <- function(points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE, use_verbose = FALSE) {
+    .Call(`_mediator_InitializeGauss`, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose)
+}
+
+#' @export
+MLEGauss <- function(x, points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE, use_verbose = FALSE) {
+    .Call(`_mediator_MLEGauss`, x, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose)
+}
+
+#' @export
+log_likelihood <- function(theta, points, lower_bound, upper_bound, marks = NULL, N = 50L, use_verbose = FALSE) {
+    .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, marks, N, use_verbose)
 }
 

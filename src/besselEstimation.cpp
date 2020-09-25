@@ -44,7 +44,16 @@ arma::mat EstimateBessel(
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-  logLik.SetInputs(X, lb, ub, labels);
+
+  arma::uvec labs;
+
+  if (labels.isNull())
+  {
+    labs.set_size(X.n_rows);
+    labs.fill(0.0);
+  }
+
+  logLik.SetInputData(X, lb, ub, labs);
 
   // Create the optimizer.
   // ens::DE optimizer(1000, 1000, 0.6, 0.8, 1e-5);
@@ -84,10 +93,16 @@ double EvaluateBessel(
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-  logLik.SetInputs(X, lb, ub, labels);
 
-  if (arma::is_finite(rho1) & arma::is_finite(rho2))
-    logLik.SetIntensities(rho1, rho2);
+  arma::uvec labs;
+
+  if (labels.isNull())
+  {
+    labs.set_size(X.n_rows);
+    labs.fill(0.0);
+  }
+
+  logLik.SetInputData(X, lb, ub, labs);
 
   arma::mat params(p.n_elem, 1);
   for (unsigned int i = 0;i < p.n_elem;++i)
@@ -110,6 +125,16 @@ arma::mat InitializeBessel(
 {
   // Construct the objective function.
   BesselLogLikelihood logLik;
-  logLik.SetInputs(X, lb, ub, labels);
+
+  arma::uvec labs;
+
+  if (labels.isNull())
+  {
+    labs.set_size(X.n_rows);
+    labs.fill(0.0);
+  }
+
+  logLik.SetInputData(X, lb, ub, labs);
+
   return logLik.GetInitialPoint();
 }

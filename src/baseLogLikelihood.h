@@ -8,32 +8,42 @@ class BaseLogLikelihood
 public:
   BaseLogLikelihood()
   {
-    m_FirstAmplitude = NA_REAL;
-    m_SecondAmplitude = NA_REAL;
-    m_NormalizedCrossAmplitude = NA_REAL;
-    m_CrossBeta = NA_REAL;
-    m_NormalizedFirstAlpha = NA_REAL;
-    m_NormalizedSecondAlpha = NA_REAL;
-    m_EstimateIntensities = true;
-
-    m_DomainDimension = 1;
-    m_DomainVolume = 1.0;
-    m_TruncationIndex = 100;
-    m_NumberOfMarks = 2;
-    m_Modified = true;
-    m_Integral = 0.0;
-    m_LogDeterminant = 0.0;
+    m_TruncationIndex = 50;
   }
 
   ~BaseLogLikelihood() {}
 
-  void SetInputs(
+  void SetInputData(
       const arma::mat &points,
       const arma::vec &lb,
       const arma::vec &ub,
-      const Rcpp::Nullable<arma::uvec> &labels = R_NilValue
+      const arma::uvec &labels
   );
+
+  // to be used in optimizer class
+  unsigned int GetNumberOfParameters();
   arma::mat GetInitialPoint();
+  arma::vec GetParameterLowerBounds() {return m_ParameterLowerBounds;}
+  arma::vec GetParameterUpperBounds() {return m_ParameterUpperBounds;}
+
+  // Setter/getter for alpha1
+  void SetFirstAlpha(const double val);
+  double GetFirstAlpha() {return m_FirstAlpha;}
+
+  // Setter/getter for alpha2
+  void SetSecondAlpha(const double val);
+  double GetSecondAlpha() {return m_SecondAlpha;}
+
+  // Setter/getter for alpha12
+  void SetCrossAlpha(const double val);
+  double GetCrossAlpha() {return m_CrossAlpha;}
+
+  // Setter/getter for tau
+  void SetCorrelation(const double val);
+  double GetCorrelation() {return m_Correlation;}
+
+  void SetUseVerbose(const bool &val) {m_UseVerbose = val;}
+
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
       const double alpha,
@@ -48,9 +58,7 @@ public:
       const double alpha,
       const unsigned int dimension) = 0;
 
-  void SetIntensities(const double rho1, const double rho2 = NA_REAL);
   void SetTruncationIndex(const int index) {m_TruncationIndex = index;}
-  arma::mat TransformParameters(const arma::vec &p);
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -87,6 +95,7 @@ public:
   void GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g);
 
 protected:
+  double GetCrossAmplitudeNormalizationFactor();
   //! Generic functions to be implemented in each child class
   virtual double GetCrossAlphaLowerBound() = 0;
   virtual double GetK11Value(const double squaredNorm) = 0;
@@ -95,23 +104,23 @@ protected:
   double GetFirstAmplitude() {return m_FirstAmplitude;}
   double GetSecondAmplitude() {return m_SecondAmplitude;}
   double GetCrossAmplitude() {return m_CrossAmplitude;}
-  double GetFirstAlpha() {return m_FirstAlpha;}
-  double GetSecondAlpha() {return m_SecondAlpha;}
-  double GetCrossAlpha() {return m_CrossAlpha;}
   unsigned int GetDomainDimension() {return m_DomainDimension;}
 
 private:
-  unsigned int GetNumberOfParameters();
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
+  void SetIntegerGrid();
+
+  unsigned int m_NumberOfPoints;
+
+  arma::vec m_ParameterLowerBounds, m_ParameterUpperBounds;
+
+  std::vector<std::pair<int, std::vector<int> > > m_IntegerGrid;
 
   double m_Integral, m_LogDeterminant;
   arma::vec m_GradientIntegral, m_GradientLogDeterminant;
-  unsigned int m_SampleSize;
-  arma::mat m_DistanceMatrix;
   arma::uvec m_PointLabels;
   arma::vec m_ConstraintVector;
-  bool m_Modified;
   double m_DomainVolume;
   arma::vec m_DeltaDiagonal;
   int m_TruncationIndex;
@@ -120,13 +129,18 @@ private:
 
   //! Generic variables used by all models and needed in each child class
   unsigned int m_DomainDimension;
-  double m_FirstAlpha, m_SecondAlpha;
-  double m_CrossBeta, m_NormalizedFirstAlpha, m_NormalizedSecondAlpha;
-  double m_FirstIntensity, m_SecondIntensity;
+
+  // Original parameters
+  double m_FirstAlpha, m_SecondAlpha, m_CrossAlpha;
+  double m_FirstIntensity, m_SecondIntensity, m_Correlation;
+
+  // Variables for optimized parameters
+  double m_CrossBeta;
   double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
   double m_NormalizedCrossAmplitude;
-  double m_InverseCrossAlpha, m_CrossAlpha;
-  bool m_EstimateIntensities;
+  double m_InverseCrossAlpha;
+
+  bool m_UseVerbose;
 
   static const double m_Epsilon;
 };
