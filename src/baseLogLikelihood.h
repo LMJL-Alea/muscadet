@@ -6,9 +6,14 @@
 class BaseLogLikelihood
 {
 public:
+  using KVectorType = std::vector<double>;
+  using KVectorPairType = std::pair<double,KVectorType>;
+
   BaseLogLikelihood()
   {
     m_TruncationIndex = 50;
+    m_RelativeTolerance = 0.99;
+    m_SplitSummation = true;
   }
 
   ~BaseLogLikelihood() {}
@@ -109,15 +114,35 @@ protected:
 private:
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
+  void GenerateCombinations(
+      const unsigned int N,
+      const unsigned int K,
+      std::vector<std::vector<unsigned int> > &resVector
+  );
   void SetIntegerGrid();
+  void IncrementSummation(
+      const double kSquaredNorm,
+      const KVectorType &kVector,
+      const double weight
+  );
 
   unsigned int m_NumberOfPoints;
 
   arma::vec m_ParameterLowerBounds, m_ParameterUpperBounds;
 
-  std::vector<std::pair<int, std::vector<int> > > m_IntegerGrid;
+  arma::mat m_DataLMatrix;
+  arma::mat m_InternalLMatrix;
+  double m_TraceValue;
+  bool m_ContinueLoop;
+  arma::vec m_WorkingEigenValues;
+  arma::mat m_WorkingEigenVectors;
+  double m_RelativeTolerance;
+  bool m_SplitSummation;
 
-  double m_Integral, m_LogDeterminant;
+  std::vector<KVectorPairType> m_IntegerGrid;
+  std::vector<std::vector<KVectorPairType> > m_OptimizedIntegerGrid;
+
+  double m_LogSpectrum, m_LogDeterminant;
   arma::vec m_GradientIntegral, m_GradientLogDeterminant;
   arma::uvec m_PointLabels;
   arma::vec m_ConstraintVector;
