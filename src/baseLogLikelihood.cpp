@@ -305,7 +305,7 @@ void BaseLogLikelihood::IncrementSummation(const double kSquaredNorm, const KVec
         workValue = 1.0;
         for (unsigned int k = 0;k < m_DomainDimension;++k)
         {
-          if (std::abs(kVector[k]) < m_Epsilon)
+          if (kVector[k] < m_Epsilon)
             continue;
           workValue *= std::cos(2.0 * M_PI * kVector[k] * (m_DataPoints(l, k) - m_DataPoints(m, k)));
         }
