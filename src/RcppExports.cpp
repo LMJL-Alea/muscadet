@@ -7,6 +7,23 @@
 
 using namespace Rcpp;
 
+// CtildeStat2d_cpp
+NumericMatrix CtildeStat2d_cpp(NumericVector x, NumericVector y, double lambdao, NumericVector lambdaa, NumericVector lambda, IntegerVector k1a, IntegerVector k2a);
+RcppExport SEXP _mediator_CtildeStat2d_cpp(SEXP xSEXP, SEXP ySEXP, SEXP lambdaoSEXP, SEXP lambdaaSEXP, SEXP lambdaSEXP, SEXP k1aSEXP, SEXP k2aSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type lambdao(lambdaoSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lambdaa(lambdaaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type k1a(k1aSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type k2a(k2aSEXP);
+    rcpp_result_gen = Rcpp::wrap(CtildeStat2d_cpp(x, y, lambdao, lambdaa, lambda, k1a, k2a));
+    return rcpp_result_gen;
+END_RCPP
+}
 // EstimateBessel
 arma::mat EstimateBessel(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
 RcppExport SEXP _mediator_EstimateBessel(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
@@ -173,6 +190,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_mediator_CtildeStat2d_cpp", (DL_FUNC) &_mediator_CtildeStat2d_cpp, 7},
     {"_mediator_EstimateBessel", (DL_FUNC) &_mediator_EstimateBessel, 9},
     {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 7},
     {"_mediator_InitializeBessel", (DL_FUNC) &_mediator_InitializeBessel, 9},
