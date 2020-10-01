@@ -11,9 +11,39 @@ public:
 
   BaseLogLikelihood()
   {
-    m_TruncationIndex = 50;
+    m_NumberOfPoints = 1;
+    m_NumberOfMarks = 1;
+    m_DomainDimension = 1;
+
+    m_TruncationIndex = 512;
+
+    m_TraceValue = 0.0;
     m_RelativeTolerance = 0.99;
+    m_LogSpectrum = 0.0;
+    m_LogDeterminant = 0.0;
+    m_DomainVolume = 1.0;
+
+    m_ContinueLoop = true;
     m_SplitSummation = true;
+    m_UseVerbose = false;
+
+    m_ParameterLowerBounds.reset();
+    m_ParameterUpperBounds.reset();
+    m_WorkingEigenValues.reset();
+    m_GradientIntegral.reset();
+    m_GradientLogDeterminant.reset();
+    m_ConstraintVector.reset();
+    m_DeltaDiagonal.reset();
+
+    m_PointLabels.reset();
+
+    m_DataLMatrix.reset();
+    m_InternalLMatrix.reset();
+    m_WorkingEigenVectors.reset();
+    m_DataPoints.reset();
+
+    m_IntegerGrid.clear();
+    m_OptimizedIntegerGrid.clear();
   }
 
   ~BaseLogLikelihood() {}
@@ -32,19 +62,19 @@ public:
   arma::vec GetParameterUpperBounds() {return m_ParameterUpperBounds;}
 
   // Setter/getter for alpha1
-  void SetFirstAlpha(const double val);
+  void SetFirstAlpha(const double val) {m_FirstAlpha = val;}
   double GetFirstAlpha() {return m_FirstAlpha;}
 
   // Setter/getter for alpha2
-  void SetSecondAlpha(const double val);
+  void SetSecondAlpha(const double val) {m_SecondAlpha = val;}
   double GetSecondAlpha() {return m_SecondAlpha;}
 
   // Setter/getter for alpha12
-  void SetCrossAlpha(const double val);
+  void SetCrossAlpha(const double val) {m_CrossAlpha = val;}
   double GetCrossAlpha() {return m_CrossAlpha;}
 
   // Setter/getter for tau
-  void SetCorrelation(const double val);
+  void SetCorrelation(const double val) {m_Correlation = val;}
   double GetCorrelation() {return m_Correlation;}
 
   void SetUseVerbose(const bool &val) {m_UseVerbose = val;}
@@ -127,45 +157,50 @@ private:
   );
 
   unsigned int m_NumberOfPoints;
-
-  arma::vec m_ParameterLowerBounds, m_ParameterUpperBounds;
-
-  arma::mat m_DataLMatrix;
-  arma::mat m_InternalLMatrix;
-  double m_TraceValue;
-  bool m_ContinueLoop;
-  arma::vec m_WorkingEigenValues;
-  arma::mat m_WorkingEigenVectors;
-  double m_RelativeTolerance;
-  bool m_SplitSummation;
-
-  std::vector<KVectorPairType> m_IntegerGrid;
-  std::vector<std::vector<KVectorPairType> > m_OptimizedIntegerGrid;
-
-  double m_LogSpectrum, m_LogDeterminant;
-  arma::vec m_GradientIntegral, m_GradientLogDeterminant;
-  arma::uvec m_PointLabels;
-  arma::vec m_ConstraintVector;
-  double m_DomainVolume;
-  arma::vec m_DeltaDiagonal;
-  int m_TruncationIndex;
-  arma::mat m_DataPoints;
   unsigned int m_NumberOfMarks;
-
-  //! Generic variables used by all models and needed in each child class
   unsigned int m_DomainDimension;
 
-  // Original parameters
-  double m_FirstAlpha, m_SecondAlpha, m_CrossAlpha;
-  double m_FirstIntensity, m_SecondIntensity, m_Correlation;
+  int m_TruncationIndex;
 
-  // Variables for optimized parameters
+  double m_TraceValue;
+  double m_RelativeTolerance;
+  double m_LogSpectrum;
+  double m_LogDeterminant;
+  double m_DomainVolume;
+  double m_FirstAlpha;
+  double m_SecondAlpha;
+  double m_CrossAlpha;
+  double m_FirstIntensity;
+  double m_SecondIntensity;
+  double m_Correlation;
   double m_CrossBeta;
-  double m_FirstAmplitude, m_CrossAmplitude, m_SecondAmplitude;
+  double m_FirstAmplitude;
+  double m_CrossAmplitude;
+  double m_SecondAmplitude;
   double m_NormalizedCrossAmplitude;
   double m_InverseCrossAlpha;
 
+  bool m_ContinueLoop;
+  bool m_SplitSummation;
   bool m_UseVerbose;
+
+  arma::vec m_ParameterLowerBounds;
+  arma::vec m_ParameterUpperBounds;
+  arma::vec m_WorkingEigenValues;
+  arma::vec m_GradientIntegral;
+  arma::vec m_GradientLogDeterminant;
+  arma::vec m_ConstraintVector;
+  arma::vec m_DeltaDiagonal;
+
+  arma::uvec m_PointLabels;
+
+  arma::mat m_DataLMatrix;
+  arma::mat m_InternalLMatrix;
+  arma::mat m_WorkingEigenVectors;
+  arma::mat m_DataPoints;
+
+  std::vector<KVectorPairType> m_IntegerGrid;
+  std::vector<std::vector<KVectorPairType> > m_OptimizedIntegerGrid;
 
   static const double m_Epsilon;
 };

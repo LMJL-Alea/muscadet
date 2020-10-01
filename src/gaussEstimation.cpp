@@ -355,7 +355,7 @@ arma::vec log_likelihood(const arma::mat &theta,
     }
 
     workingParams = logLik.GetInitialPoint();
-    outputValues(i) = - logLik.Evaluate(workingParams) / 2.0;
+    outputValues(i) = logLik.Evaluate(workingParams);
   }
 
   Rcpp::Rcout << "It took " << timer.toc() << " seconds for " << theta.n_cols << " function evaluations." << std::endl;
