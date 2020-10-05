@@ -2,6 +2,18 @@
 
 const double BaseLogLikelihood::m_Epsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
+void BaseLogLikelihood::SetFirstAlpha(const double val)
+{
+  m_FirstAlpha = val;
+  m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, val, m_DomainDimension);
+}
+
+void BaseLogLikelihood::SetSecondAlpha(const double val)
+{
+  m_SecondAlpha = val;
+  m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, val, m_DomainDimension);
+}
+
 double BaseLogLikelihood::GetCrossAmplitudeNormalizationFactor()
 {
   double normalizationFactor = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon;
@@ -11,126 +23,30 @@ double BaseLogLikelihood::GetCrossAmplitudeNormalizationFactor()
   return normalizationFactor;
 }
 
-void BaseLogLikelihood::GenerateCombinations(const unsigned int N, const unsigned int K, std::vector<std::vector<unsigned int> > &resVector)
-{
-  resVector.clear();
-
-  std::string bitmask(K, 1); // K leading 1's
-  bitmask.resize(N, 0); // N-K trailing 0's
-  std::vector<unsigned int> singleCombination(K);
-
-  // print integers and permute bitmask
-  do {
-    unsigned int pos = 0;
-    for (unsigned int i = 0;i < N;++i) // [0..N-1] integers
-    {
-      if (bitmask[i])
-      {
-        singleCombination[pos] = i;
-        ++pos;
-      }
-    }
-    resVector.push_back(singleCombination);
-  } while (std::prev_permutation(bitmask.begin(), bitmask.end()));
-}
-
-void BaseLogLikelihood::SetIntegerGrid()
-{
-  KVectorType kVector(m_DomainDimension);
-
-  if (m_SplitSummation)
-  {
-    m_OptimizedIntegerGrid.resize(m_DomainDimension + 1);
-    std::vector<std::vector<unsigned int> > combinationVector;
-
-    // Central point
-    unsigned int numberOfElements = 1;
-    m_OptimizedIntegerGrid[0].resize(numberOfElements);
-    std::fill(kVector.begin(), kVector.end(), 0.0);
-    m_OptimizedIntegerGrid[0][0] = std::make_pair(0.0, kVector);
-
-    // Number of points on domain axes
-    this->GenerateCombinations(m_DomainDimension, 1, combinationVector);
-    numberOfElements = combinationVector.size() * std::pow(m_TruncationIndex, 1);
-    m_OptimizedIntegerGrid[1].resize(numberOfElements);
-    for (unsigned int i = 0;i < combinationVector.size();++i)
-    {
-      std::fill(kVector.begin(), kVector.end(), 0.0);
-      unsigned int index = combinationVector[i][0];
-      for (unsigned int j = 0;j < m_TruncationIndex;++j)
-      {
-        kVector[index] = (j + 1.0) * m_DeltaDiagonal[index];
-        m_OptimizedIntegerGrid[1][i * m_TruncationIndex + j] = std::make_pair(kVector[index] * kVector[index], kVector);
-      }
-    }
-
-    // Number of points on domain planes
-    this->GenerateCombinations(m_DomainDimension, 2, combinationVector);
-    numberOfElements = combinationVector.size() * std::pow(m_TruncationIndex, 2);
-    m_OptimizedIntegerGrid[2].resize(numberOfElements);
-    unsigned int pos = 0;
-    for (unsigned int i = 0;i < combinationVector.size();++i)
-    {
-      std::fill(kVector.begin(), kVector.end(), 0.0);
-      unsigned int index1 = combinationVector[i][0];
-      unsigned int index2 = combinationVector[i][1];
-      for (unsigned int j = 0;j < m_TruncationIndex;++j)
-      {
-        kVector[index1] = (j + 1.0) * m_DeltaDiagonal[index1];
-        for (unsigned int k = 0;k < m_TruncationIndex;++k)
-        {
-          kVector[index2] = (k + 1.0) * m_DeltaDiagonal[index2];
-          m_OptimizedIntegerGrid[2][pos] = std::make_pair(kVector[index1] * kVector[index1] + kVector[index2] * kVector[index2], kVector);
-          ++pos;
-        }
-      }
-    }
-
-    for (unsigned int i = 0;i <= m_DomainDimension;++i)
-      std::sort(m_OptimizedIntegerGrid[i].begin(), m_OptimizedIntegerGrid[i].end());
-
-    return;
-  }
-
-  unsigned int kBuilderSize = 2 * m_TruncationIndex + 1;
-  unsigned int numberOfKVectors = std::pow(kBuilderSize, m_DomainDimension);
-  m_IntegerGrid.resize(numberOfKVectors);
-
-  if (m_UseVerbose)
-    Rcpp::Rcout << "* Number of k-vectors: " << numberOfKVectors << std::endl;
-
-  arma::ivec kBuilder = arma::linspace<arma::ivec>(-m_TruncationIndex, m_TruncationIndex, kBuilderSize);
-
-  for (unsigned int i = 0;i < numberOfKVectors;++i)
-  {
-    auto temp = i;
-
-    double squaredDistanceValue = 0.0;
-
-    for (unsigned int j = 0;j < m_DomainDimension;++j)
-    {
-      auto index = temp % kBuilderSize;
-      temp /= kBuilderSize;
-      kVector[j] = kBuilder[index] * m_DeltaDiagonal[j];
-      squaredDistanceValue += kVector[j] * kVector[j];
-    }
-
-    m_IntegerGrid[i] = std::make_pair(squaredDistanceValue, kVector);
-  }
-
-  std::sort(m_IntegerGrid.begin(), m_IntegerGrid.end());
-}
-
 void BaseLogLikelihood::SetInputData(
     const arma::mat &points,
     const arma::vec &lb,
     const arma::vec &ub,
-    const arma::uvec &labels)
+    const arma::uvec &labels,
+    const Rcpp::DataFrame &ndGrid,
+    const unsigned int N)
 {
   m_DataPoints = points;
+  m_TruncationIndex = N;
   m_DomainDimension = points.n_cols;
   m_NumberOfPoints = points.n_rows;
   m_DataLMatrix.set_size(m_NumberOfPoints, m_NumberOfPoints);
+
+  // m_CosineMatrix.set_size(m_NumberOfPoints * (m_NumberOfPoints - 1) / 2, m_DomainDimension);
+  // unsigned int pos = 0;
+  // for (unsigned int i = 0;i < m_NumberOfPoints;++i)
+  // {
+  //   for (unsigned int j = i + 1;j < m_NumberOfPoints;++j)
+  //   {
+  //     m_CosineMatrix.row(pos) = arma::cos(2.0 * M_PI * (points.row(i) - points.row(j)));
+  //     ++pos;
+  //   }
+  // }
 
   m_DomainVolume = 1.0;
   m_DeltaDiagonal.set_size(m_DomainDimension);
@@ -152,6 +68,7 @@ void BaseLogLikelihood::SetInputData(
   m_InternalLMatrix.set_size(m_NumberOfMarks, m_NumberOfMarks);
   m_WorkingEigenValues.set_size(m_NumberOfMarks);
   m_WorkingEigenVectors.set_size(m_NumberOfMarks, m_NumberOfMarks);
+  m_LMatrixSum.set_size(m_NumberOfMarks, m_NumberOfMarks);
 
   // Poisson estimates for intensities
   m_FirstIntensity = 0.0;
@@ -169,7 +86,16 @@ void BaseLogLikelihood::SetInputData(
   m_SecondIntensity /= m_DomainVolume;
 
   // Generate K-Space grid
-  this->SetIntegerGrid();
+  m_MaximalNumberOfKVectors = ndGrid.nrows();
+  m_KGrid = static_cast<Rcpp::IntegerMatrix>(Rcpp::no_init(m_MaximalNumberOfKVectors, m_DomainDimension));
+  for (unsigned int i = 0;i < m_DomainDimension;++i)
+    m_KGrid.column(i) = Rcpp::as<Rcpp::IntegerVector>(ndGrid[i]);
+  m_KSquaredNorms = ndGrid["sq_norm"];
+  m_KWeights = ndGrid["weight"];
+
+  m_ListOfInternalLMatrices.set_size(m_NumberOfMarks, m_NumberOfMarks, m_MaximalNumberOfKVectors);
+  m_CosineValues.set_size(m_TruncationIndex + 1, m_DomainDimension);
+  m_CosineValues.row(0).fill(1.0);
 
   Rcpp::Rcout << "* Number of points:             " << m_NumberOfPoints << std::endl;
   Rcpp::Rcout << "* Domain dimension:             " << m_DomainDimension << std::endl;
@@ -185,103 +111,114 @@ unsigned int BaseLogLikelihood::GetNumberOfParameters()
   return (m_NumberOfMarks == 1) ? 1 : 4;
 }
 
-// double BaseLogLikelihood::GetCosN(const double x, const unsigned int n)
-// {
-//   if (n == 0)
-//     return 1.0;
-//
-//   if (n == 1)
-//     return std::cos((double)x);
-//
-//   if (n == 2)
-//     return std::cos(2.0 * x);
-//
-//   return 2.0 * this->GetCosN(x, 1) * this->GetCosN(x, n - 1) - this->  GetCosN(x, n - 2);
-// }
-
-void BaseLogLikelihood::IncrementSummation(const double kSquaredNorm, const KVectorType &kVector, const double weight)
+void BaseLogLikelihood::ComputeLogSpectrum()
 {
-  // Now compute eigenvalues and vector of K0^hat(Delta k)
-  double k11Value = this->GetK11Value(kSquaredNorm);
-  double k12Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK12Value(kSquaredNorm);
-  double k22Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK22Value(kSquaredNorm);
+  m_LogSpectrum = 0.0;
+  double traceValue = 0.0;
+  m_NumberOfKVectors = 0;
+  m_ActualTruncationIndex = 0;
+  m_LMatrixSum.fill(0.0);
+  double kSquaredNorm = 0.0;
+  double prevKSquaredNorm = 0.0;
 
-  m_TraceValue += (k11Value + k22Value) * weight;
-
-  if (m_TraceValue > m_RelativeTolerance * (m_FirstIntensity + m_SecondIntensity))
+  for (unsigned int i = 0;i < m_MaximalNumberOfKVectors;++i)
   {
-    m_ContinueLoop = false;
-    return;
-  }
+    kSquaredNorm = m_KSquaredNorms[i];
+    double weightValue = m_KWeights[i];
 
-  double dValue = std::sqrt((k11Value - k22Value) * (k11Value - k22Value) + 4 * k12Value * k12Value);
-  m_WorkingEigenValues[0] = (k11Value + k22Value + dValue) / 2.0;
+    // Now compute eigenvalues and vector of K0^hat(Delta k)
+    double k11Value = this->GetK11Value(kSquaredNorm);
+    double k22Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK22Value(kSquaredNorm);
 
-  if (m_NumberOfMarks == 2)
-    m_WorkingEigenValues[1] = (k11Value + k22Value - dValue) / 2.0;
+    traceValue += (k11Value + k22Value) * weightValue;
 
-  if (m_UseVerbose)
-    Rcpp::Rcout << m_WorkingEigenValues << std::endl;
+    if (traceValue > m_RelativeTolerance * (m_FirstIntensity + m_SecondIntensity) && kSquaredNorm != prevKSquaredNorm)
+      break;
 
-  // Now focus on the log determinant part
+    double k12Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK12Value(kSquaredNorm);
 
-  m_WorkingEigenVectors(0, 0) = 1.0;
+    for (unsigned int j = 0;j < m_DomainDimension;++j)
+      m_ActualTruncationIndex = std::max(m_ActualTruncationIndex, (unsigned int)m_KGrid(i, j));
 
-  if (m_NumberOfMarks == 2)
-  {
-    double mValue = (-k11Value + k22Value + dValue) / (2.0 * k12Value);
-    double mValueDeriv = std::sqrt(1.0 + mValue * mValue);
-    m_WorkingEigenVectors(0, 0) = 1.0 / mValueDeriv;
-    m_WorkingEigenVectors(1, 0) = mValue / mValueDeriv;
-    m_WorkingEigenVectors(0, 1) = -mValue / mValueDeriv;
-    m_WorkingEigenVectors(1, 1) = 1.0 / mValueDeriv;
-  }
+    double dValue = std::sqrt((k11Value - k22Value) * (k11Value - k22Value) + 4.0 * k12Value * k12Value);
+    m_WorkingEigenValues[0] = (k11Value + k22Value + dValue) / 2.0;
 
-  if (m_UseVerbose)
-    Rcpp::Rcout << m_WorkingEigenVectors << std::endl;
+    if (m_NumberOfMarks == 2)
+      m_WorkingEigenValues[1] = (k11Value + k22Value - dValue) / 2.0;
 
-  // Compute first summation (which does not depend on either eigenvectors or data)
-  // and matrix involved in log det that does not depend on data
-  m_InternalLMatrix.fill(0.0);
-  for (unsigned int k = 0;k < m_NumberOfMarks;++k)
-  {
-    m_LogSpectrum += std::log(1.0 - m_WorkingEigenValues[k]) * weight;
-    m_InternalLMatrix = m_InternalLMatrix + m_WorkingEigenValues[k] / (1.0 - m_WorkingEigenValues[k]) * (m_WorkingEigenVectors.col(k) * m_WorkingEigenVectors.col(k).t());
-  }
-  m_InternalLMatrix = m_InternalLMatrix * weight;
+    // Now focus on the log determinant part
 
-  double workValue = 0.0;
+    m_WorkingEigenVectors(0, 0) = 1.0;
 
-  for (unsigned int l = 0;l < m_NumberOfPoints;++l)
-  {
-    m_DataLMatrix(l, l) += m_InternalLMatrix(m_PointLabels[l] - 1, m_PointLabels[l] - 1);
-
-    for (unsigned int m = l + 1;m < m_NumberOfPoints;++m)
+    if (m_NumberOfMarks == 2)
     {
-      if (!m_SplitSummation)
+      double mValue = (-k11Value + k22Value + dValue) / (2.0 * k12Value);
+      double mValueDeriv = std::sqrt(1.0 + mValue * mValue);
+      m_WorkingEigenVectors(0, 0) = 1.0 / mValueDeriv;
+      m_WorkingEigenVectors(1, 0) = mValue / mValueDeriv;
+      m_WorkingEigenVectors(0, 1) = -mValue / mValueDeriv;
+      m_WorkingEigenVectors(1, 1) = 1.0 / mValueDeriv;
+    }
+
+    // Compute first summation (which does not depend on either eigenvectors or data)
+    // and matrix involved in log det that does not depend on data
+    m_InternalLMatrix.fill(0.0);
+    for (unsigned int k = 0;k < m_NumberOfMarks;++k)
+    {
+      m_LogSpectrum += std::log(1.0 - m_WorkingEigenValues[k]) * weightValue;
+      m_InternalLMatrix = m_InternalLMatrix + m_WorkingEigenValues[k] / (1.0 - m_WorkingEigenValues[k]) * (m_WorkingEigenVectors.col(k) * m_WorkingEigenVectors.col(k).t());
+    }
+    m_InternalLMatrix = m_InternalLMatrix * weightValue;
+
+    m_LMatrixSum = m_LMatrixSum + m_InternalLMatrix;
+    m_ListOfInternalLMatrices.slice(m_NumberOfKVectors) = m_InternalLMatrix;
+
+    prevKSquaredNorm = kSquaredNorm;
+    ++m_NumberOfKVectors;
+  }
+
+  if (m_UseVerbose)
+  {
+    Rcpp::Rcout << "* Current truncation index:     " << m_ActualTruncationIndex << std::endl;
+  }
+
+  m_ListOfInternalLMatrices.resize(m_NumberOfMarks, m_NumberOfMarks, m_NumberOfKVectors);
+  m_CosineValues.resize(m_ActualTruncationIndex + 1, m_DomainDimension);
+}
+
+void BaseLogLikelihood::ComputeLogDeterminant()
+{
+  m_DataLMatrix.fill(0.0);
+  double sign = 0.0;
+  unsigned int pos = 0;
+
+  for (unsigned int k = 0;k < m_NumberOfPoints;++k)
+  {
+    m_DataLMatrix(k, k) = m_LMatrixSum(m_PointLabels[k] - 1, m_PointLabels[k] - 1);
+
+    for (unsigned int l = k + 1;l < m_NumberOfPoints;++l)
+    {
+      // m_CosineValues.row(1) = m_CosineMatrix.row(pos);
+      m_CosineValues.row(1) = arma::cos(2.0 * M_PI * (m_DataPoints.row(k) - m_DataPoints.row(l)));
+      for (unsigned int j = 2;j < m_CosineValues.n_rows;++j)
+        m_CosineValues.row(j) = 2.0 * m_CosineValues.row(1) % m_CosineValues.row(j - 1) - m_CosineValues.row(j - 2);
+
+      for (unsigned int i = 0;i < m_NumberOfKVectors;++i)
       {
-        double scalarProduct = 0.0;
-        for (unsigned int k = 0;k < m_DomainDimension;++k)
-          scalarProduct += kVector[k] * (m_DataPoints(l, k) - m_DataPoints(m, k));
-        workValue = std::cos(2.0 * M_PI * scalarProduct);
-      }
-      else
-      {
-        workValue = 1.0;
-        for (unsigned int k = 0;k < m_DomainDimension;++k)
-        {
-          if (kVector[k] < m_Epsilon)
-            continue;
-          workValue *= std::cos(2.0 * M_PI * kVector[k] * (m_DataPoints(l, k) - m_DataPoints(m, k)));
-        }
+        double workValue = m_ListOfInternalLMatrices(m_PointLabels[k] - 1, m_PointLabels[l] - 1, i);
+        for (unsigned int m = 0;m < m_DomainDimension;++m)
+          workValue *= m_CosineValues(m_KGrid(i, m), m);
+
+        m_DataLMatrix(k, l) += workValue;
+        m_DataLMatrix(l, k) += workValue;
       }
 
-      workValue *= m_InternalLMatrix(m_PointLabels[l] - 1, m_PointLabels[m] - 1);
-
-      m_DataLMatrix(l, m) += workValue;
-      m_DataLMatrix(m, l) += workValue;
+      ++pos;
     }
   }
+
+  m_DataLMatrix.clean(arma::datum::eps);
+  arma::log_det(m_LogDeterminant, sign, m_DataLMatrix);
 }
 
 double BaseLogLikelihood::Evaluate(const arma::mat& x)
@@ -291,52 +228,8 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0)
     return(DBL_MAX);
 
-  m_LogSpectrum = 0.0;
-  m_DataLMatrix.fill(0.0);
-  m_TraceValue = 0.0;
-  m_ContinueLoop = true;
-  double weightValue = 1.0;
-  unsigned int counter = 0;
-
-  if (m_SplitSummation)
-  {
-    for (unsigned int i = 0;i <= m_DomainDimension;++i)
-    {
-      weightValue = (double)std::pow(2, i);
-
-      for (unsigned int j = 0;j < m_OptimizedIntegerGrid[i].size();++j)
-      {
-        ++counter;
-
-        this->IncrementSummation(m_OptimizedIntegerGrid[i][j].first, m_OptimizedIntegerGrid[i][j].second, weightValue);
-
-        if (!m_ContinueLoop)
-          break;
-      }
-
-      if (!m_ContinueLoop)
-        break;
-    }
-  }
-  else
-  {
-    for (unsigned int i = 0;i < m_IntegerGrid.size();++i)
-    {
-      ++counter;
-
-      this->IncrementSummation(m_IntegerGrid[i].first, m_IntegerGrid[i].second, weightValue);
-
-      if (!m_ContinueLoop)
-        break;
-    }
-  }
-
-  if (m_UseVerbose)
-    Rcpp::Rcout << "* Number of k-vector used:      " << counter << std::endl;
-  m_DataLMatrix.clean(arma::datum::eps);
-
-  double sign;
-  arma::log_det(m_LogDeterminant, sign, m_DataLMatrix);
+  this->ComputeLogSpectrum();
+  this->ComputeLogDeterminant();
 
   if (m_UseVerbose)
   {

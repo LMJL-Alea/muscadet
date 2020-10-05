@@ -2,7 +2,6 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
-#include <RcppEnsmallen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -24,156 +23,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// EstimateBessel
-arma::mat EstimateBessel(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_EstimateBessel(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimateBessel(X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
-// EvaluateBessel
-double EvaluateBessel(const arma::vec& p, const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2);
-RcppExport SEXP _mediator_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type p(pSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    rcpp_result_gen = Rcpp::wrap(EvaluateBessel(p, X, lb, ub, labels, rho1, rho2));
-    return rcpp_result_gen;
-END_RCPP
-}
-// InitializeBessel
-arma::mat InitializeBessel(const arma::mat& X, const arma::vec& lb, const arma::vec& ub, const Rcpp::Nullable<arma::uvec>& labels, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_InitializeBessel(SEXP XSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP labelsSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type lb(lbSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ub(ubSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_alpha(estimate_alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(InitializeBessel(X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
-// EstimateGauss
-arma::mat EstimateGauss(const arma::mat& points, const double alpha1, const Rcpp::Nullable<double>& rho1, const Rcpp::Nullable<double>& alpha2, const Rcpp::Nullable<double>& rho2, const Rcpp::Nullable<double>& alpha12, const Rcpp::Nullable<double>& tau, const Rcpp::Nullable<arma::vec>& lower_bound, const Rcpp::Nullable<arma::vec>& upper_bound, const Rcpp::Nullable<arma::uvec>& labels, const int N, const bool estimate_intensities, const bool use_verbose);
-RcppExport SEXP _mediator_EstimateGauss(SEXP pointsSEXP, SEXP alpha1SEXP, SEXP rho1SEXP, SEXP alpha2SEXP, SEXP rho2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP labelsSEXP, SEXP NSEXP, SEXP estimate_intensitiesSEXP, SEXP use_verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type points(pointsSEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho2(rho2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha12(alpha12SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type tau(tauSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type lower_bound(lower_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type upper_bound(upper_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_intensities(estimate_intensitiesSEXP);
-    Rcpp::traits::input_parameter< const bool >::type use_verbose(use_verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimateGauss(points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// EvaluateGauss
-double EvaluateGauss(const arma::mat& points, const double alpha1, const Rcpp::Nullable<double>& rho1, const Rcpp::Nullable<double>& alpha2, const Rcpp::Nullable<double>& rho2, const Rcpp::Nullable<double>& alpha12, const Rcpp::Nullable<double>& tau, const Rcpp::Nullable<arma::vec>& lower_bound, const Rcpp::Nullable<arma::vec>& upper_bound, const Rcpp::Nullable<arma::uvec>& labels, const int N, const bool estimate_intensities);
-RcppExport SEXP _mediator_EvaluateGauss(SEXP pointsSEXP, SEXP alpha1SEXP, SEXP rho1SEXP, SEXP alpha2SEXP, SEXP rho2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP labelsSEXP, SEXP NSEXP, SEXP estimate_intensitiesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type points(pointsSEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho2(rho2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha12(alpha12SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type tau(tauSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type lower_bound(lower_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type upper_bound(upper_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_intensities(estimate_intensitiesSEXP);
-    rcpp_result_gen = Rcpp::wrap(EvaluateGauss(points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities));
-    return rcpp_result_gen;
-END_RCPP
-}
-// InitializeGauss
-arma::mat InitializeGauss(const arma::mat& points, const double alpha1, const Rcpp::Nullable<double>& rho1, const Rcpp::Nullable<double>& alpha2, const Rcpp::Nullable<double>& rho2, const Rcpp::Nullable<double>& alpha12, const Rcpp::Nullable<double>& tau, const Rcpp::Nullable<arma::vec>& lower_bound, const Rcpp::Nullable<arma::vec>& upper_bound, const Rcpp::Nullable<arma::uvec>& labels, const int N, const bool estimate_intensities, const bool use_verbose);
-RcppExport SEXP _mediator_InitializeGauss(SEXP pointsSEXP, SEXP alpha1SEXP, SEXP rho1SEXP, SEXP alpha2SEXP, SEXP rho2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP labelsSEXP, SEXP NSEXP, SEXP estimate_intensitiesSEXP, SEXP use_verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type points(pointsSEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho2(rho2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha12(alpha12SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type tau(tauSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type lower_bound(lower_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type upper_bound(upper_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_intensities(estimate_intensitiesSEXP);
-    Rcpp::traits::input_parameter< const bool >::type use_verbose(use_verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(InitializeGauss(points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// MLEGauss
-double MLEGauss(const arma::vec& x, const arma::mat& points, const double alpha1, const Rcpp::Nullable<double>& rho1, const Rcpp::Nullable<double>& alpha2, const Rcpp::Nullable<double>& rho2, const Rcpp::Nullable<double>& alpha12, const Rcpp::Nullable<double>& tau, const Rcpp::Nullable<arma::vec>& lower_bound, const Rcpp::Nullable<arma::vec>& upper_bound, const Rcpp::Nullable<arma::uvec>& labels, const int N, const bool estimate_intensities, const bool use_verbose);
-RcppExport SEXP _mediator_MLEGauss(SEXP xSEXP, SEXP pointsSEXP, SEXP alpha1SEXP, SEXP rho1SEXP, SEXP alpha2SEXP, SEXP rho2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP labelsSEXP, SEXP NSEXP, SEXP estimate_intensitiesSEXP, SEXP use_verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type points(pointsSEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha1(alpha1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho1(rho1SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha2(alpha2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type rho2(rho2SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type alpha12(alpha12SEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<double>& >::type tau(tauSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type lower_bound(lower_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::vec>& >::type upper_bound(upper_boundSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type labels(labelsSEXP);
-    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const bool >::type estimate_intensities(estimate_intensitiesSEXP);
-    Rcpp::traits::input_parameter< const bool >::type use_verbose(use_verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(MLEGauss(x, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
 // log_likelihood
-arma::vec log_likelihood(const arma::mat& theta, const arma::mat& points, const arma::vec& lower_bound, const arma::vec& upper_bound, const Rcpp::Nullable<arma::uvec>& marks, const int N, const bool use_verbose);
-RcppExport SEXP _mediator_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP marksSEXP, SEXP NSEXP, SEXP use_verboseSEXP) {
+arma::vec log_likelihood(const arma::mat& theta, const arma::mat& points, const arma::vec& lower_bound, const arma::vec& upper_bound, const Rcpp::DataFrame& nd_grid, const Rcpp::Nullable<arma::uvec>& marks, const int N, const bool use_verbose);
+RcppExport SEXP _mediator_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP nd_gridSEXP, SEXP marksSEXP, SEXP NSEXP, SEXP use_verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -181,24 +33,41 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type points(pointsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lower_bound(lower_boundSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type upper_bound(upper_boundSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::DataFrame& >::type nd_grid(nd_gridSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type marks(marksSEXP);
     Rcpp::traits::input_parameter< const int >::type N(NSEXP);
     Rcpp::traits::input_parameter< const bool >::type use_verbose(use_verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(log_likelihood(theta, points, lower_bound, upper_bound, marks, N, use_verbose));
+    rcpp_result_gen = Rcpp::wrap(log_likelihood(theta, points, lower_bound, upper_bound, nd_grid, marks, N, use_verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// start_profiler
+SEXP start_profiler(SEXP str);
+RcppExport SEXP _mediator_start_profiler(SEXP strSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type str(strSEXP);
+    rcpp_result_gen = Rcpp::wrap(start_profiler(str));
+    return rcpp_result_gen;
+END_RCPP
+}
+// stop_profiler
+SEXP stop_profiler();
+RcppExport SEXP _mediator_stop_profiler() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(stop_profiler());
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_CtildeStat2d_cpp", (DL_FUNC) &_mediator_CtildeStat2d_cpp, 7},
-    {"_mediator_EstimateBessel", (DL_FUNC) &_mediator_EstimateBessel, 9},
-    {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 7},
-    {"_mediator_InitializeBessel", (DL_FUNC) &_mediator_InitializeBessel, 9},
-    {"_mediator_EstimateGauss", (DL_FUNC) &_mediator_EstimateGauss, 13},
-    {"_mediator_EvaluateGauss", (DL_FUNC) &_mediator_EvaluateGauss, 12},
-    {"_mediator_InitializeGauss", (DL_FUNC) &_mediator_InitializeGauss, 13},
-    {"_mediator_MLEGauss", (DL_FUNC) &_mediator_MLEGauss, 14},
-    {"_mediator_log_likelihood", (DL_FUNC) &_mediator_log_likelihood, 7},
+    {"_mediator_log_likelihood", (DL_FUNC) &_mediator_log_likelihood, 8},
+    {"_mediator_start_profiler", (DL_FUNC) &_mediator_start_profiler, 1},
+    {"_mediator_stop_profiler", (DL_FUNC) &_mediator_stop_profiler, 0},
     {NULL, NULL, 0}
 };
 

@@ -5,98 +5,29 @@ CtildeStat2d_cpp <- function(x, y, lambdao, lambdaa, lambda, k1a, k2a) {
     .Call(`_mediator_CtildeStat2d_cpp`, x, y, lambdao, lambdaa, lambda, k1a, k2a)
 }
 
-#' Stationary Bivariate Bessel DPP Estimator
-#'
-#' This function estimates the parameters of a stationary bivariate Gaussian DPP from a set of observed points and labels.
-#'
-#' @param X A matrix of size n x (d+1) storing the points in R^d and their label in last column.
-#'
-#' @return A vector with the estimated model parameters.
-#'
 #' @export
-#' @examples
-#' dpp <- bessel_tauSq0p5[[1]]
-#' X <- cbind(dpp$x, dpp$y)
-#' labels <- dpp$marks
-#' rho1 <- rho2 <- 100
-#' rho12 <- sqrt(0.5) * sqrt(rho1 * rho2)
-#' alpha1 <- alpha2 <- 0.03
-#' alpha12 <- 0.03
-#' d <- 2
-#' EstimateBessel(
-#'   X = X,
-#'   labels = labels,
-#'   lb = rep(-0.5, ncol(X)),
-#'   ub = rep( 0.5, ncol(X)),
-#'   rho1 = rho1,
-#'   rho2 = rho2,
-#'   alpha1 = alpha1,
-#'   alpha2 = alpha2,
-#'   estimate_alpha = FALSE
-#' )
-EstimateBessel <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call(`_mediator_EstimateBessel`, X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
+log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, marks = NULL, N = 50L, use_verbose = FALSE) {
+    .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, N, use_verbose)
 }
 
-EvaluateBessel <- function(p, X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_) {
-    .Call(`_mediator_EvaluateBessel`, p, X, lb, ub, labels, rho1, rho2)
-}
-
-InitializeBessel <- function(X, lb, ub, labels = NULL, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call(`_mediator_InitializeBessel`, X, lb, ub, labels, rho1, rho2, alpha1, alpha2, estimate_alpha)
-}
-
-#' Stationary Bivariate Gaussian DPP Estimator
+#' C/C++ CPU Profiler Helpers
 #'
-#' This function estimates the parameters of a stationary bivariate Gaussian
-#' DPP from a set of observed points and labels.
+#' These function allows to profile the C/C++ code parts of an R function.
 #'
-#' @param X A matrix of size n x (d+1) storing the points in R^d and their label in last column.
+#' @param str A character string providing the path to a file where the
+#'   profiling output will be stored.
 #'
-#' @return A vector with the estimated model parameters.
-#'
-#' @export
-#' @examples
-#' dpp <- sim_gauss5[[1]]
-#' X <- cbind(dpp$x, dpp$y)
-#' labels <- dpp$marks
-#' rho1 <- rho2 <- 100
-#' rho12 <- sqrt(0.5 * sqrt(rho1 * rho2)
-#' alpha1 <- alpha2 <- 0.03
-#' alpha12 <- 0.03
-#' d <- 2
-#' EstimateGauss(
-#'   X = X,
-#'   labels = labels,
-#'   lb = rep(-0.5, ncol(X)),
-#'   ub = rep( 0.5, ncol(X)),
-#'   rho1 = rho1,
-#'   rho2 = rho2,
-#'   alpha1 = alpha1,
-#'   alpha2 = alpha2,
-#'   estimate_alpha = FALSE
-#' )
-EstimateGauss <- function(points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE, use_verbose = FALSE) {
-    .Call(`_mediator_EstimateGauss`, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose)
+#' @return `NULL`.
+#' @name profiler
+NULL
+
+#' @rdname profiler
+start_profiler <- function(str) {
+    .Call(`_mediator_start_profiler`, str)
 }
 
-#' @export
-EvaluateGauss <- function(points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE) {
-    .Call(`_mediator_EvaluateGauss`, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities)
-}
-
-#' @export
-InitializeGauss <- function(points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE, use_verbose = FALSE) {
-    .Call(`_mediator_InitializeGauss`, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose)
-}
-
-#' @export
-MLEGauss <- function(x, points, alpha1, rho1 = NULL, alpha2 = NULL, rho2 = NULL, alpha12 = NULL, tau = NULL, lower_bound = NULL, upper_bound = NULL, labels = NULL, N = 50L, estimate_intensities = FALSE, use_verbose = FALSE) {
-    .Call(`_mediator_MLEGauss`, x, points, alpha1, rho1, alpha2, rho2, alpha12, tau, lower_bound, upper_bound, labels, N, estimate_intensities, use_verbose)
-}
-
-#' @export
-log_likelihood <- function(theta, points, lower_bound, upper_bound, marks = NULL, N = 50L, use_verbose = FALSE) {
-    .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, marks, N, use_verbose)
+#' @rdname profiler
+stop_profiler <- function() {
+    .Call(`_mediator_stop_profiler`)
 }
 

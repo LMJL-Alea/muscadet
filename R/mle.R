@@ -1,3 +1,32 @@
+#' Title
+#'
+#' @param theta
+#' @param points
+#' @param lower_bound
+#' @param upper_bound
+#' @param marks
+#' @param N
+#' @param use_verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
+my_mle <- function(theta, points, lower_bound, upper_bound, marks = NULL, N = 512, use_verbose = FALSE) {
+  nd_grid <- generate_nd_grid(N, dim(points)[2])
+
+  log_likelihood(
+    theta = theta,
+    points = points,
+    lower_bound = lb,
+    upper_bound = ub,
+    nd_grid = nd_grid,
+    marks = marks,
+    N = N,
+    use_verbose = use_verbose
+  )
+}
+
 #' Maximum Likelihood Estimator of Stationary Bivariate DPPs
 #'
 #' @param X An n x d matrix storing n observed points in R^d.

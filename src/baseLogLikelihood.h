@@ -6,15 +6,14 @@
 class BaseLogLikelihood
 {
 public:
-  using KVectorType = std::vector<double>;
-  using KVectorPairType = std::pair<double,KVectorType>;
-
   BaseLogLikelihood()
   {
     m_NumberOfPoints = 1;
     m_NumberOfMarks = 1;
     m_DomainDimension = 1;
-
+    m_MaximalNumberOfKVectors = 1;
+    m_NumberOfKVectors = 1;
+    m_ActualTruncationIndex = 1;
     m_TruncationIndex = 512;
 
     m_TraceValue = 0.0;
@@ -23,8 +22,6 @@ public:
     m_LogDeterminant = 0.0;
     m_DomainVolume = 1.0;
 
-    m_ContinueLoop = true;
-    m_SplitSummation = true;
     m_UseVerbose = false;
 
     m_ParameterLowerBounds.reset();
@@ -34,16 +31,15 @@ public:
     m_GradientLogDeterminant.reset();
     m_ConstraintVector.reset();
     m_DeltaDiagonal.reset();
-
+    m_LMatrixSum.reset();
     m_PointLabels.reset();
-
     m_DataLMatrix.reset();
     m_InternalLMatrix.reset();
     m_WorkingEigenVectors.reset();
     m_DataPoints.reset();
-
-    m_IntegerGrid.clear();
-    m_OptimizedIntegerGrid.clear();
+    m_ListOfInternalLMatrices.reset();
+    m_CosineMatrix.reset();
+    m_CosineValues.reset();
   }
 
   ~BaseLogLikelihood() {}
@@ -52,7 +48,9 @@ public:
       const arma::mat &points,
       const arma::vec &lb,
       const arma::vec &ub,
-      const arma::uvec &labels
+      const arma::uvec &labels,
+      const Rcpp::DataFrame &ndGrid,
+      const unsigned int N
   );
 
   // to be used in optimizer class
@@ -62,11 +60,11 @@ public:
   arma::vec GetParameterUpperBounds() {return m_ParameterUpperBounds;}
 
   // Setter/getter for alpha1
-  void SetFirstAlpha(const double val) {m_FirstAlpha = val;}
+  void SetFirstAlpha(const double val);
   double GetFirstAlpha() {return m_FirstAlpha;}
 
   // Setter/getter for alpha2
-  void SetSecondAlpha(const double val) {m_SecondAlpha = val;}
+  void SetSecondAlpha(const double val);
   double GetSecondAlpha() {return m_SecondAlpha;}
 
   // Setter/getter for alpha12
@@ -92,8 +90,6 @@ public:
       const double intensity,
       const double alpha,
       const unsigned int dimension) = 0;
-
-  void SetTruncationIndex(const int index) {m_TruncationIndex = index;}
 
   // Return the objective function f(x) for the given x.
   double Evaluate(const arma::mat& x);
@@ -144,21 +140,15 @@ protected:
 private:
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
-  void GenerateCombinations(
-      const unsigned int N,
-      const unsigned int K,
-      std::vector<std::vector<unsigned int> > &resVector
-  );
-  void SetIntegerGrid();
-  void IncrementSummation(
-      const double kSquaredNorm,
-      const KVectorType &kVector,
-      const double weight
-  );
+  void ComputeLogSpectrum();
+  void ComputeLogDeterminant();
 
   unsigned int m_NumberOfPoints;
   unsigned int m_NumberOfMarks;
   unsigned int m_DomainDimension;
+  unsigned int m_MaximalNumberOfKVectors;
+  unsigned int m_NumberOfKVectors;
+  unsigned int m_ActualTruncationIndex;
 
   int m_TruncationIndex;
 
@@ -180,8 +170,6 @@ private:
   double m_NormalizedCrossAmplitude;
   double m_InverseCrossAlpha;
 
-  bool m_ContinueLoop;
-  bool m_SplitSummation;
   bool m_UseVerbose;
 
   arma::vec m_ParameterLowerBounds;
@@ -198,9 +186,15 @@ private:
   arma::mat m_InternalLMatrix;
   arma::mat m_WorkingEigenVectors;
   arma::mat m_DataPoints;
+  arma::mat m_CosineValues;
+  arma::mat m_LMatrixSum;
+  arma::mat m_CosineMatrix;
 
-  std::vector<KVectorPairType> m_IntegerGrid;
-  std::vector<std::vector<KVectorPairType> > m_OptimizedIntegerGrid;
+  arma::cube m_ListOfInternalLMatrices;
+
+  Rcpp::IntegerMatrix m_KGrid;
+  Rcpp::NumericVector m_KSquaredNorms;
+  Rcpp::IntegerVector m_KWeights;
 
   static const double m_Epsilon;
 };
