@@ -13,10 +13,9 @@ public:
     m_DomainDimension = 1;
     m_MaximalNumberOfKVectors = 1;
     m_NumberOfKVectors = 1;
-    m_ActualTruncationIndex = 1;
     m_TruncationIndex = 512;
+    m_ActualTruncationIndex = 1;
 
-    m_TraceValue = 0.0;
     m_RelativeTolerance = 0.99;
     m_LogSpectrum = 0.0;
     m_LogDeterminant = 0.0;
@@ -24,8 +23,6 @@ public:
 
     m_UseVerbose = false;
 
-    m_ParameterLowerBounds.reset();
-    m_ParameterUpperBounds.reset();
     m_WorkingEigenValues.reset();
     m_GradientIntegral.reset();
     m_GradientLogDeterminant.reset();
@@ -36,7 +33,6 @@ public:
     m_DataLMatrix.reset();
     m_InternalLMatrix.reset();
     m_WorkingEigenVectors.reset();
-    m_DataPoints.reset();
     m_ListOfInternalLMatrices.reset();
     m_CosineMatrix.reset();
     m_CosineValues.reset();
@@ -56,8 +52,6 @@ public:
   // to be used in optimizer class
   unsigned int GetNumberOfParameters();
   arma::mat GetInitialPoint();
-  arma::vec GetParameterLowerBounds() {return m_ParameterLowerBounds;}
-  arma::vec GetParameterUpperBounds() {return m_ParameterUpperBounds;}
 
   // Setter/getter for alpha1
   void SetFirstAlpha(const double val);
@@ -140,7 +134,6 @@ protected:
 private:
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
-  void ComputeAll();
   void ComputeLogSpectrum();
   void ComputeLogDeterminant();
 
@@ -149,11 +142,9 @@ private:
   unsigned int m_DomainDimension;
   unsigned int m_MaximalNumberOfKVectors;
   unsigned int m_NumberOfKVectors;
+  unsigned int m_TruncationIndex;
   unsigned int m_ActualTruncationIndex;
 
-  int m_TruncationIndex;
-
-  double m_TraceValue;
   double m_RelativeTolerance;
   double m_LogSpectrum;
   double m_LogDeterminant;
@@ -173,8 +164,6 @@ private:
 
   bool m_UseVerbose;
 
-  arma::vec m_ParameterLowerBounds;
-  arma::vec m_ParameterUpperBounds;
   arma::vec m_WorkingEigenValues;
   arma::vec m_GradientIntegral;
   arma::vec m_GradientLogDeterminant;
@@ -186,7 +175,6 @@ private:
   arma::mat m_DataLMatrix;
   arma::mat m_InternalLMatrix;
   arma::mat m_WorkingEigenVectors;
-  arma::mat m_DataPoints;
   arma::mat m_CosineValues;
   arma::mat m_LMatrixSum;
   arma::mat m_CosineMatrix;

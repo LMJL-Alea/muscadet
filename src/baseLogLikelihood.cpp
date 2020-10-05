@@ -111,96 +111,6 @@ unsigned int BaseLogLikelihood::GetNumberOfParameters()
   return (m_NumberOfMarks == 1) ? 1 : 4;
 }
 
-void BaseLogLikelihood::ComputeAll()
-{
-  m_LogSpectrum = 0.0;
-  double traceValue = 0.0;
-  double kSquaredNorm = 0.0;
-  double prevKSquaredNorm = 0.0;
-  m_DataLMatrix.fill(0.0);
-  double sign = 0.0;
-
-  for (unsigned int i = 0;i < m_MaximalNumberOfKVectors;++i)
-  {
-    kSquaredNorm = m_KSquaredNorms[i];
-    double weightValue = m_KWeights[i];
-
-    // Now compute eigenvalues and vector of K0^hat(Delta k)
-    double k11Value = this->GetK11Value(kSquaredNorm);
-    double k22Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK22Value(kSquaredNorm);
-
-    traceValue += (k11Value + k22Value) * weightValue;
-
-    // Rcpp::Rcout << i << " " << traceValue << " " << kSquaredNorm << std::endl;
-
-    if (traceValue > m_RelativeTolerance * (m_FirstIntensity + m_SecondIntensity) && kSquaredNorm != prevKSquaredNorm)
-      break;
-
-    double k12Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK12Value(kSquaredNorm);
-
-    double dValue = std::sqrt((k11Value - k22Value) * (k11Value - k22Value) + 4.0 * k12Value * k12Value);
-    m_WorkingEigenValues[0] = (k11Value + k22Value + dValue) / 2.0;
-
-    if (m_NumberOfMarks == 2)
-      m_WorkingEigenValues[1] = (k11Value + k22Value - dValue) / 2.0;
-
-    // Now focus on the log determinant part
-
-    m_WorkingEigenVectors(0, 0) = 1.0;
-
-    if (m_NumberOfMarks == 2)
-    {
-      double mValue = (-k11Value + k22Value + dValue) / (2.0 * k12Value);
-      double mValueDeriv = std::sqrt(1.0 + mValue * mValue);
-      m_WorkingEigenVectors(0, 0) = 1.0 / mValueDeriv;
-      m_WorkingEigenVectors(1, 0) = mValue / mValueDeriv;
-      m_WorkingEigenVectors(0, 1) = -mValue / mValueDeriv;
-      m_WorkingEigenVectors(1, 1) = 1.0 / mValueDeriv;
-    }
-
-    // Compute first summation (which does not depend on either eigenvectors or data)
-    // and matrix involved in log det that does not depend on data
-    m_InternalLMatrix.fill(0.0);
-    for (unsigned int j = 0;j < m_NumberOfMarks;++j)
-    {
-      m_LogSpectrum += std::log(1.0 - m_WorkingEigenValues[j]) * weightValue;
-      m_InternalLMatrix = m_InternalLMatrix + m_WorkingEigenValues[j] / (1.0 - m_WorkingEigenValues[j]) * (m_WorkingEigenVectors.col(j) * m_WorkingEigenVectors.col(j).t());
-    }
-    m_InternalLMatrix = m_InternalLMatrix * weightValue;
-
-    unsigned int pos = 0;
-    unsigned int nValue = 0;
-    for (unsigned int j = 0;j < m_DomainDimension;++j)
-      nValue = std::max(nValue, (unsigned int)m_KGrid(i, j));
-
-    for (unsigned int j = 0;j < m_NumberOfPoints;++j)
-    {
-      m_DataLMatrix(j, j) += m_InternalLMatrix(m_PointLabels[j] - 1, m_PointLabels[j] - 1);
-
-      for (unsigned int k = j + 1;k < m_NumberOfPoints;++k)
-      {
-        m_CosineValues.row(1) = m_CosineMatrix.row(pos);
-        for (unsigned int l = 2;l < nValue + 1;++l)
-          m_CosineValues.row(l) = 2.0 * m_CosineValues.row(1) % m_CosineValues.row(l - 1) - m_CosineValues.row(l - 2);
-
-        double workValue = m_InternalLMatrix(m_PointLabels[j] - 1, m_PointLabels[k] - 1);
-        for (unsigned int l = 0;l < m_DomainDimension;++l)
-          workValue *= m_CosineValues(m_KGrid(i, l), l);
-
-        m_DataLMatrix(j, k) += workValue;
-        m_DataLMatrix(k, j) += workValue;
-
-        ++pos;
-      }
-    }
-
-    prevKSquaredNorm = kSquaredNorm;
-  }
-
-  m_DataLMatrix.clean(arma::datum::eps);
-  arma::log_det(m_LogDeterminant, sign, m_DataLMatrix);
-}
-
 void BaseLogLikelihood::ComputeLogSpectrum()
 {
   m_LogSpectrum = 0.0;
@@ -220,8 +130,6 @@ void BaseLogLikelihood::ComputeLogSpectrum()
     double k22Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK22Value(kSquaredNorm);
 
     traceValue += (k11Value + k22Value) * weightValue;
-
-    // Rcpp::Rcout << i << " " << traceValue << " " << kSquaredNorm << std::endl;
 
     if (traceValue > m_RelativeTolerance * (m_FirstIntensity + m_SecondIntensity) && kSquaredNorm != prevKSquaredNorm)
       break;
@@ -312,8 +220,6 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
 
   if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0)
     return(DBL_MAX);
-
-  // this->ComputeAll();
 
   this->ComputeLogSpectrum();
   this->ComputeLogDeterminant();
