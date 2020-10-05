@@ -134,10 +134,10 @@ lambda.and.k <- function#Internal function calculating lambda and k
     trunc <- 1
     prec <- 0
     ## cat("truncation is being calculated adaptively. Current truncation:\n")
-    # while(prec<=prec0 & (2*trunc)<=maxtrunc & trunc<=truncrange){
-    while(prec<=prec0 & (trunc + 1)<=maxtrunc & trunc<=truncrange){
-          # trunc <- 2*trunc
-      trunc <- trunc + 1
+    while(prec<=prec0 & (2*trunc)<=maxtrunc & trunc<=truncrange){
+    # while(prec<=prec0 & (trunc + 1)<=maxtrunc & trunc<=truncrange){
+          trunc <- 2*trunc
+      # trunc <- trunc + 1
       if(stationary){
         ## Coordinates on axes:
         k1a <- c(rep(0,trunc),1:trunc)
