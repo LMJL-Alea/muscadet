@@ -140,6 +140,7 @@ protected:
 private:
   void SetModelParameters(const arma::mat &params);
   bool CheckModelParameters();
+  void ComputeAll();
   void ComputeLogSpectrum();
   void ComputeLogDeterminant();
 
