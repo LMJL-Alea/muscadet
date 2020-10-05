@@ -31,22 +31,22 @@ void BaseLogLikelihood::SetInputData(
     const Rcpp::DataFrame &ndGrid,
     const unsigned int N)
 {
-  m_DataPoints = points;
+  // m_DataPoints = points;
   m_TruncationIndex = N;
   m_DomainDimension = points.n_cols;
   m_NumberOfPoints = points.n_rows;
   m_DataLMatrix.set_size(m_NumberOfPoints, m_NumberOfPoints);
 
-  // m_CosineMatrix.set_size(m_NumberOfPoints * (m_NumberOfPoints - 1) / 2, m_DomainDimension);
-  // unsigned int pos = 0;
-  // for (unsigned int i = 0;i < m_NumberOfPoints;++i)
-  // {
-  //   for (unsigned int j = i + 1;j < m_NumberOfPoints;++j)
-  //   {
-  //     m_CosineMatrix.row(pos) = arma::cos(2.0 * M_PI * (points.row(i) - points.row(j)));
-  //     ++pos;
-  //   }
-  // }
+  m_CosineMatrix.set_size(m_NumberOfPoints * (m_NumberOfPoints - 1) / 2, m_DomainDimension);
+  unsigned int pos = 0;
+  for (unsigned int i = 0;i < m_NumberOfPoints;++i)
+  {
+    for (unsigned int j = i + 1;j < m_NumberOfPoints;++j)
+    {
+      m_CosineMatrix.row(pos) = arma::cos(2.0 * M_PI * (points.row(i) - points.row(j)));
+      ++pos;
+    }
+  }
 
   m_DomainVolume = 1.0;
   m_DeltaDiagonal.set_size(m_DomainDimension);
@@ -182,6 +182,7 @@ void BaseLogLikelihood::ComputeLogSpectrum()
     Rcpp::Rcout << "* Current truncation index:     " << m_ActualTruncationIndex << std::endl;
   }
 
+  m_KGrid = m_KGrid(Rcpp::Range(0, m_NumberOfKVectors), Rcpp::_);
   m_ListOfInternalLMatrices.resize(m_NumberOfMarks, m_NumberOfMarks, m_NumberOfKVectors);
   m_CosineValues.resize(m_ActualTruncationIndex + 1, m_DomainDimension);
 }
@@ -198,8 +199,8 @@ void BaseLogLikelihood::ComputeLogDeterminant()
 
     for (unsigned int l = k + 1;l < m_NumberOfPoints;++l)
     {
-      // m_CosineValues.row(1) = m_CosineMatrix.row(pos);
-      m_CosineValues.row(1) = arma::cos(2.0 * M_PI * (m_DataPoints.row(k) - m_DataPoints.row(l)));
+      m_CosineValues.row(1) = m_CosineMatrix.row(pos);
+      // m_CosineValues.row(1) = arma::cos(2.0 * M_PI * (m_DataPoints.row(k) - m_DataPoints.row(l)));
       for (unsigned int j = 2;j < m_CosineValues.n_rows;++j)
         m_CosineValues.row(j) = 2.0 * m_CosineValues.row(1) % m_CosineValues.row(j - 1) - m_CosineValues.row(j - 2);
 
