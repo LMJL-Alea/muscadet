@@ -5,6 +5,7 @@
 #' @param lower_bound
 #' @param upper_bound
 #' @param marks
+#' @param num_threads
 #' @param N
 #' @param use_verbose
 #'
@@ -12,7 +13,7 @@
 #' @export
 #'
 #' @examples
-my_mle <- function(theta, points, lower_bound, upper_bound, marks = NULL, N = 512, use_verbose = FALSE) {
+my_mle <- function(theta, points, lower_bound, upper_bound, marks = NULL, num_threads = 1, N = 512, use_verbose = FALSE) {
   nd_grid <- generate_nd_grid(N, dim(points)[2])
 
   log_likelihood(
@@ -22,6 +23,7 @@ my_mle <- function(theta, points, lower_bound, upper_bound, marks = NULL, N = 51
     upper_bound = ub,
     nd_grid = nd_grid,
     marks = marks,
+    num_threads = num_threads,
     N = N,
     use_verbose = use_verbose
   )

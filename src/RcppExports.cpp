@@ -24,8 +24,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // log_likelihood
-arma::vec log_likelihood(const arma::mat& theta, const arma::mat& points, const arma::vec& lower_bound, const arma::vec& upper_bound, const Rcpp::DataFrame& nd_grid, const Rcpp::Nullable<arma::uvec>& marks, const int N, const bool use_verbose);
-RcppExport SEXP _mediator_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP nd_gridSEXP, SEXP marksSEXP, SEXP NSEXP, SEXP use_verboseSEXP) {
+arma::vec log_likelihood(const arma::mat& theta, const arma::mat& points, const arma::vec& lower_bound, const arma::vec& upper_bound, const Rcpp::DataFrame& nd_grid, const Rcpp::Nullable<arma::uvec>& marks, const unsigned int num_threads, const unsigned int N, const bool use_verbose);
+RcppExport SEXP _mediator_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP nd_gridSEXP, SEXP marksSEXP, SEXP num_threadsSEXP, SEXP NSEXP, SEXP use_verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -35,9 +35,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type upper_bound(upper_boundSEXP);
     Rcpp::traits::input_parameter< const Rcpp::DataFrame& >::type nd_grid(nd_gridSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<arma::uvec>& >::type marks(marksSEXP);
-    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type num_threads(num_threadsSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type N(NSEXP);
     Rcpp::traits::input_parameter< const bool >::type use_verbose(use_verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(log_likelihood(theta, points, lower_bound, upper_bound, nd_grid, marks, N, use_verbose));
+    rcpp_result_gen = Rcpp::wrap(log_likelihood(theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, use_verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -65,7 +66,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_CtildeStat2d_cpp", (DL_FUNC) &_mediator_CtildeStat2d_cpp, 7},
-    {"_mediator_log_likelihood", (DL_FUNC) &_mediator_log_likelihood, 8},
+    {"_mediator_log_likelihood", (DL_FUNC) &_mediator_log_likelihood, 9},
     {"_mediator_start_profiler", (DL_FUNC) &_mediator_start_profiler, 1},
     {"_mediator_stop_profiler", (DL_FUNC) &_mediator_stop_profiler, 0},
     {NULL, NULL, 0}

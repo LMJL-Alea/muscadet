@@ -1,5 +1,9 @@
 #include "baseLogLikelihood.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 const double BaseLogLikelihood::m_Epsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
 void BaseLogLikelihood::SetFirstAlpha(const double val)
@@ -12,6 +16,17 @@ void BaseLogLikelihood::SetSecondAlpha(const double val)
 {
   m_SecondAlpha = val;
   m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, val, m_DomainDimension);
+}
+
+void BaseLogLikelihood::SetCrossParameters(const double alpha12, const double tau)
+{
+  m_CrossAlpha = alpha12;
+  m_Correlation = tau;
+  m_CrossAmplitude = this->RetrieveAmplitudeFromParameters(
+    tau * std::sqrt(m_FirstIntensity * m_SecondIntensity),
+    alpha12,
+    m_DomainDimension
+  );
 }
 
 double BaseLogLikelihood::GetCrossAmplitudeNormalizationFactor()
@@ -31,21 +46,17 @@ void BaseLogLikelihood::SetInputData(
     const Rcpp::DataFrame &ndGrid,
     const unsigned int N)
 {
-  // m_DataPoints = points;
   m_TruncationIndex = N;
   m_DomainDimension = points.n_cols;
   m_NumberOfPoints = points.n_rows;
   m_DataLMatrix.set_size(m_NumberOfPoints, m_NumberOfPoints);
 
   m_CosineMatrix.set_size(m_NumberOfPoints * (m_NumberOfPoints - 1) / 2, m_DomainDimension);
-  unsigned int pos = 0;
-  for (unsigned int i = 0;i < m_NumberOfPoints;++i)
+  for (unsigned int k = 1;k <= m_CosineMatrix.n_rows;++k)
   {
-    for (unsigned int j = i + 1;j < m_NumberOfPoints;++j)
-    {
-      m_CosineMatrix.row(pos) = arma::cos(2.0 * M_PI * (points.row(i) - points.row(j)));
-      ++pos;
-    }
+    unsigned int i = std::floor((1 + std::sqrt(8 * (double)k - 7)) / 2);
+    unsigned int j = k - (i - 1) * i / 2 - 1;
+    m_CosineMatrix.row(k - 1) = arma::cos(2.0 * M_PI * (points.row(i) - points.row(j)));
   }
 
   m_DomainVolume = 1.0;
@@ -65,6 +76,7 @@ void BaseLogLikelihood::SetInputData(
   if (m_NumberOfMarks > 2)
     Rcpp::stop("The current version only handles univariate and bivariate DPPs.");
 
+  m_NumberOfParameters = (m_NumberOfMarks == 1) ? 1 : 4;
   m_InternalLMatrix.set_size(m_NumberOfMarks, m_NumberOfMarks);
   m_WorkingEigenValues.set_size(m_NumberOfMarks);
   m_WorkingEigenVectors.set_size(m_NumberOfMarks, m_NumberOfMarks);
@@ -94,8 +106,6 @@ void BaseLogLikelihood::SetInputData(
   m_KWeights = ndGrid["weight"];
 
   m_ListOfInternalLMatrices.set_size(m_NumberOfMarks, m_NumberOfMarks, m_MaximalNumberOfKVectors);
-  m_CosineValues.set_size(m_TruncationIndex + 1, m_DomainDimension);
-  m_CosineValues.row(0).fill(1.0);
 
   Rcpp::Rcout << "* Number of points:             " << m_NumberOfPoints << std::endl;
   Rcpp::Rcout << "* Domain dimension:             " << m_DomainDimension << std::endl;
@@ -104,11 +114,6 @@ void BaseLogLikelihood::SetInputData(
   Rcpp::Rcout << "* Intensity of the first mark:  " << m_FirstIntensity << std::endl;
   Rcpp::Rcout << "* Intensity of the second mark: " << m_SecondIntensity << std::endl;
   Rcpp::Rcout << "* Truncation index:             " << m_TruncationIndex << std::endl;
-}
-
-unsigned int BaseLogLikelihood::GetNumberOfParameters()
-{
-  return (m_NumberOfMarks == 1) ? 1 : 4;
 }
 
 void BaseLogLikelihood::ComputeLogSpectrum()
@@ -151,7 +156,7 @@ void BaseLogLikelihood::ComputeLogSpectrum()
 
     if (m_NumberOfMarks == 2)
     {
-      double mValue = (-k11Value + k22Value + dValue) / (2.0 * k12Value);
+      double mValue = (k12Value < m_Epsilon) ? 0.0 : (-k11Value + k22Value + dValue) / (2.0 * k12Value);
       double mValueDeriv = std::sqrt(1.0 + mValue * mValue);
       m_WorkingEigenVectors(0, 0) = 1.0 / mValueDeriv;
       m_WorkingEigenVectors(1, 0) = mValue / mValueDeriv;
@@ -184,29 +189,34 @@ void BaseLogLikelihood::ComputeLogDeterminant()
 {
   m_DataLMatrix.fill(0.0);
   double sign = 0.0;
-  unsigned int pos = 0;
 
   for (unsigned int i = 0;i < m_NumberOfPoints;++i)
-  {
     m_DataLMatrix(i, i) = m_LMatrixSum(m_PointLabels[i] - 1, m_PointLabels[i] - 1);
 
-    for (unsigned int j = i + 1;j < m_NumberOfPoints;++j)
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(m_NumberOfThreads)
+#endif
+
+  for (unsigned int k = 1;k <= m_CosineMatrix.n_rows;++k)
+  {
+    arma::mat cosineValues(m_ActualTruncationIndex + 1, m_DomainDimension);
+    cosineValues.row(0).fill(1.0);
+
+    unsigned int i = std::floor((1 + std::sqrt(8 * (double)k - 7)) / 2);
+    unsigned int j = k - (i - 1) * i / 2 - 1;
+
+    cosineValues.row(1) = m_CosineMatrix.row(k - 1);
+    for (unsigned int l = 2;l < m_ActualTruncationIndex + 1;++l)
+      cosineValues.row(l) = 2.0 * cosineValues.row(1) % cosineValues.row(l - 1) - cosineValues.row(l - 2);
+
+    for (unsigned int l = 0;l < m_NumberOfKVectors;++l)
     {
-      m_CosineValues.row(1) = m_CosineMatrix.row(pos);
-      for (unsigned int k = 2;k < m_ActualTruncationIndex + 1;++k)
-        m_CosineValues.row(k) = 2.0 * m_CosineValues.row(1) % m_CosineValues.row(k - 1) - m_CosineValues.row(k - 2);
+      double workValue = m_ListOfInternalLMatrices(m_PointLabels[i] - 1, m_PointLabels[j] - 1, l);
+      for (unsigned int m = 0;m < m_DomainDimension;++m)
+        workValue *= cosineValues(m_KGrid(l, m), m);
 
-      for (unsigned int k = 0;k < m_NumberOfKVectors;++k)
-      {
-        double workValue = m_ListOfInternalLMatrices(m_PointLabels[i] - 1, m_PointLabels[j] - 1, k);
-        for (unsigned int l = 0;l < m_DomainDimension;++l)
-          workValue *= m_CosineValues(m_KGrid(k, l), l);
-
-        m_DataLMatrix(i, j) += workValue;
-        m_DataLMatrix(j, i) += workValue;
-      }
-
-      ++pos;
+      m_DataLMatrix(i, j) += workValue;
+      m_DataLMatrix(j, i) += workValue;
     }
   }
 
@@ -214,7 +224,7 @@ void BaseLogLikelihood::ComputeLogDeterminant()
   arma::log_det(m_LogDeterminant, sign, m_DataLMatrix);
 }
 
-double BaseLogLikelihood::Evaluate(const arma::mat& x)
+double BaseLogLikelihood::GetValue(const arma::vec& x)
 {
   this->SetModelParameters(x);
 
@@ -243,223 +253,18 @@ double BaseLogLikelihood::Evaluate(const arma::mat& x)
   return -2.0 * logLik;
 }
 
-void BaseLogLikelihood::Gradient(const arma::mat& x, arma::mat &g)
+void BaseLogLikelihood::SetModelParameters(const arma::vec &params)
 {
-  this->SetModelParameters(x);
-  g.set_size(this->GetNumberOfParameters(), 1);
+  unsigned int numParams = params.n_rows;
 
-  bool validParams = this->CheckModelParameters();
-  if (!validParams)
+  if (numParams != m_NumberOfParameters)
+    Rcpp::stop("The number of input parameters does not match the expected value.");
+
+  this->SetFirstAlpha(params(0));
+
+  if (numParams == 4)
   {
-    g.fill(0.0);
-    return;
+    this->SetSecondAlpha(params(1));
+    this->SetCrossParameters(params(2), params(3));
   }
-
-  if (!std::isfinite(m_LogSpectrum) || !std::isfinite(m_LogDeterminant))
-  {
-    Rcpp::Rcout << m_LogSpectrum << " " << m_LogDeterminant << " " << x.as_row() << std::endl;
-    Rcpp::stop("Non finite stuff in gradient");
-  }
-
-  for (unsigned int i = 0;i < this->GetNumberOfParameters();++i)
-    g[i] = m_DomainVolume * m_GradientIntegral[i] + m_GradientLogDeterminant[i];
-
-  g *= -2.0;
-}
-
-double BaseLogLikelihood::EvaluateWithGradient(const arma::mat& x, arma::mat& g)
-{
-  this->SetModelParameters(x);
-  g.set_size(this->GetNumberOfParameters(), 1);
-
-  bool validParams = this->CheckModelParameters();
-  if (!validParams)
-  {
-    g.fill(0.0);
-    return DBL_MAX;
-  }
-
-  m_LogSpectrum = 0;
-  m_LogDeterminant = 0;
-
-  if (!std::isfinite(m_LogSpectrum) || !std::isfinite(m_LogDeterminant))
-  {
-    Rcpp::Rcout << m_LogSpectrum << " " << m_LogDeterminant << " " << x.as_row() << std::endl;
-    Rcpp::stop("Non finite stuff in evaluate with gradient");
-  }
-
-  double logLik = 2.0 * m_DomainVolume;
-  logLik += m_DomainVolume * m_LogSpectrum;
-  logLik += m_LogDeterminant;
-
-  for (unsigned int i = 0;i < this->GetNumberOfParameters();++i)
-    g[i] = m_DomainVolume * m_GradientIntegral[i] + m_GradientLogDeterminant[i];
-
-  g *= -2.0;
-
-  return -2.0 * logLik;
-}
-
-double BaseLogLikelihood::EvaluateConstraint(const size_t i, const arma::mat& x)
-{
-  this->SetModelParameters(x);
-  this->CheckModelParameters();
-  return m_ConstraintVector[i];
-}
-
-void BaseLogLikelihood::GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g)
-{
-  g.set_size(this->GetNumberOfParameters(), 1);
-  g.fill(0.0);
-}
-
-void BaseLogLikelihood::SetModelParameters(const arma::mat &params)
-{
-  // if (this->GetNumberOfParameters() == 1)
-  // {
-  //   m_FirstAlpha = params[0];
-  //
-  // }
-  // else if (this->GetNumberOfParameters() == 1)
-  // {
-  //
-  // }
-  // else if (this->GetNumberOfParameters() == 1)
-  // {
-  //
-  // }
-  // else if (this->GetNumberOfParameters() == 1)
-  // {
-  //
-  // }
-  // else
-  //   Rcpp::stop("The input parameter vector should be of length 1, 2, 4 or 6.");
-
-  unsigned int pos = 0;
-  double workScalar = 0.0;
-
-  // Set k1
-  workScalar = params[pos];
-
-  if (m_FirstAmplitude != workScalar)
-  {
-    m_FirstAmplitude = workScalar;
-    m_FirstAlpha = this->RetrieveAlphaFromParameters(m_FirstAmplitude, m_FirstIntensity, m_DomainDimension);
-  }
-
-  ++pos;
-
-  if (m_NumberOfMarks == 2)
-  {
-    // Set k2
-    workScalar = params[pos];
-
-    if (m_SecondAmplitude != workScalar)
-    {
-      m_SecondAmplitude = workScalar;
-      m_SecondAlpha = this->RetrieveAlphaFromParameters(m_SecondAmplitude, m_SecondIntensity, m_DomainDimension);
-    }
-
-    ++pos;
-
-    // Set k12star
-    workScalar = params[pos];
-
-    if (m_NormalizedCrossAmplitude != workScalar)
-    {
-      m_NormalizedCrossAmplitude = workScalar;
-    }
-
-    ++pos;
-
-    // Set beta12
-    workScalar = params[pos];
-
-    if (m_CrossBeta != workScalar)
-    {
-      m_CrossBeta = workScalar;
-    }
-
-    ++pos;
-  }
-
-  if (0) // (m_Modified)
-  {
-    if (m_NumberOfMarks == 2)
-    {
-      m_InverseCrossAlpha = m_CrossBeta / this->GetCrossAlphaLowerBound();
-      m_CrossAlpha = 1.0 / m_InverseCrossAlpha;
-      double upperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude);
-      upperBound = std::min(upperBound, m_FirstAmplitude * m_SecondAmplitude);
-      upperBound = std::max(upperBound, 0.0);
-      upperBound = std::sqrt(upperBound);
-      m_CrossAmplitude = m_NormalizedCrossAmplitude * upperBound;
-    }
-  }
-
-  // Rcpp::Rcout << m_FirstAlpha << " " << m_SecondAlpha << " " << m_CrossAlpha << " " << m_FirstIntensity << " " << m_SecondIntensity << " " << m_CrossAmplitude / M_PI / m_CrossAlpha / m_CrossAlpha / std::sqrt(m_FirstIntensity * m_SecondIntensity) << std::endl;
-}
-
-bool BaseLogLikelihood::CheckModelParameters()
-{
-  return true;
-}
-
-arma::mat BaseLogLikelihood::GetInitialPoint()
-{
-  unsigned int numParams = this->GetNumberOfParameters();
-  arma::mat params(numParams, 1);
-
-  if (numParams == 1)
-  {
-    m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
-    params(0, 0) = m_FirstAmplitude;
-  }
-  else if (numParams == 2)
-  {
-    m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
-    double alphaUpperBound = this->RetrieveAlphaFromParameters(1.0, 1.0 / m_DomainVolume, m_DomainDimension);
-    params(0, 0) = m_FirstAmplitude;
-    params(1, 0) = m_FirstAlpha / alphaUpperBound;
-  }
-  else if (numParams == 4)
-  {
-    m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
-    m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, m_SecondAlpha, m_DomainDimension);
-    m_CrossAmplitude = this->RetrieveAmplitudeFromParameters(m_Correlation * std::sqrt(m_FirstIntensity * m_SecondIntensity), m_CrossAlpha, m_DomainDimension);
-
-    double k12UpperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon;
-    k12UpperBound = std::min(k12UpperBound, m_FirstAmplitude * m_SecondAmplitude);
-    k12UpperBound = std::max(k12UpperBound, 0.0);
-    k12UpperBound = std::sqrt(k12UpperBound);
-
-    params(0, 0) = m_FirstAmplitude;
-    params(1, 0) = m_SecondAmplitude;
-    params(2, 0) = m_CrossAmplitude / k12UpperBound;
-    params(3, 0) = this->GetCrossAlphaLowerBound() / m_CrossAlpha;
-  }
-  else if (numParams == 6)
-  {
-    m_FirstAmplitude = this->RetrieveAmplitudeFromParameters(m_FirstIntensity, m_FirstAlpha, m_DomainDimension);
-    m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, m_SecondAlpha, m_DomainDimension);
-    m_CrossAmplitude = this->RetrieveAmplitudeFromParameters(m_Correlation * std::sqrt(m_FirstIntensity * m_SecondIntensity), m_CrossAlpha, m_DomainDimension);
-
-    double k12UpperBound = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon;
-    k12UpperBound = std::min(k12UpperBound, m_FirstAmplitude * m_SecondAmplitude);
-    k12UpperBound = std::max(k12UpperBound, 0.0);
-    k12UpperBound = std::sqrt(k12UpperBound);
-
-    double alphaUpperBound = this->RetrieveAlphaFromParameters(1.0, 1.0 / m_DomainVolume, m_DomainDimension);
-
-    params(0, 0) = m_FirstAmplitude;
-    params(1, 0) = m_SecondAmplitude;
-    params(2, 0) = m_CrossAmplitude / k12UpperBound;
-    params(3, 0) = this->GetCrossAlphaLowerBound() / m_CrossAlpha;
-    params(4, 0) = m_FirstAlpha / alphaUpperBound;
-    params(5, 0) = m_SecondAlpha / alphaUpperBound;
-  }
-  else
-    Rcpp::stop("The input vector should be of size 1, 2, 4 or 6.");
-
-  return params;
 }

@@ -314,7 +314,8 @@ arma::vec log_likelihood(const arma::mat &theta,
                          const arma::vec &upper_bound,
                          const Rcpp::DataFrame &nd_grid,
                          const Rcpp::Nullable<arma::uvec> &marks = R_NilValue,
-                         const int N = 50,
+                         const unsigned int num_threads = 1,
+                         const unsigned int N = 50,
                          const bool use_verbose = false)
 {
   // Construct the objective function.
@@ -331,32 +332,16 @@ arma::vec log_likelihood(const arma::mat &theta,
     pointMarks = Rcpp::as<arma::uvec>(marks);
 
   logLik.SetInputData(points, lower_bound, upper_bound, pointMarks, nd_grid, N);
+  logLik.SetNumberOfThreads(num_threads);
   logLik.SetUseVerbose(use_verbose);
 
-  unsigned int numParams = theta.n_rows;
-
   arma::vec outputValues(theta.n_cols);
-  arma::mat workingParams(theta.n_rows, 1);
 
   arma::wall_clock timer;
   timer.tic();
 
   for (unsigned int i = 0;i < theta.n_cols;++i)
-  {
-    if (numParams == 1)
-      logLik.SetFirstAlpha(theta(0, i));
-
-    if (numParams == 4)
-    {
-      logLik.SetFirstAlpha(theta(0, i));
-      logLik.SetSecondAlpha(theta(1, i));
-      logLik.SetCrossAlpha(theta(2, i));
-      logLik.SetCorrelation(theta(3, i));
-    }
-
-    workingParams = logLik.GetInitialPoint();
-    outputValues(i) = logLik.Evaluate(workingParams);
-  }
+    outputValues(i) = logLik.GetValue(theta.col(i));
 
   Rcpp::Rcout << "It took " << timer.toc() << " seconds for " << theta.n_cols << " function evaluations." << std::endl;
 

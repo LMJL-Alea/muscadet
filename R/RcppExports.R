@@ -6,8 +6,8 @@ CtildeStat2d_cpp <- function(x, y, lambdao, lambdaa, lambda, k1a, k2a) {
 }
 
 #' @export
-log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, marks = NULL, N = 50L, use_verbose = FALSE) {
-    .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, N, use_verbose)
+log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, marks = NULL, num_threads = 1L, N = 50L, use_verbose = FALSE) {
+    .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, use_verbose)
 }
 
 #' C/C++ CPU Profiler Helpers

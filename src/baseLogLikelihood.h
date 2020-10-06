@@ -15,6 +15,8 @@ public:
     m_NumberOfKVectors = 1;
     m_TruncationIndex = 512;
     m_ActualTruncationIndex = 1;
+    m_NumberOfThreads = 1;
+    m_NumberOfParameters = 1;
 
     m_RelativeTolerance = 0.99;
     m_LogSpectrum = 0.0;
@@ -24,9 +26,6 @@ public:
     m_UseVerbose = false;
 
     m_WorkingEigenValues.reset();
-    m_GradientIntegral.reset();
-    m_GradientLogDeterminant.reset();
-    m_ConstraintVector.reset();
     m_DeltaDiagonal.reset();
     m_LMatrixSum.reset();
     m_PointLabels.reset();
@@ -35,7 +34,6 @@ public:
     m_WorkingEigenVectors.reset();
     m_ListOfInternalLMatrices.reset();
     m_CosineMatrix.reset();
-    m_CosineValues.reset();
   }
 
   ~BaseLogLikelihood() {}
@@ -49,28 +47,40 @@ public:
       const unsigned int N
   );
 
-  // to be used in optimizer class
-  unsigned int GetNumberOfParameters();
-  arma::mat GetInitialPoint();
+  // Setter/getter for number of threads
+  void SetNumberOfThreads(const unsigned int val) {m_NumberOfThreads = val;}
+  unsigned int GetNumberOfThreads() const {return m_NumberOfThreads;}
+
+  // Setter/getter for number of parameters
+  void SetNumberOfParameters(const unsigned int val) {m_NumberOfParameters = val;}
+  unsigned int GetNumberOfParameters() const {return m_NumberOfParameters;}
 
   // Setter/getter for alpha1
   void SetFirstAlpha(const double val);
-  double GetFirstAlpha() {return m_FirstAlpha;}
+  double GetFirstAlpha() const {return m_FirstAlpha;}
 
   // Setter/getter for alpha2
   void SetSecondAlpha(const double val);
-  double GetSecondAlpha() {return m_SecondAlpha;}
+  double GetSecondAlpha() const {return m_SecondAlpha;}
 
   // Setter/getter for alpha12
-  void SetCrossAlpha(const double val) {m_CrossAlpha = val;}
-  double GetCrossAlpha() {return m_CrossAlpha;}
-
-  // Setter/getter for tau
-  void SetCorrelation(const double val) {m_Correlation = val;}
-  double GetCorrelation() {return m_Correlation;}
+  void SetCrossParameters(const double alpha12, const double tau);
+  double GetCrossAlpha() const {return m_CrossAlpha;}
+  double GetCorrelation() const {return m_Correlation;}
 
   void SetUseVerbose(const bool &val) {m_UseVerbose = val;}
+  bool GetUseVerbose() const {return m_UseVerbose;}
 
+  // Return the objective function f(x) for the given x.
+  double GetValue(const arma::vec& x);
+
+protected:
+  double GetCrossAmplitudeNormalizationFactor();
+  //! Generic functions to be implemented in each child class
+  virtual double GetCrossAlphaLowerBound() = 0;
+  virtual double GetK11Value(const double squaredNorm) = 0;
+  virtual double GetK12Value(const double squaredNorm) = 0;
+  virtual double GetK22Value(const double squaredNorm) = 0;
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
       const double alpha,
@@ -84,55 +94,13 @@ public:
       const double intensity,
       const double alpha,
       const unsigned int dimension) = 0;
-
-  // Return the objective function f(x) for the given x.
-  double Evaluate(const arma::mat& x);
-
-  // Compute the gradient of f(x) for the given x and store the result in g.
-  void Gradient(const arma::mat& x, arma::mat& g);
-
-  // OPTIONAL: this may be implemented in addition to---or instead
-  // of---Evaluate() and Gradient().  If this is the only function implemented,
-  // implementations of Evaluate() and Gradient() will be automatically
-  // generated using template metaprogramming.  Often, implementing
-  // EvaluateWithGradient() can result in more efficient optimizations.
-  //
-  // Given parameters x and a matrix g, return the value of f(x) and store
-  // f'(x) in the provided matrix g.  g should have the same size (rows,
-  // columns) as x.
-  double EvaluateWithGradient(const arma::mat& x, arma::mat& g);
-
-  // Get the number of constraints on the objective function.
-  size_t NumConstraints() {return 5;}
-
-  // Evaluate constraint i at the parameters x.  If the constraint is
-  // unsatisfied, DBL_MAX should be returned.  If the constraint is satisfied,
-  // any real value can be returned.  The optimizer will add this value to its
-  // overall objective that it is trying to minimize.  (So, a hard constraint
-  // can just return 0 if it's satisfied.)
-  double EvaluateConstraint(const size_t i, const arma::mat& x);
-
-  // Evaluate the gradient of constraint i at the parameters x, storing the
-  // result in the given matrix g.  If this is a hard constraint you can set
-  // the gradient to 0.  If the constraint is not satisfied, it could be
-  // helpful to set the gradient in such a way that the gradient points in the
-  // direction where the constraint would be satisfied.
-  void GradientConstraint(const size_t i, const arma::mat& x, arma::mat& g);
-
-protected:
-  double GetCrossAmplitudeNormalizationFactor();
-  //! Generic functions to be implemented in each child class
-  virtual double GetCrossAlphaLowerBound() = 0;
-  virtual double GetK11Value(const double squaredNorm) = 0;
-  virtual double GetK12Value(const double squaredNorm) = 0;
-  virtual double GetK22Value(const double squaredNorm) = 0;
   double GetFirstAmplitude() {return m_FirstAmplitude;}
   double GetSecondAmplitude() {return m_SecondAmplitude;}
   double GetCrossAmplitude() {return m_CrossAmplitude;}
   unsigned int GetDomainDimension() {return m_DomainDimension;}
 
 private:
-  void SetModelParameters(const arma::mat &params);
+  void SetModelParameters(const arma::vec &params);
   bool CheckModelParameters();
   void ComputeLogSpectrum();
   void ComputeLogDeterminant();
@@ -144,6 +112,8 @@ private:
   unsigned int m_NumberOfKVectors;
   unsigned int m_TruncationIndex;
   unsigned int m_ActualTruncationIndex;
+  unsigned int m_NumberOfThreads;
+  unsigned int m_NumberOfParameters;
 
   double m_RelativeTolerance;
   double m_LogSpectrum;
@@ -155,19 +125,13 @@ private:
   double m_FirstIntensity;
   double m_SecondIntensity;
   double m_Correlation;
-  double m_CrossBeta;
   double m_FirstAmplitude;
   double m_CrossAmplitude;
   double m_SecondAmplitude;
-  double m_NormalizedCrossAmplitude;
-  double m_InverseCrossAlpha;
 
   bool m_UseVerbose;
 
   arma::vec m_WorkingEigenValues;
-  arma::vec m_GradientIntegral;
-  arma::vec m_GradientLogDeterminant;
-  arma::vec m_ConstraintVector;
   arma::vec m_DeltaDiagonal;
 
   arma::uvec m_PointLabels;
@@ -175,7 +139,6 @@ private:
   arma::mat m_DataLMatrix;
   arma::mat m_InternalLMatrix;
   arma::mat m_WorkingEigenVectors;
-  arma::mat m_CosineValues;
   arma::mat m_LMatrixSum;
   arma::mat m_CosineMatrix;
 

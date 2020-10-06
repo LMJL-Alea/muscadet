@@ -10,6 +10,7 @@ my_mle(
   lower_bound,
   upper_bound,
   marks = NULL,
+  num_threads = 1,
   N = 512,
   use_verbose = FALSE
 )
