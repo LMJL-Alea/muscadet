@@ -31,7 +31,7 @@ void BaseLogLikelihood::SetCrossParameters(const double alpha12, const double ta
 
 double BaseLogLikelihood::GetCrossAmplitudeNormalizationFactor()
 {
-  double normalizationFactor = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon;
+  double normalizationFactor = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon * m_Epsilon;
   normalizationFactor = std::min(normalizationFactor, m_FirstAmplitude * m_SecondAmplitude);
   normalizationFactor = std::max(normalizationFactor, 0.0);
   normalizationFactor = std::sqrt(normalizationFactor);
@@ -228,8 +228,8 @@ double BaseLogLikelihood::GetValue(const arma::vec& x)
 {
   this->SetModelParameters(x);
 
-  if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0)
-    return(DBL_MAX);
+  if (!this->CheckModelParameters())
+    return DBL_MAX;
 
   this->ComputeLogSpectrum();
   this->ComputeLogDeterminant();
@@ -267,4 +267,24 @@ void BaseLogLikelihood::SetModelParameters(const arma::vec &params)
     this->SetSecondAlpha(params(1));
     this->SetCrossParameters(params(2), params(3));
   }
+}
+
+bool BaseLogLikelihood::CheckModelParameters()
+{
+  if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0 - m_Epsilon)
+    return false;
+
+  if (m_NumberOfParameters == 4)
+  {
+    if (m_SecondAmplitude < m_Epsilon || m_SecondAmplitude > 1.0 - m_Epsilon)
+      return false;
+
+    if (m_CrossAlpha < this->GetCrossAlphaLowerBound())
+      return false;
+
+    if (m_CrossAmplitude > this->GetCrossAmplitudeNormalizationFactor())
+      return false;
+  }
+
+  return true;
 }
