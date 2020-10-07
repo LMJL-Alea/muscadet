@@ -25,6 +25,7 @@ public:
 
     m_UseVerbose = false;
 
+    m_DataPoints.reset();
     m_WorkingEigenValues.reset();
     m_DeltaDiagonal.reset();
     m_LMatrixSum.reset();
@@ -33,7 +34,6 @@ public:
     m_InternalLMatrix.reset();
     m_WorkingEigenVectors.reset();
     m_ListOfInternalLMatrices.reset();
-    m_CosineMatrix.reset();
   }
 
   ~BaseLogLikelihood() {}
@@ -136,11 +136,11 @@ private:
 
   arma::uvec m_PointLabels;
 
+  arma::mat m_DataPoints;
   arma::mat m_DataLMatrix;
   arma::mat m_InternalLMatrix;
   arma::mat m_WorkingEigenVectors;
   arma::mat m_LMatrixSum;
-  arma::mat m_CosineMatrix;
 
   arma::cube m_ListOfInternalLMatrices;
 

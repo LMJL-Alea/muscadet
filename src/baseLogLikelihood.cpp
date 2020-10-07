@@ -46,18 +46,11 @@ void BaseLogLikelihood::SetInputData(
     const Rcpp::DataFrame &ndGrid,
     const unsigned int N)
 {
+  m_DataPoints = points;
   m_TruncationIndex = N;
   m_DomainDimension = points.n_cols;
   m_NumberOfPoints = points.n_rows;
   m_DataLMatrix.set_size(m_NumberOfPoints, m_NumberOfPoints);
-
-  m_CosineMatrix.set_size(m_NumberOfPoints * (m_NumberOfPoints - 1) / 2, m_DomainDimension);
-  for (unsigned int k = 1;k <= m_CosineMatrix.n_rows;++k)
-  {
-    unsigned int i = std::floor((1 + std::sqrt(8 * (double)k - 7)) / 2);
-    unsigned int j = k - (i - 1) * i / 2 - 1;
-    m_CosineMatrix.row(k - 1) = arma::cos(2.0 * M_PI * (points.row(i) - points.row(j)));
-  }
 
   m_DomainVolume = 1.0;
   m_DeltaDiagonal.set_size(m_DomainDimension);
@@ -189,23 +182,28 @@ void BaseLogLikelihood::ComputeLogDeterminant()
 {
   m_DataLMatrix.fill(0.0);
   double sign = 0.0;
-
-  for (unsigned int i = 0;i < m_NumberOfPoints;++i)
-    m_DataLMatrix(i, i) = m_LMatrixSum(m_PointLabels[i] - 1, m_PointLabels[i] - 1);
+  double workInteger = 2.0 * m_NumberOfPoints + 1.0;
 
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(m_NumberOfThreads)
 #endif
 
-  for (unsigned int k = 1;k <= m_CosineMatrix.n_rows;++k)
+  for (unsigned int k = 0;k < m_NumberOfPoints * (m_NumberOfPoints + 1) / 2;++k)
   {
+    double i = std::floor((workInteger - std::sqrt(workInteger * workInteger - 8.0 * k)) / 2.0);
+    double j = k + i * (i - 1) / 2 - (m_NumberOfPoints - 1.0) * i;
+    i = (unsigned int)i;
+    j = (unsigned int)j;
+
+    if (i == j)
+    {
+      m_DataLMatrix(i, i) = m_LMatrixSum(m_PointLabels[i] - 1, m_PointLabels[i] - 1);
+      continue;
+    }
+
     arma::mat cosineValues(m_ActualTruncationIndex + 1, m_DomainDimension);
     cosineValues.row(0).fill(1.0);
-
-    unsigned int i = std::floor((1 + std::sqrt(8 * (double)k - 7)) / 2);
-    unsigned int j = k - (i - 1) * i / 2 - 1;
-
-    cosineValues.row(1) = m_CosineMatrix.row(k - 1);
+    cosineValues.row(1) = arma::cos(2.0 * M_PI * (m_DataPoints.row(i) - m_DataPoints.row(j)));
     for (unsigned int l = 2;l < m_ActualTruncationIndex + 1;++l)
       cosineValues.row(l) = 2.0 * cosineValues.row(1) % cosineValues.row(l - 1) - cosineValues.row(l - 2);
 
