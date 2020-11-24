@@ -20,6 +20,7 @@ LinkingTo:
     Rcpp,
     RcppArmadillo,
     nloptr
+RcppModules: DPP
 Imports: 
     Rcpp,
     spatstat,

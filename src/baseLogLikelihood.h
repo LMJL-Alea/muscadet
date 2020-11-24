@@ -74,13 +74,15 @@ public:
   // Return the objective function f(x) for the given x.
   double GetValue(const arma::vec& x);
 
-protected:
-  double GetCrossAmplitudeNormalizationFactor();
-  //! Generic functions to be implemented in each child class
-  virtual double GetCrossAlphaLowerBound() = 0;
-  virtual double GetK11Value(const double squaredNorm) = 0;
-  virtual double GetK12Value(const double squaredNorm) = 0;
-  virtual double GetK22Value(const double squaredNorm) = 0;
+  // Return an initial point for optimization
+  arma::vec GetInitialPoint() const;
+
+  double GetFirstIntensity() const {return m_FirstIntensity;}
+  double GetSecondIntensity() const {return m_SecondIntensity;}
+  unsigned int GetDomainDimension() const {return m_DomainDimension;}
+
+  double GetSquaredCrossAmplitudeUpperBound() const;
+  virtual double GetCrossAlphaLowerBound() const = 0;
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
       const double alpha,
@@ -94,10 +96,16 @@ protected:
       const double intensity,
       const double alpha,
       const unsigned int dimension) = 0;
+
+protected:
+
+  //! Generic functions to be implemented in each child class
+  virtual double GetK11Value(const double squaredNorm) = 0;
+  virtual double GetK12Value(const double squaredNorm) = 0;
+  virtual double GetK22Value(const double squaredNorm) = 0;
   double GetFirstAmplitude() {return m_FirstAmplitude;}
   double GetSecondAmplitude() {return m_SecondAmplitude;}
   double GetCrossAmplitude() {return m_CrossAmplitude;}
-  unsigned int GetDomainDimension() {return m_DomainDimension;}
 
 private:
   void SetModelParameters(const arma::vec &params);

@@ -64,11 +64,14 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP _rcpp_module_boot_DPP();
+
 static const R_CallMethodDef CallEntries[] = {
     {"_mediator_CtildeStat2d_cpp", (DL_FUNC) &_mediator_CtildeStat2d_cpp, 7},
     {"_mediator_log_likelihood", (DL_FUNC) &_mediator_log_likelihood, 9},
     {"_mediator_start_profiler", (DL_FUNC) &_mediator_start_profiler, 1},
     {"_mediator_stop_profiler", (DL_FUNC) &_mediator_stop_profiler, 0},
+    {"_rcpp_module_boot_DPP", (DL_FUNC) &_rcpp_module_boot_DPP, 0},
     {NULL, NULL, 0}
 };
 

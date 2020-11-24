@@ -23,7 +23,7 @@ public:
   );
 
 private:
-  double GetCrossAlphaLowerBound();
+  double GetCrossAlphaLowerBound() const;
   double GetK11Value(const double squaredNorm);
   double GetK12Value(const double squaredNorm);
   double GetK22Value(const double squaredNorm);

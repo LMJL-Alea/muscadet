@@ -13,20 +13,19 @@
 #' @export
 #'
 #' @examples
-my_mle <- function(theta, points, lower_bound, upper_bound, marks = NULL, num_threads = 1, N = 512, use_verbose = FALSE) {
+my_mle <- function(points, lower_bound, upper_bound,
+                   model = "gauss",
+                   optimizer = "bobyqa",
+                   marks = NULL,
+                   num_threads = 1,
+                   N = 512,
+                   use_verbose = FALSE) {
   nd_grid <- generate_nd_grid(N, dim(points)[2])
 
-  log_likelihood(
-    theta = theta,
-    points = points,
-    lower_bound = lb,
-    upper_bound = ub,
-    nd_grid = nd_grid,
-    marks = marks,
-    num_threads = num_threads,
-    N = N,
-    use_verbose = use_verbose
-  )
+  dpp <- new(DeterminantalPointProcess)
+  dpp$SetLikelihoodModel(model);
+  dpp$SetOptimizer(optimizer);
+  dpp$Fit(points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, use_verbose)
 }
 
 #' Maximum Likelihood Estimator of Stationary Bivariate DPPs

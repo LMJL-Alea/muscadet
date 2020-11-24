@@ -5,10 +5,11 @@
 \title{Title}
 \usage{
 my_mle(
-  theta,
   points,
   lower_bound,
   upper_bound,
+  model = "gauss",
+  optimizer = "bobyqa",
   marks = NULL,
   num_threads = 1,
   N = 512,
