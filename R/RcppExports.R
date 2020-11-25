@@ -10,24 +10,3 @@ log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, mar
     .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, use_verbose)
 }
 
-#' C/C++ CPU Profiler Helpers
-#'
-#' These function allows to profile the C/C++ code parts of an R function.
-#'
-#' @param str A character string providing the path to a file where the
-#'   profiling output will be stored.
-#'
-#' @return `NULL`.
-#' @name profiler
-NULL
-
-#' @rdname profiler
-start_profiler <- function(str) {
-    .Call(`_mediator_start_profiler`, str)
-}
-
-#' @rdname profiler
-stop_profiler <- function() {
-    .Call(`_mediator_stop_profiler`)
-}
-
