@@ -28,6 +28,7 @@ Imports:
     rlang,
     dplyr,
     tidyr
+Remotes: jyypma/nloptr
 URL: https://github.com/astamm/mediator
 BugReports: https://github.com/astamm/mediator/issues
 Suggests: 
