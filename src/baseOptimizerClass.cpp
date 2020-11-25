@@ -30,7 +30,7 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
     parameters(2),
     likelihoodPointer->GetDomainDimension()
   );
-  parameters(3) = crossIntensity / (likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+  parameters(3) = crossIntensity / std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
 }
 
 double BaseOptimizerFunction::MaximizeLikelihoodCostFunction(unsigned n,
