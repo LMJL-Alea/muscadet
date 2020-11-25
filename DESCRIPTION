@@ -21,13 +21,15 @@ LinkingTo:
     RcppArmadillo,
     nloptr
 RcppModules: DPP
+Depends: R (>= 3.5.0)
 Imports: 
     Rcpp,
     spatstat,
     nloptr (>= 1.2.2),
     rlang,
     dplyr,
-    tidyr
+    tidyr,
+    magrittr
 Remotes: jyypma/nloptr
 URL: https://github.com/astamm/mediator
 BugReports: https://github.com/astamm/mediator/issues
