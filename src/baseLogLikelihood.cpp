@@ -108,20 +108,6 @@ void BaseLogLikelihood::SetInputData(
   Rcpp::Rcout << "* Truncation index:             " << m_TruncationIndex << std::endl;
 }
 
-arma::vec BaseLogLikelihood::GetInitialPoint() const
-{
-  arma::vec initialParams(m_NumberOfParameters);
-  initialParams(0) = m_FirstAmplitude;
-
-  if (m_NumberOfParameters == 1)
-    return initialParams;
-
-  initialParams(1) = m_SecondAmplitude;
-  initialParams(2) = this->GetCrossAlphaLowerBound() / m_CrossAlpha;
-  initialParams(3) = m_CrossAmplitude * m_CrossAmplitude / this->GetSquaredCrossAmplitudeUpperBound();
-  return initialParams;
-}
-
 void BaseLogLikelihood::ComputeLogSpectrum()
 {
   m_LogSpectrum = 0.0;

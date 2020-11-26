@@ -74,9 +74,6 @@ public:
   // Return the objective function f(x) for the given x.
   double GetValue(const arma::vec& x);
 
-  // Return an initial point for optimization
-  arma::vec GetInitialPoint() const;
-
   double GetFirstIntensity() const {return m_FirstIntensity;}
   double GetSecondIntensity() const {return m_SecondIntensity;}
   unsigned int GetDomainDimension() const {return m_DomainDimension;}

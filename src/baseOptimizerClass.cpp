@@ -62,7 +62,6 @@ double BaseOptimizerFunction::MaximizeLikelihood(arma::vec &parameters,
 
   // Parameter initialization: one might want to do something smarter here such
   // as PCF initialization
-  // parameters = likelihoodPointer->GetInitialPoint();
   parameters.fill(0.5);
 
   MaximizeLikelihoodData extraData;

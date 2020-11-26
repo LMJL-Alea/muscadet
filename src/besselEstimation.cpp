@@ -63,7 +63,6 @@
 //
 //   // Create a starting point for our optimization randomly within the
 //   // authorized search space.
-//   arma::mat params = logLik.GetInitialPoint();
 //
 //   // Time the routine
 //   arma::wall_clock clock;
@@ -136,5 +135,4 @@
 //
 //   logLik.SetInputData(X, lb, ub, labs);
 //
-//   return logLik.GetInitialPoint();
 // }

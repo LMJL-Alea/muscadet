@@ -91,8 +91,6 @@
 //   if (tau.isNotNull())
 //     logLik.SetCorrelation(Rcpp::as<double>(tau));
 //
-//   arma::mat params = logLik.GetInitialPoint();
-//
 //   // Create the optimizer.
 //   ens::SPSA optimizer;
 //   // ens::ExponentialSchedule expSchedule;
@@ -174,8 +172,6 @@
 //   if (tau.isNotNull())
 //     logLik.SetCorrelation(Rcpp::as<double>(tau));
 //
-//   arma::mat params = logLik.GetInitialPoint();
-//
 //   return logLik.Evaluate(params);
 // }
 //
@@ -238,8 +234,6 @@
 //
 //   if (tau.isNotNull())
 //     logLik.SetCorrelation(Rcpp::as<double>(tau));
-//
-//   return logLik.GetInitialPoint();
 // }
 //
 // //' @export
