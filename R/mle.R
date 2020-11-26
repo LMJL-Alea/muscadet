@@ -1,25 +1,27 @@
-#' Title
+#' Estimation of multi-mark DPP via Maximum Likelihood
 #'
-#' @param theta
-#' @param points
-#' @param lower_bound
-#' @param upper_bound
-#' @param marks
-#' @param num_threads
-#' @param N
-#' @param use_verbose
+#' @param data A ppp.
+#' @param model A DPP model. For now either gauss or bessel.
+#' @param optimizer Any derivative-free optimizer in NlOpt.
+#' @param num_threads Number of threas to run on.
+#' @param N Maximum...
+#' @param use_verbose Show information along the way.
 #'
 #' @return
 #' @export
 #'
 #' @examples
-my_mle <- function(points, lower_bound, upper_bound,
-                   model = "gauss",
-                   optimizer = "bobyqa",
-                   marks = NULL,
-                   num_threads = 1,
-                   N = 512,
-                   use_verbose = FALSE) {
+mle <- function(data,
+                model = "gauss",
+                optimizer = "bobyqa",
+                num_threads = 1,
+                N = 512,
+                use_verbose = FALSE) {
+  points <- cbind(data$x, data$y)
+  marks <- data$marks
+  lower_bound <- c(data$window$xrange[1], data$window$yrange[1])
+  upper_bound <- c(data$window$xrange[2], data$window$yrange[2])
+
   nd_grid <- generate_nd_grid(N, dim(points)[2])
 
   dpp <- new(DeterminantalPointProcess)
