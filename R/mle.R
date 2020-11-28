@@ -1,16 +1,22 @@
 #' Estimation of multi-mark DPP via Maximum Likelihood
 #'
-#' @param data A ppp.
-#' @param model A DPP model. For now either gauss or bessel.
-#' @param optimizer Any derivative-free optimizer in NlOpt.
-#' @param num_threads Number of threas to run on.
-#' @param N Maximum...
-#' @param use_verbose Show information along the way.
+#' @param data A \code{\link[spatstat]{ppp}} object storing an observed planar
+#'   determinantal point process.
+#' @param model A DPP model. For now either gauss or bessel (default: gauss).
+#' @param optimizer Any derivative-free optimizer in NlOpt (default: bobyqa).
+#' @param num_threads Number of threas to run on (default: 1).
+#' @param N Maximum truncation index for Fourier transform (default: 512).
+#' @param use_verbose Display information during optimization. Choose \code{0}
+#'   for no information, \code{1} for global information at likelihood setup or
+#'   \code{2} for detailed  information at each function evaluation. Defaults to
+#'   \code{0}.
 #'
-#' @return
+#' @return A list with two components: \code{par} (optimized model parameters)
+#'   and \code{value} (\code{-2 logLik} at the maximum likelihood).
 #' @export
 #'
 #' @examples
+#' opt <- mle(sim_gauss0[[1]])
 mle <- function(data,
                 model = "gauss",
                 optimizer = "bobyqa",

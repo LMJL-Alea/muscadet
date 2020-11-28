@@ -14,21 +14,29 @@ mle(
 )
 }
 \arguments{
-\item{data}{A ppp.}
+\item{data}{A \code{\link[spatstat]{ppp}} object storing an observed planar
+determinantal point process.}
 
-\item{model}{A DPP model. For now either gauss or bessel.}
+\item{model}{A DPP model. For now either gauss or bessel (default: gauss).}
 
-\item{optimizer}{Any derivative-free optimizer in NlOpt.}
+\item{optimizer}{Any derivative-free optimizer in NlOpt (default: bobyqa).}
 
-\item{num_threads}{Number of threas to run on.}
+\item{num_threads}{Number of threas to run on (default: 1).}
 
-\item{N}{Maximum...}
+\item{N}{Maximum truncation index for Fourier transform (default: 512).}
 
-\item{use_verbose}{Show information along the way.}
+\item{use_verbose}{Display information during optimization. Choose \code{0}
+for no information, \code{1} for global information at likelihood setup or
+\code{2} for detailed  information at each function evaluation. Defaults to
+\code{0}.}
 }
 \value{
-
+A list with two components: \code{par} (optimized model parameters)
+and \code{value} (\code{-2 logLik} at the maximum likelihood).
 }
 \description{
 Estimation of multi-mark DPP via Maximum Likelihood
+}
+\examples{
+opt <- mle(sim_gauss0[[1]])
 }
