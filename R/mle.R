@@ -16,7 +16,7 @@
 #' @export
 #'
 #' @examples
-#' opt <- mle(sim_gauss0[[1]])
+#' opt <- mle(sim_gauss5[[1]])
 mle <- function(data,
                 model = "gauss",
                 optimizer = "bobyqa",

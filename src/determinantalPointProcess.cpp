@@ -4,6 +4,17 @@
 #include "besselLogLikelihood.h"
 #include "bobyqaOptimizerClass.h"
 
+Rcpp::NumericVector DeterminantalPointProcess::FormatVectorForOutput(const arma::vec &inputVector) const
+{
+  Rcpp::NumericVector outputVector = Rcpp::wrap(inputVector);
+  if (outputVector.size() == 1)
+    outputVector.names() = Rcpp::CharacterVector({"alpha"});
+  else
+    outputVector.names() = Rcpp::CharacterVector({"alpha1", "alpha2", "alpha12", "tau"});
+  outputVector.attr("dim") = R_NilValue;
+  return outputVector;
+}
+
 void DeterminantalPointProcess::SetLikelihoodModel(const std::string &val)
 {
   SharedFactory<BaseLogLikelihood> likelihoodFactory;
@@ -55,7 +66,7 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
   double minValue = m_OptimizerPointer->MaximizeLikelihood(parameters, m_LikelihoodPointer);
 
   return Rcpp::List::create(
-    Rcpp::Named("par") = Rcpp::wrap(parameters),
+    Rcpp::Named("par") = this->FormatVectorForOutput(parameters),
     Rcpp::Named("value") = minValue
   );
 }

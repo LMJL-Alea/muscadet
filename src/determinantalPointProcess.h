@@ -20,6 +20,9 @@ public:
       const bool use_verbose = false
   ) const;
 
+protected:
+  Rcpp::NumericVector FormatVectorForOutput(const arma::vec &inputVector) const;
+
 private:
   std::shared_ptr<BaseLogLikelihood> m_LikelihoodPointer;
   std::shared_ptr<BaseOptimizerFunction> m_OptimizerPointer;
