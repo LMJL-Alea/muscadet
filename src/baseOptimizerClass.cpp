@@ -24,13 +24,44 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
 
   parameters(2) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(2);
 
-  double crossAmplitude = std::sqrt(std::max(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(3), 0.0));
+  double crossAmplitude = std::sqrt(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(3));
   double crossIntensity = likelihoodPointer->RetrieveIntensityFromParameters(
     crossAmplitude,
     parameters(2),
     likelihoodPointer->GetDomainDimension()
   );
   parameters(3) = crossIntensity / std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+}
+
+void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &parameters,
+                                                                const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer)
+{
+  likelihoodPointer->SetFirstAlpha(parameters(0));
+  parameters(0) = likelihoodPointer->RetrieveAmplitudeFromParameters(
+    likelihoodPointer->GetFirstIntensity(),
+    parameters(0),
+    likelihoodPointer->GetDomainDimension()
+  );
+
+  if (parameters.n_elem == 1)
+    return;
+
+  likelihoodPointer->SetSecondAlpha(parameters(1));
+  parameters(1) = likelihoodPointer->RetrieveAmplitudeFromParameters(
+    likelihoodPointer->GetSecondIntensity(),
+    parameters(1),
+    likelihoodPointer->GetDomainDimension()
+  );
+
+  double crossIntensity = parameters(3) * std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+  double crossAmplitude = likelihoodPointer->RetrieveAmplitudeFromParameters(
+    crossIntensity,
+    parameters(2),
+    likelihoodPointer->GetDomainDimension()
+  );
+
+  parameters(2) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(2);
+  parameters(3) = crossAmplitude * crossAmplitude / likelihoodPointer->GetSquaredCrossAmplitudeUpperBound();
 }
 
 double BaseOptimizerFunction::MaximizeLikelihoodCostFunction(unsigned n,
@@ -59,10 +90,6 @@ double BaseOptimizerFunction::MaximizeLikelihood(arma::vec &parameters,
   m_LowerBounds.fill(arma::datum::eps);
   m_UpperBounds.fill(1.0 - arma::datum::eps);
   nlopt_opt optimizer = this->GetOptimizer(numberOfParameters);
-
-  // Parameter initialization: one might want to do something smarter here such
-  // as PCF initialization
-  parameters.fill(0.5);
 
   MaximizeLikelihoodData extraData;
   extraData.likelihoodPointer = likelihoodPointer;

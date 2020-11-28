@@ -6,6 +6,7 @@
 \usage{
 mle(
   data,
+  initial_guess = NULL,
   model = "gauss",
   optimizer = "bobyqa",
   num_threads = 1,
@@ -16,6 +17,11 @@ mle(
 \arguments{
 \item{data}{A \code{\link[spatstat]{ppp}} object storing an observed planar
 determinantal point process.}
+
+\item{initial_guess}{A vector providing an intial guess for the model
+parameters that maximize the likelihood. Defaults to \code{NULL}, which
+initializes at \code{0.5} all parameters after suitable transformation into
+\link{0,1}.}
 
 \item{model}{A DPP model. For now either gauss or bessel (default: gauss).}
 
@@ -38,5 +44,5 @@ and \code{value} (\code{-2 logLik} at the maximum likelihood).
 Estimation of multi-mark DPP via Maximum Likelihood
 }
 \examples{
-opt <- mle(sim_gauss0[[1]])
+opt <- mle(sim_gauss5[[1]])
 }

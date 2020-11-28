@@ -30,16 +30,21 @@ public:
       const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer
   );
 
+  static void TransformScaledToUnscaledParameters(
+      arma::vec &parameters,
+      const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer
+  );
+  static void TransformUnscaledToScaledParameters(
+      arma::vec &parameters,
+      const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer
+  );
+
 protected:
   static double MaximizeLikelihoodCostFunction(
       unsigned n,
       const double *x,
       double *grad,
       void *data
-  );
-  static void TransformScaledToUnscaledParameters(
-      arma::vec &parameters,
-      const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer
   );
 
 private:

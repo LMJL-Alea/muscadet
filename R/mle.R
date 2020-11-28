@@ -2,6 +2,10 @@
 #'
 #' @param data A \code{\link[spatstat]{ppp}} object storing an observed planar
 #'   determinantal point process.
+#' @param initial_guess A vector providing an intial guess for the model
+#'   parameters that maximize the likelihood. Defaults to \code{NULL}, which
+#'   initializes at \code{0.5} all parameters after suitable transformation into
+#'   [0,1].
 #' @param model A DPP model. For now either gauss or bessel (default: gauss).
 #' @param optimizer Any derivative-free optimizer in NlOpt (default: bobyqa).
 #' @param num_threads Number of threas to run on (default: 1).
@@ -18,6 +22,7 @@
 #' @examples
 #' opt <- mle(sim_gauss5[[1]])
 mle <- function(data,
+                initial_guess = NULL,
                 model = "gauss",
                 optimizer = "bobyqa",
                 num_threads = 1,
@@ -33,7 +38,8 @@ mle <- function(data,
   dpp <- new(DeterminantalPointProcess)
   dpp$SetLikelihoodModel(model);
   dpp$SetOptimizer(optimizer);
-  dpp$Fit(points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, use_verbose)
+  dpp$Fit(points, lower_bound, upper_bound, nd_grid,
+          initial_guess, marks, num_threads, N, use_verbose)
 }
 
 #' Maximum Likelihood Estimator of Stationary Bivariate DPPs

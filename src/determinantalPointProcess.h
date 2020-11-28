@@ -14,6 +14,7 @@ public:
       const arma::vec &lower_bound,
       const arma::vec &upper_bound,
       const Rcpp::DataFrame &nd_grid,
+      const Rcpp::Nullable<arma::vec> &init = R_NilValue,
       const Rcpp::Nullable<arma::uvec> &marks = R_NilValue,
       const unsigned int num_threads = 1,
       const unsigned int N = 50,
