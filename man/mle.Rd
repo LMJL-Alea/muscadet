@@ -7,6 +7,7 @@
 mle(
   data,
   initial_guess = NULL,
+  fixed_marginal_parameters = FALSE,
   model = "gauss",
   optimizer = "bobyqa",
   num_threads = 1,

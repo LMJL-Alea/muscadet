@@ -44,6 +44,7 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
                                           const Rcpp::DataFrame &nd_grid,
                                           const Rcpp::Nullable<arma::vec> &init,
                                           const Rcpp::Nullable<arma::uvec> &marks,
+                                          const Rcpp::Nullable<arma::vec> &marginal_parameters,
                                           const unsigned int num_threads,
                                           const unsigned int N,
                                           const bool use_verbose) const
@@ -59,7 +60,7 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
   else
     pointMarks = Rcpp::as<arma::uvec>(marks);
 
-  m_LikelihoodPointer->SetInputData(points, lower_bound, upper_bound, pointMarks, nd_grid, N);
+  m_LikelihoodPointer->SetInputData(points, lower_bound, upper_bound, pointMarks, nd_grid, N, marginal_parameters);
   m_LikelihoodPointer->SetNumberOfThreads(num_threads);
   m_LikelihoodPointer->SetUseVerbose(use_verbose);
 
@@ -77,6 +78,16 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
   }
 
   double minValue = m_OptimizerPointer->MaximizeLikelihood(parameters, m_LikelihoodPointer);
+
+  if (marginal_parameters.isNotNull())
+  {
+    arma::vec workParams = parameters;
+    parameters.set_size(4);
+    parameters(0) = m_LikelihoodPointer->GetFirstAlpha();
+    parameters(1) = m_LikelihoodPointer->GetSecondAlpha();
+    parameters(2) = workParams(0);
+    parameters(3) = workParams(1);
+  }
 
   return Rcpp::List::create(
     Rcpp::Named("par") = this->FormatVectorForOutput(parameters),

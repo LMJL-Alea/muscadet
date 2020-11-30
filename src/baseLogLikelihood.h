@@ -24,6 +24,7 @@ public:
     m_DomainVolume = 1.0;
 
     m_UseVerbose = false;
+    m_UseFixedMarginalParameters = false;
 
     m_DataPoints.reset();
     m_WorkingEigenValues.reset();
@@ -44,7 +45,8 @@ public:
       const arma::vec &ub,
       const arma::uvec &labels,
       const Rcpp::DataFrame &ndGrid,
-      const unsigned int N
+      const unsigned int N,
+      const Rcpp::Nullable<arma::vec> &marginal_parameters = R_NilValue
   );
 
   // Setter/getter for number of threads
@@ -135,6 +137,7 @@ private:
   double m_SecondAmplitude;
 
   bool m_UseVerbose;
+  bool m_UseFixedMarginalParameters;
 
   arma::vec m_WorkingEigenValues;
   arma::vec m_DeltaDiagonal;

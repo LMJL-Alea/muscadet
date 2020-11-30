@@ -23,6 +23,7 @@
 #' opt <- mle(sim_gauss5[[1]])
 mle <- function(data,
                 initial_guess = NULL,
+                fixed_marginal_parameters = FALSE,
                 model = "gauss",
                 optimizer = "bobyqa",
                 num_threads = 1,
@@ -30,6 +31,21 @@ mle <- function(data,
                 use_verbose = FALSE) {
   points <- cbind(data$x, data$y)
   marks <- data$marks
+  marginal_parameters <- NULL
+  if (!is.null(marks) && fixed_marginal_parameters) {
+    marginal_parameters <- data %>%
+      spatstat::split.ppp() %>%
+      purrr::map(
+        .f = mle,
+        model = model,
+        optimizer = optimizer,
+        num_threads = num_threads,
+        N = N,
+        use_verbose = use_verbose
+      ) %>%
+      purrr::map_dbl("par")
+  }
+
   lower_bound <- c(data$window$xrange[1], data$window$yrange[1])
   upper_bound <- c(data$window$xrange[2], data$window$yrange[2])
 
@@ -38,8 +54,10 @@ mle <- function(data,
   dpp <- new(DeterminantalPointProcess)
   dpp$SetLikelihoodModel(model);
   dpp$SetOptimizer(optimizer);
-  dpp$Fit(points, lower_bound, upper_bound, nd_grid,
-          initial_guess, marks, num_threads, N, use_verbose)
+  dpp$Fit(
+    points, lower_bound, upper_bound, nd_grid,
+    initial_guess, marks, marginal_parameters, num_threads, N, use_verbose
+  )
 }
 
 #' Maximum Likelihood Estimator of Stationary Bivariate DPPs

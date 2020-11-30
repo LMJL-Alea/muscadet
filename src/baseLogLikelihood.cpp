@@ -43,7 +43,8 @@ void BaseLogLikelihood::SetInputData(
     const arma::vec &ub,
     const arma::uvec &labels,
     const Rcpp::DataFrame &ndGrid,
-    const unsigned int N)
+    const unsigned int N,
+    const Rcpp::Nullable<arma::vec> &marginal_parameters)
 {
   m_DataPoints = points;
   m_TruncationIndex = N;
@@ -68,7 +69,6 @@ void BaseLogLikelihood::SetInputData(
   if (m_NumberOfMarks > 2)
     Rcpp::stop("The current version only handles univariate and bivariate DPPs.");
 
-  m_NumberOfParameters = (m_NumberOfMarks == 1) ? 1 : 4;
   m_InternalLMatrix.set_size(m_NumberOfMarks, m_NumberOfMarks);
   m_WorkingEigenValues.set_size(m_NumberOfMarks);
   m_WorkingEigenVectors.set_size(m_NumberOfMarks, m_NumberOfMarks);
@@ -88,6 +88,17 @@ void BaseLogLikelihood::SetInputData(
 
   m_FirstIntensity /= m_DomainVolume;
   m_SecondIntensity /= m_DomainVolume;
+
+  if (marginal_parameters.isNotNull())
+  {
+    // Set marginal parameters
+    arma::vec marginalParams = Rcpp::as<arma::vec>(marginal_parameters);
+    this->SetFirstAlpha(marginalParams(0));
+    this->SetSecondAlpha(marginalParams(1));
+    m_UseFixedMarginalParameters = true;
+  }
+
+  m_NumberOfParameters = (m_NumberOfMarks == 1) ? 1 : ((m_UseFixedMarginalParameters) ? 2 : 4);
 
   // Generate K-Space grid
   m_MaximalNumberOfKVectors = ndGrid.nrows();
@@ -257,13 +268,18 @@ void BaseLogLikelihood::SetModelParameters(const arma::vec &params)
   if (numParams != m_NumberOfParameters)
     Rcpp::stop("The number of input parameters does not match the expected value.");
 
-  this->SetFirstAlpha(params(0));
-
-  if (numParams == 4)
+  if (numParams == 1)
+    this->SetFirstAlpha(params(0));
+  else if (numParams == 2)
+    this->SetCrossParameters(params(0), params(1));
+  else if (numParams == 4)
   {
+    this->SetFirstAlpha(params(0));
     this->SetSecondAlpha(params(1));
     this->SetCrossParameters(params(2), params(3));
   }
+  else
+    Rcpp::stop("Unknowm number of parameters.");
 }
 
 bool BaseLogLikelihood::CheckModelParameters()

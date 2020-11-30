@@ -16,6 +16,7 @@ public:
       const Rcpp::DataFrame &nd_grid,
       const Rcpp::Nullable<arma::vec> &init = R_NilValue,
       const Rcpp::Nullable<arma::uvec> &marks = R_NilValue,
+      const Rcpp::Nullable<arma::vec> &marginal_parameters = R_NilValue,
       const unsigned int num_threads = 1,
       const unsigned int N = 50,
       const bool use_verbose = false

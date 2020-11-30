@@ -3,6 +3,20 @@
 void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &parameters,
                                                                 const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer)
 {
+  if (parameters.n_elem == 2)
+  {
+    parameters(0) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(0);
+
+    double crossAmplitude = std::sqrt(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(1));
+    double crossIntensity = likelihoodPointer->RetrieveIntensityFromParameters(
+      crossAmplitude,
+      parameters(0),
+      likelihoodPointer->GetDomainDimension()
+    );
+    parameters(1) = crossIntensity / std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+    return;
+  }
+
   parameters(0) = likelihoodPointer->RetrieveAlphaFromParameters(
     parameters(0),
     likelihoodPointer->GetFirstIntensity(),
@@ -36,6 +50,20 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
 void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &parameters,
                                                                 const std::shared_ptr<BaseLogLikelihood> &likelihoodPointer)
 {
+  if (parameters.n_elem == 2)
+  {
+    double crossIntensity = parameters(1) * std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+    double crossAmplitude = likelihoodPointer->RetrieveAmplitudeFromParameters(
+      crossIntensity,
+      parameters(0),
+      likelihoodPointer->GetDomainDimension()
+    );
+
+    parameters(0) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(0);
+    parameters(1) = crossAmplitude * crossAmplitude / likelihoodPointer->GetSquaredCrossAmplitudeUpperBound();
+    return;
+  }
+
   likelihoodPointer->SetFirstAlpha(parameters(0));
   parameters(0) = likelihoodPointer->RetrieveAmplitudeFromParameters(
     likelihoodPointer->GetFirstIntensity(),
