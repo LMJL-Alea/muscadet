@@ -5,7 +5,7 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
 {
   if (parameters.n_elem == 2)
   {
-    parameters(0) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(0);
+    parameters(0) = std::sqrt((likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) * parameters(0) + likelihoodPointer->GetSquaredCrossAlphaLowerBound());
 
     double crossAmplitude = std::sqrt(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(1));
     double crossIntensity = likelihoodPointer->RetrieveIntensityFromParameters(
@@ -14,6 +14,7 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
       likelihoodPointer->GetDomainDimension()
     );
     parameters(1) = crossIntensity / std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+
     return;
   }
 
@@ -36,7 +37,7 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
 
   likelihoodPointer->SetSecondAlpha(parameters(1));
 
-  parameters(2) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(2);
+  parameters(2) = std::sqrt((likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) * parameters(2) + likelihoodPointer->GetSquaredCrossAlphaLowerBound());
 
   double crossAmplitude = std::sqrt(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(3));
   double crossIntensity = likelihoodPointer->RetrieveIntensityFromParameters(
@@ -59,8 +60,18 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
       likelihoodPointer->GetDomainDimension()
     );
 
-    parameters(0) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(0);
+    parameters(0) = (parameters(0) * parameters(0) - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) / (likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound());
+    if (parameters(0) < 0)
+      parameters(0) = 0.0;
+    if (parameters(0) > 1.0)
+      parameters(0) = 1.0;
+
     parameters(1) = crossAmplitude * crossAmplitude / likelihoodPointer->GetSquaredCrossAmplitudeUpperBound();
+    if (parameters(1) < 0)
+      parameters(1) = 0.0;
+    if (parameters(1) > 1.0)
+      parameters(1) = 1.0;
+
     return;
   }
 
@@ -88,8 +99,17 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     likelihoodPointer->GetDomainDimension()
   );
 
-  parameters(2) = likelihoodPointer->GetCrossAlphaLowerBound() / parameters(2);
+  parameters(2) = (parameters(2) * parameters(2) - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) / (likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound());
+  if (parameters(2) < 0)
+    parameters(2) = 0.0;
+  if (parameters(2) > 1.0)
+    parameters(2) = 1.0;
+
   parameters(3) = crossAmplitude * crossAmplitude / likelihoodPointer->GetSquaredCrossAmplitudeUpperBound();
+  if (parameters(3) < 0)
+    parameters(3) = 0.0;
+  if (parameters(3) > 1.0)
+    parameters(3) = 1.0;
 }
 
 double BaseOptimizerFunction::MaximizeLikelihoodCostFunction(unsigned n,
@@ -115,8 +135,17 @@ double BaseOptimizerFunction::MaximizeLikelihood(arma::vec &parameters,
   unsigned int numberOfParameters = likelihoodPointer->GetNumberOfParameters();
   m_LowerBounds.resize(numberOfParameters);
   m_UpperBounds.resize(numberOfParameters);
-  m_LowerBounds.fill(arma::datum::eps);
-  m_UpperBounds.fill(1.0 - arma::datum::eps);
+  m_LowerBounds.fill(std::sqrt(arma::datum::eps));
+  m_UpperBounds.fill(1.0 - std::sqrt(arma::datum::eps));
+
+  if (numberOfParameters > 1)
+  {
+    m_LowerBounds(numberOfParameters - 2) = 0.0;
+    m_UpperBounds(numberOfParameters - 2) = 1.0;
+    m_LowerBounds(numberOfParameters - 1) = 0.0;
+    m_UpperBounds(numberOfParameters - 1) = 1.0;
+  }
+
   nlopt_opt optimizer = this->GetOptimizer(numberOfParameters);
 
   MaximizeLikelihoodData extraData;

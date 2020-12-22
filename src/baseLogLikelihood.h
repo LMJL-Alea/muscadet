@@ -80,8 +80,9 @@ public:
   double GetSecondIntensity() const {return m_SecondIntensity;}
   unsigned int GetDomainDimension() const {return m_DomainDimension;}
 
+  double GetSquaredCrossAlphaUpperBound() const;
   double GetSquaredCrossAmplitudeUpperBound() const;
-  virtual double GetCrossAlphaLowerBound() const = 0;
+  virtual double GetSquaredCrossAlphaLowerBound() const = 0;
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
       const double alpha,

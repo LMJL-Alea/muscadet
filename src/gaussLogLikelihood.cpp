@@ -21,11 +21,11 @@ double GaussLogLikelihood::RetrieveAmplitudeFromParameters(const double intensit
   return intensity * std::pow(M_PI * alpha * alpha, order);
 }
 
-double GaussLogLikelihood::GetCrossAlphaLowerBound() const
+double GaussLogLikelihood::GetSquaredCrossAlphaLowerBound() const
 {
   double alpha1 = this->GetFirstAlpha();
   double alpha2 = this->GetSecondAlpha();
-  return std::sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2.0);
+  return (alpha1 * alpha1 + alpha2 * alpha2) / 2.0;
 }
 
 double GaussLogLikelihood::GetK11Value(const double squaredNorm)

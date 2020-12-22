@@ -4,7 +4,7 @@
 #include <omp.h>
 #endif
 
-const double BaseLogLikelihood::m_Epsilon = std::sqrt(std::numeric_limits<double>::epsilon());
+const double BaseLogLikelihood::m_Epsilon = std::sqrt(arma::datum::eps);
 
 void BaseLogLikelihood::SetFirstAlpha(const double val)
 {
@@ -20,13 +20,30 @@ void BaseLogLikelihood::SetSecondAlpha(const double val)
 
 void BaseLogLikelihood::SetCrossParameters(const double alpha12, const double tau)
 {
-  m_CrossAlpha = alpha12;
   m_Correlation = tau;
+
+  if (m_Correlation < m_Epsilon)
+  {
+    m_Correlation = 0.0;
+    m_CrossAlpha = std::sqrt(this->GetSquaredCrossAlphaLowerBound());
+    m_CrossAmplitude = 0.0;
+    return;
+  }
+
+  m_CrossAlpha = alpha12;
   m_CrossAmplitude = this->RetrieveAmplitudeFromParameters(
     tau * std::sqrt(m_FirstIntensity * m_SecondIntensity),
     alpha12,
     m_DomainDimension
   );
+}
+
+double BaseLogLikelihood::GetSquaredCrossAlphaUpperBound() const
+{
+  double weightValue = std::min(1.0, (1.0 / m_FirstAmplitude - 1.0) * (1.0/ m_SecondAmplitude - 1.0));
+  double squaredCorrelationUpperBound = weightValue * std::pow(m_FirstAlpha * m_SecondAlpha / this->GetSquaredCrossAlphaLowerBound(), (double)m_DomainDimension);
+  double squaredCorrelationLowerBound = 0.01 * squaredCorrelationUpperBound;
+  return m_FirstAlpha * m_SecondAlpha * std::pow(weightValue / squaredCorrelationLowerBound, 1.0 / m_DomainDimension);
 }
 
 double BaseLogLikelihood::GetSquaredCrossAmplitudeUpperBound() const
@@ -287,12 +304,21 @@ bool BaseLogLikelihood::CheckModelParameters()
   if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0 - m_Epsilon)
     return false;
 
+  if (m_NumberOfParameters == 2)
+  {
+    if (m_CrossAlpha * m_CrossAlpha < this->GetSquaredCrossAlphaLowerBound())
+      return false;
+
+    if (m_CrossAmplitude * m_CrossAmplitude > this->GetSquaredCrossAmplitudeUpperBound())
+      return false;
+  }
+
   if (m_NumberOfParameters == 4)
   {
     if (m_SecondAmplitude < m_Epsilon || m_SecondAmplitude > 1.0 - m_Epsilon)
       return false;
 
-    if (m_CrossAlpha < this->GetCrossAlphaLowerBound())
+    if (m_CrossAlpha * m_CrossAlpha < this->GetSquaredCrossAlphaLowerBound())
       return false;
 
     if (m_CrossAmplitude * m_CrossAmplitude > this->GetSquaredCrossAmplitudeUpperBound())

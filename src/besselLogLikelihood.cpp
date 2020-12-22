@@ -21,9 +21,10 @@ double BesselLogLikelihood::RetrieveAmplitudeFromParameters(const double intensi
   return intensity * std::pow(M_PI * alpha * alpha / order, order) * std::tgamma(1.0 + order);
 }
 
-double BesselLogLikelihood::GetCrossAlphaLowerBound() const
+double BesselLogLikelihood::GetSquaredCrossAlphaLowerBound() const
 {
-  return std::max(this->GetFirstAlpha(), this->GetSecondAlpha());
+  double maxAlpha = std::max(this->GetFirstAlpha(), this->GetSecondAlpha());
+  return maxAlpha * maxAlpha;
 }
 
 double BesselLogLikelihood::GetK11Value(const double squaredNorm)
