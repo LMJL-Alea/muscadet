@@ -19,7 +19,7 @@ public:
       const Rcpp::Nullable<arma::vec> &marginal_parameters = R_NilValue,
       const unsigned int num_threads = 1,
       const unsigned int N = 50,
-      const bool use_verbose = false
+      const unsigned int verbose_level = 0
   ) const;
 
 protected:

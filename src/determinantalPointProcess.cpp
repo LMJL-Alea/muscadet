@@ -3,6 +3,8 @@
 #include "gaussLogLikelihood.h"
 #include "besselLogLikelihood.h"
 #include "bobyqaOptimizerClass.h"
+#include "cobylaOptimizerClass.h"
+#include "neldermeadOptimizerClass.h"
 
 Rcpp::NumericVector DeterminantalPointProcess::FormatVectorForOutput(const arma::vec &inputVector) const
 {
@@ -24,18 +26,20 @@ void DeterminantalPointProcess::SetLikelihoodModel(const std::string &val)
   m_LikelihoodPointer = likelihoodFactory.Instantiate(val);
 
   if (!m_LikelihoodPointer)
-    Rcpp::stop("The requred model is not available.");
+    Rcpp::stop("The required model is not available.");
 }
 
 void DeterminantalPointProcess::SetOptimizer(const std::string &val)
 {
   SharedFactory<BaseOptimizerFunction> optimizerFactory;
   optimizerFactory.Register<BobyqaOptimizerFunction>("bobyqa");
+  optimizerFactory.Register<CobylaOptimizerFunction>("cobyla");
+  optimizerFactory.Register<NeldermeadOptimizerFunction>("neldermead");
 
   m_OptimizerPointer = optimizerFactory.Instantiate(val);
 
   if (!m_OptimizerPointer)
-    Rcpp::stop("The requred optimizer is not available.");
+    Rcpp::stop("The required optimizer is not available.");
 }
 
 Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
@@ -47,7 +51,7 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
                                           const Rcpp::Nullable<arma::vec> &marginal_parameters,
                                           const unsigned int num_threads,
                                           const unsigned int N,
-                                          const bool use_verbose) const
+                                          const unsigned int verbose_level) const
 {
   // Setup data in likelihood
   arma::uvec pointMarks;
@@ -62,7 +66,7 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
 
   m_LikelihoodPointer->SetInputData(points, lower_bound, upper_bound, pointMarks, nd_grid, N, marginal_parameters);
   m_LikelihoodPointer->SetNumberOfThreads(num_threads);
-  m_LikelihoodPointer->SetUseVerbose(use_verbose);
+  m_LikelihoodPointer->SetVerboseLevel(verbose_level);
 
   arma::vec parameters;
 
@@ -75,6 +79,17 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
   {
     parameters = Rcpp::as<arma::vec>(init);
     m_OptimizerPointer->TransformUnscaledToScaledParameters(parameters, m_LikelihoodPointer);
+    bool validInit = true;
+    for (unsigned int i = 0;i < parameters.n_elem;++i)
+    {
+      if (R_IsNA(parameters[i]))
+      {
+        validInit = false;
+        break;
+      }
+    }
+    if (!validInit)
+      parameters.fill(0.5);
   }
 
   double minValue = m_OptimizerPointer->MaximizeLikelihood(parameters, m_LikelihoodPointer);

@@ -17,13 +17,13 @@ public:
     m_ActualTruncationIndex = 1;
     m_NumberOfThreads = 1;
     m_NumberOfParameters = 1;
+    m_VerboseLevel = 0;
 
     m_RelativeTolerance = 0.99;
     m_LogSpectrum = 0.0;
     m_LogDeterminant = 0.0;
     m_DomainVolume = 1.0;
 
-    m_UseVerbose = false;
     m_UseFixedMarginalParameters = false;
 
     m_DataPoints.reset();
@@ -70,8 +70,8 @@ public:
   double GetCrossAlpha() const {return m_CrossAlpha;}
   double GetCorrelation() const {return m_Correlation;}
 
-  void SetUseVerbose(const bool &val) {m_UseVerbose = val;}
-  bool GetUseVerbose() const {return m_UseVerbose;}
+  void SetVerboseLevel(const unsigned int &val) {m_VerboseLevel = val;}
+  bool GetVerboseLevel() const {return m_VerboseLevel;}
 
   // Return the objective function f(x) for the given x.
   double GetValue(const arma::vec& x);
@@ -122,6 +122,7 @@ private:
   unsigned int m_ActualTruncationIndex;
   unsigned int m_NumberOfThreads;
   unsigned int m_NumberOfParameters;
+  unsigned int m_VerboseLevel;
 
   double m_RelativeTolerance;
   double m_LogSpectrum;
@@ -137,7 +138,6 @@ private:
   double m_CrossAmplitude;
   double m_SecondAmplitude;
 
-  bool m_UseVerbose;
   bool m_UseFixedMarginalParameters;
 
   arma::vec m_WorkingEigenValues;

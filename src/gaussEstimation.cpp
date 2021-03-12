@@ -310,7 +310,7 @@ arma::vec log_likelihood(const arma::mat &theta,
                          const Rcpp::Nullable<arma::uvec> &marks = R_NilValue,
                          const unsigned int num_threads = 1,
                          const unsigned int N = 50,
-                         const bool use_verbose = false)
+                         const unsigned int verbose_level = 0)
 {
   // Construct the objective function.
   GaussLogLikelihood logLik;
@@ -327,7 +327,7 @@ arma::vec log_likelihood(const arma::mat &theta,
 
   logLik.SetInputData(points, lower_bound, upper_bound, pointMarks, nd_grid, N);
   logLik.SetNumberOfThreads(num_threads);
-  logLik.SetUseVerbose(use_verbose);
+  logLik.SetVerboseLevel(verbose_level);
 
   arma::vec outputValues(theta.n_cols);
 

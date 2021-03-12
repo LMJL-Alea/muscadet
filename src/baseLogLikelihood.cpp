@@ -42,7 +42,7 @@ double BaseLogLikelihood::GetSquaredCrossAlphaUpperBound() const
 {
   double weightValue = std::min(1.0, (1.0 / m_FirstAmplitude - 1.0) * (1.0/ m_SecondAmplitude - 1.0));
   double squaredCorrelationUpperBound = weightValue * std::pow(m_FirstAlpha * m_SecondAlpha / this->GetSquaredCrossAlphaLowerBound(), (double)m_DomainDimension);
-  double squaredCorrelationLowerBound = 0.01 * squaredCorrelationUpperBound;
+  double squaredCorrelationLowerBound = 0.1 * squaredCorrelationUpperBound;
   return m_FirstAlpha * m_SecondAlpha * std::pow(weightValue / squaredCorrelationLowerBound, 1.0 / m_DomainDimension);
 }
 
@@ -127,13 +127,16 @@ void BaseLogLikelihood::SetInputData(
 
   m_ListOfInternalLMatrices.set_size(m_NumberOfMarks, m_NumberOfMarks, m_MaximalNumberOfKVectors);
 
-  Rcpp::Rcout << "* Number of points:             " << m_NumberOfPoints << std::endl;
-  Rcpp::Rcout << "* Domain dimension:             " << m_DomainDimension << std::endl;
-  Rcpp::Rcout << "* Domain volume:                " << m_DomainVolume << std::endl;
-  Rcpp::Rcout << "* Number of marks:              " << m_NumberOfMarks << std::endl;
-  Rcpp::Rcout << "* Intensity of the first mark:  " << m_FirstIntensity << std::endl;
-  Rcpp::Rcout << "* Intensity of the second mark: " << m_SecondIntensity << std::endl;
-  Rcpp::Rcout << "* Truncation index:             " << m_TruncationIndex << std::endl;
+  if (m_VerboseLevel == 1)
+  {
+    Rcpp::Rcout << "* Number of points:             " << m_NumberOfPoints << std::endl;
+    Rcpp::Rcout << "* Domain dimension:             " << m_DomainDimension << std::endl;
+    Rcpp::Rcout << "* Domain volume:                " << m_DomainVolume << std::endl;
+    Rcpp::Rcout << "* Number of marks:              " << m_NumberOfMarks << std::endl;
+    Rcpp::Rcout << "* Intensity of the first mark:  " << m_FirstIntensity << std::endl;
+    Rcpp::Rcout << "* Intensity of the second mark: " << m_SecondIntensity << std::endl;
+    Rcpp::Rcout << "* Truncation index:             " << m_TruncationIndex << std::endl;
+  }
 }
 
 void BaseLogLikelihood::ComputeLogSpectrum()
@@ -201,7 +204,7 @@ void BaseLogLikelihood::ComputeLogSpectrum()
     ++m_NumberOfKVectors;
   }
 
-  if (m_UseVerbose)
+  if (m_VerboseLevel > 1)
     Rcpp::Rcout << "* Current truncation index:     " << m_ActualTruncationIndex << std::endl;
 }
 
@@ -259,7 +262,7 @@ double BaseLogLikelihood::GetValue(const arma::vec& x)
   this->ComputeLogSpectrum();
   this->ComputeLogDeterminant();
 
-  if (m_UseVerbose)
+  if (m_VerboseLevel > 1)
   {
     Rcpp::Rcout << "* Log-spectrum: " << m_LogSpectrum << std::endl;
     Rcpp::Rcout << "* Log-determinant: " << m_LogDeterminant << std::endl;
