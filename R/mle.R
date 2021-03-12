@@ -5,12 +5,15 @@
 #' @param initial_guess A vector providing an intial guess for the model
 #'   parameters that maximize the likelihood. Defaults to \code{NULL}, which
 #'   initializes at \code{0.5} all parameters after suitable transformation into
-#'   [0,1].
+#'   [0,1]. If provided, expected order is `c(alpha1, alpha2, alpha12, tau)`.
+#' @param fixed_marginal_parameters Boolean specifying whether the marginal
+#'   parameters should be estimated separately using the marginal likelihood and
+#'   then fixed to further estimate the cross parameters. Default is `FALSE`.
 #' @param model A DPP model. For now either gauss or bessel (default: gauss).
 #' @param optimizer Any derivative-free optimizer in NlOpt (default: bobyqa).
 #' @param num_threads Number of threas to run on (default: 1).
 #' @param N Maximum truncation index for Fourier transform (default: 512).
-#' @param use_verbose Display information during optimization. Choose \code{0}
+#' @param verbose_level Display information during optimization. Choose \code{0}
 #'   for no information, \code{1} for global information at likelihood setup or
 #'   \code{2} for detailed  information at each function evaluation. Defaults to
 #'   \code{0}.
@@ -28,22 +31,44 @@ mle <- function(data,
                 optimizer = "bobyqa",
                 num_threads = 1,
                 N = 512,
-                use_verbose = FALSE) {
+                verbose_level = 0) {
   points <- cbind(data$x, data$y)
   marks <- data$marks
+
+  # Bivariate case
+  # Fixed marginal params so need to estimate them through marginal likelihood
   marginal_parameters <- NULL
   if (!is.null(marks) && fixed_marginal_parameters) {
-    marginal_parameters <- data %>%
-      spatstat::split.ppp() %>%
-      purrr::map(
-        .f = mle,
-        model = model,
-        optimizer = optimizer,
-        num_threads = num_threads,
-        N = N,
-        use_verbose = use_verbose
-      ) %>%
-      purrr::map_dbl("par")
+    # Initial point available, use it
+    if (!is.null(initial_guess)) {
+      alpha1 <- initial_guess[["alpha1"]]
+      alpha2 <- initial_guess[["alpha2"]]
+      init <- c(alpha1, alpha2)
+      marginal_parameters <- data %>%
+        spatstat::split.ppp() %>%
+        purrr::map2(
+          .y = init,
+          .f = mle,
+          model = model,
+          optimizer = optimizer,
+          num_threads = num_threads,
+          N = N,
+          verbose_level = verbose_level
+        ) %>%
+        purrr::map_dbl("par")
+    } else { # Naive initialization
+      marginal_parameters <- data %>%
+        spatstat::split.ppp() %>%
+        purrr::map(
+          .f = mle,
+          model = model,
+          optimizer = optimizer,
+          num_threads = num_threads,
+          N = N,
+          verbose_level = verbose_level
+        ) %>%
+        purrr::map_dbl("par")
+    }
   }
 
   lower_bound <- c(data$window$xrange[1], data$window$yrange[1])
@@ -51,13 +76,61 @@ mle <- function(data,
 
   nd_grid <- generate_nd_grid(N, dim(points)[2])
 
+  if (!is.null(marks) && !is.null(initial_guess)) {
+    if (fixed_marginal_parameters) {
+      rho1 <- initial_guess[["rho1"]]
+      rho2 <- initial_guess[["rho2"]]
+      alpha1 <- marginal_parameters[1]
+      alpha2 <- marginal_parameters[2]
+      alpha12 <- initial_guess[["alpha12"]]
+      if (!is.finite(alpha12)) alpha12 <- 1
+      tau <- initial_guess[["tau"]]
+      initial_guess <- NULL
+      if (validate_init(rho1, rho2, alpha1, alpha2, alpha12, tau, 2))
+        initial_guess <- c(alpha12, tau)
+      else
+        message("Unfeasible initial guess")
+    }
+    else {
+      alpha1 <- initial_guess[["alpha1"]]
+      alpha2 <- initial_guess[["alpha2"]]
+      alpha12 <- initial_guess[["alpha12"]]
+      if (!is.finite(alpha12)) alpha12 <- 1
+      tau <- initial_guess[["tau"]]
+      initial_guess <- c(alpha1, alpha2, alpha12, tau)
+    }
+  }
+
   dpp <- new(DeterminantalPointProcess)
   dpp$SetLikelihoodModel(model);
   dpp$SetOptimizer(optimizer);
   dpp$Fit(
     points, lower_bound, upper_bound, nd_grid,
-    initial_guess, marks, marginal_parameters, num_threads, N, use_verbose
+    initial_guess, marks, marginal_parameters,
+    num_threads, N, verbose_level
   )
+}
+
+validate_init <- function(rho1, rho2, alpha1, alpha2, alpha12, tau, dimension) {
+  if (is.na(alpha12)) {
+    message("alpha12 is NA")
+    return(FALSE)
+  }
+  k1 <- rho1 * alpha1^dimension * pi^(dimension / 2)
+  k2 <- rho2 * alpha2^dimension * pi^(dimension / 2)
+  k12 <- tau * sqrt(rho1 * rho2) * alpha12^dimension * pi^(dimension / 2)
+  k12_ub <- sqrt(max(0, min(k1 * k2, (1-k1)*(1-k2)-sqrt(.Machine$double.eps))))
+  if (k12 > k12_ub) {
+    message("k12 exceeds upper bound")
+    print(k12)
+    print(k12_ub)
+    return(FALSE)
+  }
+  if (2 * alpha12^2 < alpha1^2 + alpha2^2) {
+    message("alpha12 is below lower bound")
+    return(FALSE) # Gaussian-specific
+  }
+  TRUE
 }
 
 #' Maximum Likelihood Estimator of Stationary Bivariate DPPs

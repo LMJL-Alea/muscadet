@@ -12,7 +12,7 @@ mle(
   optimizer = "bobyqa",
   num_threads = 1,
   N = 512,
-  use_verbose = FALSE
+  verbose_level = 0
 )
 }
 \arguments{
@@ -22,7 +22,11 @@ determinantal point process.}
 \item{initial_guess}{A vector providing an intial guess for the model
 parameters that maximize the likelihood. Defaults to \code{NULL}, which
 initializes at \code{0.5} all parameters after suitable transformation into
-\link{0,1}.}
+\link{0,1}. If provided, expected order is \code{c(alpha1, alpha2, alpha12, tau)}.}
+
+\item{fixed_marginal_parameters}{Boolean specifying whether the marginal
+parameters should be estimated separately using the marginal likelihood and
+then fixed to further estimate the cross parameters. Default is \code{FALSE}.}
 
 \item{model}{A DPP model. For now either gauss or bessel (default: gauss).}
 
@@ -32,7 +36,7 @@ initializes at \code{0.5} all parameters after suitable transformation into
 
 \item{N}{Maximum truncation index for Fourier transform (default: 512).}
 
-\item{use_verbose}{Display information during optimization. Choose \code{0}
+\item{verbose_level}{Display information during optimization. Choose \code{0}
 for no information, \code{1} for global information at likelihood setup or
 \code{2} for detailed  information at each function evaluation. Defaults to
 \code{0}.}
