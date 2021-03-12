@@ -11,14 +11,12 @@ estimate(
   rmin_alpha = 22,
   rmin_alpha12 = 22,
   rmin_tau = 22,
-  tau_min = 0.1,
-  p = 0.5,
+  q = 0.5,
+  p = 2,
   divisor_marginal = "d",
   divisor_cross = "d",
-  bw_marginal = "SJ",
-  bw_cross = "SJ",
-  use_polar_marginal = FALSE,
-  use_polar_cross = FALSE
+  bw_marginal = NULL,
+  bw_cross = NULL
 )
 }
 \arguments{
@@ -33,11 +31,11 @@ account for estimating the crossing alpha parameter (default: index 1).}
 \item{rmin_tau}{The lower bound on distances that should be taken into
 account for estimating the correlation (default: index 31).}
 
-\item{tau_min}{Correlation value used to compute a suitable upper bound for
-the crossing alpha parameter (default: 0.1).}
-
 \item{p}{Power used in the marginal contrasts for estimating \code{alpha1}
 and \code{alpha2} (default: 0.2).}
+
+\item{tau_min}{Correlation value used to compute a suitable upper bound for
+the crossing alpha parameter (default: 0.1).}
 }
 \value{
 A list with the estimated model parameters in the following order:

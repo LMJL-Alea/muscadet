@@ -1,87 +1,43 @@
-contr_marginal <- function(alpha, r, y, p = 0.5, q = 2, use_polar_coordinates = TRUE) {
-  yobs <- y^p
-  ypred <- (1 - exp(-2 * (r / alpha)^2))^p
-  if (use_polar_coordinates) return(sum(c(0, diff(r)) * abs(yobs - ypred)^q * r))
-  sum(c(0, diff(r)) * abs(yobs - ypred)^q)
+contrast_marginal <- function(alpha, r, y, q = 0.5, p = 2) {
+  yobs <- y^q
+  ypred <- (1 - exp(-2 * (r / alpha)^2))^q
+  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
-contr_beta <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  if (use_polar_coordinates) {
-    part1 <- gamma_max^3 * beta^3 * exp(-4 * min(r)^2 * beta) / (24 * rho1^2 * rho2^2 * pi^4)
-    part2 <- gamma_max^2 * beta^2 / (rho1 * rho2 * pi^2) * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2) * r)
-    return(part1 - part2)
-  }
-  part1 <- gamma_max^3 * beta^4 / (3 * rho1^2 * rho2^2 * pi^4) * sum(c(0, diff(r)) * exp(-4 * beta * r^2))
-  part2 <- gamma_max^2 * beta^2 / (rho1 * rho2 * pi^2) * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2))
-  part1 - part2
+compute_tau <- function(beta_max, M, r, y) {
+  I1 <- sum(c(0, diff(r)) * (1 - y) * (1 - exp(-2*r^2*beta_max)) / (2 * r^2))
+  I2 <- sum(c(0, diff(r)) * (1 - exp(-4*r^2*beta_max)) / (4 * r^2))
+  tauSq <- I1 / I2
+  if (tauSq < 0) return(0)
+  if (tauSq > M^2 * beta_max^2) return(M * beta_max)
+  sqrt(tauSq)
 }
 
-compute_gamma_first <- function(r, y, beta_max, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  # a0 <- beta_max * sum(c(0, diff(r)) * (1 - y)^2)
-  # a1 <- 3 / (2 * rho1 * rho2 * pi^2) * sum(c(0, diff(r)) * (1 - y) * pgamma(beta_max, 3, rate = 2 * r^2) / r^6)
-  # a2 <- 15 / (128 * rho1^2 * rho2^2 * pi^4) * sum(c(0, diff(r)) * pgamma(beta_max, 5, rate = 4 * r^2) / r^10)
-  # gamma <- a1 / (2 * a2)
-  gamma <- 32 * rho1 * rho2 * pi^2 / 5 * sum(c(0, diff(r)) * (1 - y) * pgamma(beta_max, 3, rate = 2 * r^2) / r^6) / sum(c(0, diff(r)) * pgamma(beta_max, 5, rate = 4 * r^2) / r^10)
-  if (gamma < 0) return(0)
-  if (gamma > gamma_max) return(gamma_max)
-  gamma
-}
-
-compute_gamma <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  if (use_polar_coordinates) {
-    gamma <- 8 * rho1 * rho2 * pi^2 * exp(4 * beta * min(r)^2) * sum(c(0, diff(r)) * r * (1 - y) * exp(-2 * beta * r^2)) / beta
-    if (gamma < 0 | gamma > gamma_max) {
-      gamma <- 0
-      val1 <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2 * r)
-      gamma <- gamma_max
-      val2 <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2 * r)
-      if (val1 < val2) gamma <- 0
-    }
-    return(gamma)
-  }
-
-  val0 <- sum(c(0, diff(r)) * (1 - y)^2)
-  gamma <- rho1 * rho2 * pi^2 * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2)) / beta^2 / sum(c(0, diff(r)) * exp(-4 * beta * r^2))
-  val <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2)
-  n <- length(r)
-  if (n * log(val0) <= 2 + n * log(val)) return(0)
-  if (gamma < 0 | gamma > gamma_max) {
-    gamma <- gamma_max
-    val2 <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2)
-    if (val0 < val2) gamma <- 0
-  }
-  gamma
-}
-
-compute_gamma_alt <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  cost <- function(x, r, y) {
-    val0 <- sum(c(0, diff(r)) * (1 - y)^2)
-    sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2) / val0
-  }
-
-  trials <- 80
-  gamma_vec <- numeric(trials)
-  val_vec <- numeric(trials)
-  rtot <- r
-  ytot <- y
-  for (i in 1:trials) {
-    r <- rtot[i:512]
-    y <- ytot[i:512]
-    gamma <- rho1 * rho2 * pi^2 * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2)) / beta^2 / sum(c(0, diff(r)) * exp(-4 * beta * r^2))
-    val <- cost(gamma, r, y)
-    if (gamma < 0 | gamma > gamma_max) {
-      gamma <- gamma_max
-      val <- cost(gamma, r, y)
-      if (1 < val) {
-        gamma <- 0
-        val <- 1
-      }
-    }
-    gamma_vec[i] <- gamma
-    val_vec[i] <- val
-  }
-
-  gamma_vec[which.min(val_vec)]
+combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("bcv", "SJ")) {
+  alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(
+    lambda = spatstat::intensity(x),
+    d = 2
+  ))
+  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
+  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
+  df <- bw %>%
+    purrr::map(~ {
+      pcfemp <- spatstat::pcf(x, bw = .x, divisor = divisor, var.approx = TRUE)
+      c(
+        alpha = optimise(
+          f = contrast_marginal,
+          interval = c(alpha_lb, alpha_ub),
+          r = pcfemp$r[rmin_alpha:length(pcfemp$r)],
+          y = pcfemp$iso[rmin_alpha:length(pcfemp$r)],
+          q = q,
+          p = p
+        )$minimum,
+        precision = 1 / mean(pcfemp$v[-1])
+      )
+    }) %>%
+    purrr::transpose() %>%
+    purrr::simplify_all()
+  sum(df$precision * df$alpha) / sum(df$precision)
 }
 
 #' Estimation of Stationary Bivariate 2-dimensional DPP
@@ -119,14 +75,12 @@ estimate <- function(X,
                      rmin_alpha = 22,
                      rmin_alpha12 = 22,
                      rmin_tau = 22,
-                     tau_min = 0.1,
-                     p = 0.5,
+                     q = 0.5,
+                     p = 2,
                      divisor_marginal = "d",
                      divisor_cross = "d",
-                     bw_marginal = "SJ",
-                     bw_cross = "SJ",
-                     use_polar_marginal = FALSE,
-                     use_polar_cross = FALSE) {
+                     bw_marginal = NULL,
+                     bw_cross = NULL) {
   Xs <- spatstat::split.ppp(X)
 
   # First estimate marginal intensities
@@ -135,99 +89,81 @@ estimate <- function(X,
   rho2 <- as.numeric(rho2[2])
 
   # Estimate alpha1
-  pcfemp <- spatstat::pcf(Xs[[1]], bw = bw_marginal, divisor = divisor_marginal)
-  alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(lambda = rho1, d = 2))
-  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
-  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
-  alpha1 <- optimise(
-    f = contr_marginal,
-    interval = c(alpha_lb, alpha_ub),
-    r = pcfemp$r[rmin_alpha:512],
-    y = pcfemp$iso[rmin_alpha:512],
+  # pcfemp <- spatstat::pcf(Xs[[1]], bw = bw_marginal, divisor = divisor_marginal)
+  alpha1 <- combine_bw_marginal(
+    x = Xs[[1]],
+    divisor = divisor_marginal,
+    rmin_alpha = rmin_alpha,
+    q = q,
     p = p,
-    use_polar_coordinates = use_polar_marginal
-  )$minimum
-
-  # Estimate alpha2
-  pcfemp <- spatstat::pcf(Xs[[2]], bw = bw_marginal, divisor = divisor_marginal)
-  alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(lambda = rho2, d = 2))
-  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
-  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
-  alpha2 <- optimise(
-    f = contr_marginal,
-    interval = c(alpha_lb, alpha_ub),
-    r = pcfemp$r[rmin_alpha:512],
-    y = pcfemp$iso[rmin_alpha:512],
-    p = p,
-    use_polar_coordinates = use_polar_marginal
-  )$minimum
-
-  # Set bounds for cross parameters
-  # We estimate
-  # - beta = 1 / alpha12^2
-  # - gamma = tau^2 rho1 rho2 pi^2 alpha12^4
-  pcfemp <- spatstat::pcfcross(X, bw = bw_cross, divisor = divisor_cross)
-  k1 <- rho1 * pi * alpha1^2 # Model dependent
-  k2 <- rho2 * pi * alpha2^2 # Model dependent
-  gamma_max <- min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps))
-  gamma_max <- max(0, gamma_max)
-  beta_min <- tau_min / (alpha1 * alpha2)
-  beta_max <- 2 / (alpha1^2 + alpha2^2) # Model dependent
-
-  # Start by beta estimation
-  # beta <- optimise(
-  #   f = contr_beta,
-  #   interval = c(beta_min, beta_max),
-  #   r = pcfemp$r[rmin_alpha12:512],
-  #   y = pcfemp$iso[rmin_alpha12:512],
-  #   gamma_max = gamma_max,
-  #   rho1 = rho1,
-  #   rho2 = rho2,
-  #   use_polar_coordinates = use_polar_cross
-  # )$minimum
-  #
-  # # Retrieve gamma
-  # gamma <- compute_gamma(
-  #   beta = beta,
-  #   r = pcfemp$r[rmin_tau:512],
-  #   y = pcfemp$iso[rmin_tau:512],
-  #   gamma_max = gamma_max,
-  #   rho1 = rho1,
-  #   rho2 = rho2,
-  #   use_polar_coordinates = use_polar_cross
-  # )
-
-  # or
-  # compute gamma first
-  gamma <- compute_gamma_first(
-    r = pcfemp$r[rmin_tau:512],
-    y = pcfemp$iso[rmin_tau:512],
-    beta_max = beta_max,
-    gamma_max = gamma_max,
-    rho1 = rho1,
-    rho2 = rho2
+    bw = c("bcv", "SJ")
   )
 
-  # then retrieve beta
-  if (gamma < sqrt(.Machine$double.eps)) return(list(
-    rho1 = rho1,
-    rho2 = rho2,
-    alpha1 = alpha1,
-    alpha2 = alpha2,
-    alpha12 = NA,
-    tau = 0
-  ))
+  # Estimate alpha2
+  # pcfemp <- spatstat::pcf(Xs[[2]], bw = bw_marginal, divisor = divisor_marginal)
+  alpha2 <- combine_bw_marginal(
+    x = Xs[[2]],
+    divisor = divisor_marginal,
+    rmin_alpha = rmin_alpha,
+    q = q,
+    p = p,
+    bw = c("bcv", "SJ")
+  )
 
-  cost <- function(x) {
-    r <- pcfemp$r[rmin_alpha12:512]
-    y <- pcfemp$iso[rmin_alpha12:512]
-    sum(c(0, diff(r)) * (1 - y - gamma * x^2 * exp(-2 * x * r^2) / (rho1 * rho2 * pi^2))^2)
+  # Get cross PCF for estimating tau and alpha12
+  pcfemp <- spatstat::pcfcross(X, bw = bw_cross, divisor = divisor_cross)
+
+  # Model-dependent variables
+  # Notations: beta = 1 / alpha12^2
+  beta_max <- 2 / (alpha1^2 + alpha2^2)
+  k1 <- rho1 * pi * alpha1^2
+  k2 <- rho2 * pi * alpha2^2
+  k12max <- sqrt(max(0, min(k1 * k2, (1-k1)*(1-k2)-sqrt(.Machine$double.eps))))
+  M <- k12max / sqrt(rho1 * rho2) / pi
+
+  # compute tau first
+  tau <- compute_tau(
+    r = pcfemp$r[rmin_tau:length(pcfemp$r)],
+    y = pcfemp$iso[rmin_tau:length(pcfemp$r)],
+    beta_max = beta_max,
+    M = M
+  )
+
+  # Notations: gamma = tau sqrt(rho1 rho2) pi alpha12^2
+  gamma_min <- tau * sqrt(rho1 * rho2) * pi / beta_max
+  gamma_max <- sqrt(max(0, min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps))))
+
+  if (gamma_max - gamma_min < sqrt(.Machine$double.eps))
+    gamma <- gamma_max
+  else {
+    contrast_cross <- function(gamma) {
+      r <- pcfemp$r[rmin_alpha12:length(pcfemp$r)]
+      yobs <- pcfemp$iso[rmin_alpha12:length(pcfemp$r)]^q
+      ypred <- (1 - tau^2 * exp(-2 * r^2 * tau * sqrt(rho1*rho2) * pi / gamma))^q
+      sum(c(0, diff(r)) * abs(yobs - ypred)^p)
+    }
+
+    gamma <- optimise(
+      f = contrast_cross,
+      interval = c(gamma_min, gamma_max)
+    )$minimum
   }
 
-  beta <- optimise(
-    f = cost,
-    interval = c(beta_min, beta_max)
-  )$minimum
+  # cost_full <- function(x) {
+  #   beta <- x[1]
+  #   gamma <- x[2]
+  #   r <- pcfemp$r[rmin_alpha12:512]
+  #   y <- pcfemp$iso[rmin_alpha12:512]
+  #   sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(-2 * beta * r^2) / (rho1 * rho2 * pi^2))^2)
+  # }
+  # opt <- nloptr::bobyqa(
+  #   x0 = c(beta_min + (beta_max - beta_min) / 2, gamma_max / 2),
+  #   fn = cost_full,
+  #   lower = c(beta_min, 0),
+  #   upper = c(beta_max, gamma_max)
+  # )
+  # beta <- opt$par[1]
+  # gamma <- opt$par[2]
 
   if (method == "PCF")
     return(list(
@@ -235,8 +171,8 @@ estimate <- function(X,
       rho2 = rho2,
       alpha1 = alpha1,
       alpha2 = alpha2,
-      alpha12 = 1 / sqrt(beta),
-      tau = sqrt(gamma / (rho1 * rho2)) * beta / pi
+      alpha12 = sqrt(gamma / tau / sqrt(rho1 * rho2) / pi),
+      tau = tau
     ))
 
   # Code for MLE
