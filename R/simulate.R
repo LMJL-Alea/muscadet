@@ -18,52 +18,40 @@
 #' @export
 #'
 #' @examples
-#' pp <- simulate()
-simulate <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
-                     alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
-                     nu1 = 10, nu2 = 10, nu12 = 10,
-                     progress = TRUE,
-                     Kspec = "Kspecmatern",
-                     testtau = "testtaumatern")
+#' pp <- rbidpp()
+rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
+                   alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
+                   nu1 = 10, nu2 = 10, nu12 = 10, L = 1,
+                   progress = TRUE,
+                   ncores = parallel::detectCores(logical = FALSE),
+                   Kspec = "Kspecmatern",
+                   testtau = "testtaumatern")
 {
   set.seed(seed)
 
-  if (n == 1) return(rbidpp(
-    rho1 = rho1, rho2 = rho2, tau = tau,
-    alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
-    nu1 = nu1, nu2 = nu2, nu12 = n12,
-    progress = 0, Kspec = Kspec, testtau = testtau
-  ))
-
-  if (requireNamespace("furrr", quietly = TRUE)) {
-    future::plan(future::multiprocess)
-    furrr::future_map(
-      .x = 1:n,
-      .f = ~ rbidpp(
-        rho1 = rho1, rho2 = rho2, tau = tau,
-        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
-        nu1 = nu1, nu2 = nu2, nu12 = n12,
-        progress = 0, Kspec = Kspec, testtau = testtau
-      ),
-      .progress = progress
-    )
-  } else {
-    purrr::map(
-      .x = 1:n,
-      .f = ~ rbidpp(
-        rho1 = rho1, rho2 = rho2, tau = tau,
-        alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
-        nu1 = nu1, nu2 = nu2, nu12 = n12,
-        progress = 0, Kspec = Kspec, testtau = testtau
-      )
-    )
+  if (progress && requireNamespace("progressr", quietly = TRUE)) {
+    progressr::handlers(global = TRUE)
+    progressr::handlers("progress")
+    p <- progressr::progressor(along = 1:n)
   }
+
+  purrr::map(1:n, ~ {
+    if (progress && requireNamespace("progressr", quietly = TRUE)) {
+      p()
+    }
+    .rbidpp_single(
+      rho1 = rho1, rho2 = rho2, tau = tau,
+      alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
+      nu1 = nu1, nu2 = nu2, nu12 = n12, L = L, ncores = ncores,
+      progress = 0, Kspec = Kspec, testtau = testtau
+    )
+  })
 }
 
-rbidpp <- function(
+.rbidpp_single <- function(
   rho1 = 100, rho2 = 100, tau = 0.2,
   alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
-  nu1 = 10, nu2 = 10, nu12 = 10,
+  nu1 = 10, nu2 = 10, nu12 = 10, L = 1, ncores = parallel::detectCores(logical = FALSE),
   progress = 0,
   Kspec="Kspecmatern",
   testtau="testtaumatern") {
@@ -71,7 +59,7 @@ rbidpp <- function(
   if(!testtau(tau,rho1,rho2,alpha1,alpha2,alpha12)){stop('invalid value for tau')}
 
   #step1
-  expnum=rho1+rho2
+  expnum <- (rho1+rho2) * L^2
   if(Kspec=="Kspecbessel"){prec0<-0.95}
   else{prec0 <- 0.99}
   Kspec<-get(Kspec)
@@ -80,7 +68,7 @@ rbidpp <- function(
   trunc <- 1
   prec <- 0
   maxtrunc=1000
-  sumdiag=function(r,K,...){sum(diag(K(r,...)))}
+  sumdiag=function(r,K,...){sum(diag(K(r / L,...)))}
   while (prec <= prec0 & (2 * trunc) <= maxtrunc) {
     trunc <- 2 * trunc
     index1a <- c(rep(0, trunc), 1:trunc)
@@ -97,36 +85,15 @@ rbidpp <- function(
 
   #step2
   if(progress>0) cat("Spectral decomposition...")
-  M=2
-  kk=as.matrix(expand.grid(-N:N,-N:N))
-  Vfull=NULL
-  eigenvalues=NULL
-  for(i in 1:nrow(kk)){
-    #print(i)
-    tmp<-eigen(Kspec(sqrt(kk[i,1]^2+kk[i,2]^2),rho1,rho2,alpha1,alpha2,alpha12,tau))
-    eigenvalues=c(eigenvalues,tmp$values)
-    Vfull=cbind(Vfull,tmp$vector)
-  }
-  #dim(Vfull)
-  #length(eigenvalues)
-  kkfull=kronecker(kk,rep(1,M))
-  if(progress>0) cat(" Done.\n")
+  l <- rbidpp_impl(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, ncores)
+  kkindex <- l$kkindex
+  V <- l$V
 
+  print(dim(kkindex))
+  print(dim(V))
 
-  #step3
-  tmp=rbinom(nrow(kkfull),1,eigenvalues)
-  index <-which(tmp==1)
-  kkindex=kkfull[index,]
-  dim(kkindex)
-  V=Vfull[,index]
-  #dim(V)
-  rm(kkfull)
-  rm(Vfull)
-  gc()
-
-
-  #step4 : cf the functions below
-  X <- rdpppmulti(kkindex,V,progress=progress)
+  #step3 : cf the functions below
+  X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat::boxx(map(1:ncol(kkindex), ~ c(0, L))))
   return(X)
 }
 
