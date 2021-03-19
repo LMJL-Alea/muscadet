@@ -6,13 +6,41 @@
 #include "cobylaOptimizerClass.h"
 #include "neldermeadOptimizerClass.h"
 
-Rcpp::NumericVector DeterminantalPointProcess::FormatVectorForOutput(const arma::vec &inputVector) const
+Rcpp::NumericVector DeterminantalPointProcess::FormatVectorForOutput(const arma::vec &parameters) const
 {
-  Rcpp::NumericVector outputVector = Rcpp::wrap(inputVector);
-  if (outputVector.size() == 1)
-    outputVector.names() = Rcpp::CharacterVector({"alpha"});
+  arma::vec inputVector;
+
+  if (parameters.n_elem == 1)
+  {
+    inputVector.set_size(2);
+    inputVector(0) = m_LikelihoodPointer->GetFirstIntensity();
+    inputVector(1) = parameters(0);
+  }
   else
-    outputVector.names() = Rcpp::CharacterVector({"alpha1", "alpha2", "alpha12", "tau"});
+  {
+    inputVector.set_size(7);
+    inputVector(0) = m_LikelihoodPointer->GetFirstIntensity();
+    inputVector(1) = m_LikelihoodPointer->GetSecondIntensity();
+    inputVector(2) = (parameters.n_elem == 2) ? m_LikelihoodPointer->GetFirstAlpha() : parameters(0);
+    inputVector(3) = (parameters.n_elem == 2) ? m_LikelihoodPointer->GetSecondAlpha() : parameters(1);
+    inputVector(4) = (parameters.n_elem == 2) ? parameters(0) : parameters(2);
+    inputVector(5) = (parameters.n_elem == 2) ? parameters(1) : parameters(3);
+
+    if (inputVector(5) < m_LikelihoodPointer->m_ZeroValue)
+      inputVector(6) = NA_REAL;
+    else
+    {
+      double rho12Value = m_LikelihoodPointer->GetCrossIntensity();
+      unsigned int dimValue = m_LikelihoodPointer->GetDomainDimension();
+      inputVector(6) = m_LikelihoodPointer->RetrieveAlphaFromParameters(inputVector(4), rho12Value, dimValue);
+    }
+  }
+
+  Rcpp::NumericVector outputVector = Rcpp::wrap(inputVector);
+  if (outputVector.size() == 2)
+    outputVector.names() = Rcpp::CharacterVector({"rho", "alpha"});
+  else
+    outputVector.names() = Rcpp::CharacterVector({"rho1", "rho2", "alpha1", "alpha2", "k12", "tau", "alpha12"});
   outputVector.attr("dim") = R_NilValue;
   return outputVector;
 }
@@ -79,30 +107,9 @@ Rcpp::List DeterminantalPointProcess::Fit(const arma::mat &points,
   {
     parameters = Rcpp::as<arma::vec>(init);
     m_OptimizerPointer->TransformUnscaledToScaledParameters(parameters, m_LikelihoodPointer);
-    bool validInit = true;
-    for (unsigned int i = 0;i < parameters.n_elem;++i)
-    {
-      if (R_IsNA(parameters[i]))
-      {
-        validInit = false;
-        break;
-      }
-    }
-    if (!validInit)
-      parameters.fill(0.5);
   }
 
   double minValue = m_OptimizerPointer->MaximizeLikelihood(parameters, m_LikelihoodPointer);
-
-  if (marginal_parameters.isNotNull())
-  {
-    arma::vec workParams = parameters;
-    parameters.set_size(4);
-    parameters(0) = m_LikelihoodPointer->GetFirstAlpha();
-    parameters(1) = m_LikelihoodPointer->GetSecondAlpha();
-    parameters(2) = workParams(0);
-    parameters(3) = workParams(1);
-  }
 
   return Rcpp::List::create(
     Rcpp::Named("par") = this->FormatVectorForOutput(parameters),

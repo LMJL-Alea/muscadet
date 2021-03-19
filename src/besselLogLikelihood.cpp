@@ -3,7 +3,7 @@
 double BesselLogLikelihood::RetrieveIntensityFromParameters(const double amplitude, const double alpha, const unsigned int dimension)
 {
   double order = (double)dimension / 2.0;
-  double inPowerValue = M_PI * alpha * alpha / order;
+  double inPowerValue = this->m_PiValue * alpha * alpha / order;
   double denomValue = std::pow(inPowerValue, order) * std::tgamma(1.0 + order);
   return amplitude / denomValue;
 }
@@ -12,41 +12,49 @@ double BesselLogLikelihood::RetrieveAlphaFromParameters(const double amplitude, 
 {
   double order = (double)dimension / 2.0;
   double gammaValue = std::tgamma(1.0 + order);
-  return std::pow(amplitude / (intensity * gammaValue), 1.0 / (2.0 * order)) * std::sqrt(order / M_PI);
+  return std::pow(amplitude / (intensity * gammaValue), 1.0 / (2.0 * order)) * std::sqrt(order / this->m_PiValue);
 }
 
 double BesselLogLikelihood::RetrieveAmplitudeFromParameters(const double intensity, const double alpha, const unsigned int dimension)
 {
   double order = (double)dimension / 2.0;
-  return intensity * std::pow(M_PI * alpha * alpha / order, order) * std::tgamma(1.0 + order);
+  return intensity * std::pow(this->m_PiValue * alpha * alpha / order, order) * std::tgamma(1.0 + order);
 }
 
-double BesselLogLikelihood::GetSquaredCrossAlphaLowerBound() const
+double BesselLogLikelihood::GetCrossAlphaLowerBound() const
 {
-  double maxAlpha = std::max(this->GetFirstAlpha(), this->GetSecondAlpha());
-  return maxAlpha * maxAlpha;
+  return std::max(this->GetFirstAlpha(), this->GetSecondAlpha());
 }
 
 double BesselLogLikelihood::GetK11Value(const double squaredNorm)
 {
   double alphaValue = this->GetFirstAlpha();
-  if (2.0 * M_PI * M_PI * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
+  if (2.0 * this->m_PiValue * this->m_PiValue * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
     return this->GetFirstAmplitude();
   return 0.0;
 }
 
 double BesselLogLikelihood::GetK12Value(const double squaredNorm)
 {
-  double alphaValue = this->GetCrossAlpha();
-  if (2.0 * M_PI * M_PI * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
+  double tauValue = this->GetCorrelation();
+  if (tauValue < this->m_ZeroValue)
+    return 0.0;
+
+  double kValue = this->GetCrossAmplitude();
+  double rhoValue = this->GetCrossIntensity();
+  unsigned int dimValue = this->GetDomainDimension();
+  double alphaValue = this->RetrieveAlphaFromParameters(kValue, rhoValue, dimValue);
+
+  if (2.0 * this->m_PiValue * this->m_PiValue * alphaValue * alphaValue * squaredNorm < (double)dimValue)
     return this->GetCrossAmplitude();
+
   return 0.0;
 }
 
 double BesselLogLikelihood::GetK22Value(const double squaredNorm)
 {
   double alphaValue = this->GetSecondAlpha();
-  if (2.0 * M_PI * M_PI * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
+  if (2.0 * this->m_PiValue * this->m_PiValue * alphaValue * alphaValue * squaredNorm < (double)this->GetDomainDimension())
     return this->GetSecondAmplitude();
   return 0.0;
 }

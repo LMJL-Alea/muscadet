@@ -13,7 +13,7 @@ arma::mat22 GetGaussianKernel(const double rSq,
                               const double tau)
 {
   arma::mat22 kernelMatrix;
-  double piVal = arma::datum::pi;
+  double piVal = M_PI;
   double rho12 = tau * std::sqrt(rho1* rho2);
   kernelMatrix(0, 0) = rho1 * alpha1Sq * piVal * std::exp(-piVal * piVal * alpha1Sq * rSq);
   kernelMatrix(0, 1) = rho12 * alpha12Sq * piVal * std::exp(-piVal * piVal * alpha12Sq * rSq);
@@ -40,8 +40,6 @@ Rcpp::List rbidpp_impl(const int N,
     threadedEigenVectors[i] = arma::mat(2, 0);
   }
 
-  Rcpp::Rcout<< "Entering parallel loop" <<std::endl;
-
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(nbThreads)
 #endif
@@ -54,7 +52,7 @@ Rcpp::List rbidpp_impl(const int N,
     Rcpp::NumericVector workBernoulli(1);
     arma::irowvec2 workIndices;
     unsigned int threadId = omp_get_thread_num();
-    printf("Hello world from omp thread %d\n", threadId);
+    // printf("Hello world from omp thread %d\n", threadId);
 
     workIndices(0) = i;
 
@@ -86,7 +84,7 @@ Rcpp::List rbidpp_impl(const int N,
     }
   }
 
-  Rcpp::Rcout<< "Done with parallel loop" <<std::endl;
+  // Rcpp::Rcout<< "Done with parallel loop" <<std::endl;
 
   arma::imat kIndices(0, 2);
   arma::mat eigenVectors(2, 0);
@@ -97,7 +95,7 @@ Rcpp::List rbidpp_impl(const int N,
     eigenVectors.insert_cols(eigenVectors.n_cols, threadedEigenVectors[i]);
   }
 
-  Rcpp::Rcout<< "Done aggregating threaded data" <<std::endl;
+  // Rcpp::Rcout<< "Done aggregating threaded data" <<std::endl;
 
   return Rcpp::List::create(
     Rcpp::Named("kkindex") = kIndices,

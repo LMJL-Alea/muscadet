@@ -65,10 +65,11 @@ public:
   void SetSecondAlpha(const double val);
   double GetSecondAlpha() const {return m_SecondAlpha;}
 
-  // Setter/getter for alpha12
-  void SetCrossParameters(const double alpha12, const double tau);
-  double GetCrossAlpha() const {return m_CrossAlpha;}
+  // Setter/getter for cross parameters
+  void SetCrossParameters(const double k12, const double tau);
+  double GetCrossAmplitude() const {return m_CrossAmplitude;}
   double GetCorrelation() const {return m_Correlation;}
+  double GetCrossAlpha() const {return m_CrossAlpha;}
 
   void SetVerboseLevel(const unsigned int &val) {m_VerboseLevel = val;}
   bool GetVerboseLevel() const {return m_VerboseLevel;}
@@ -78,11 +79,11 @@ public:
 
   double GetFirstIntensity() const {return m_FirstIntensity;}
   double GetSecondIntensity() const {return m_SecondIntensity;}
+  double GetCrossIntensity() const {return m_CrossIntensity;}
   unsigned int GetDomainDimension() const {return m_DomainDimension;}
 
-  double GetSquaredCrossAlphaUpperBound() const;
-  double GetSquaredCrossAmplitudeUpperBound() const;
-  virtual double GetSquaredCrossAlphaLowerBound() const = 0;
+  double GetCrossAmplitudeUpperBound() const;
+  virtual double GetCrossAlphaLowerBound() const = 0;
   virtual double RetrieveIntensityFromParameters(
       const double amplitude,
       const double alpha,
@@ -97,6 +98,9 @@ public:
       const double alpha,
       const unsigned int dimension) = 0;
 
+  static const double m_ZeroValue;
+  static const double m_PiValue;
+
 protected:
 
   //! Generic functions to be implemented in each child class
@@ -105,7 +109,6 @@ protected:
   virtual double GetK22Value(const double squaredNorm) = 0;
   double GetFirstAmplitude() {return m_FirstAmplitude;}
   double GetSecondAmplitude() {return m_SecondAmplitude;}
-  double GetCrossAmplitude() {return m_CrossAmplitude;}
 
 private:
   void SetModelParameters(const arma::vec &params);
@@ -133,15 +136,16 @@ private:
   double m_CrossAlpha;
   double m_FirstIntensity;
   double m_SecondIntensity;
+  double m_CrossIntensity;
   double m_Correlation;
   double m_FirstAmplitude;
-  double m_CrossAmplitude;
   double m_SecondAmplitude;
+  double m_CrossAmplitude;
 
   bool m_UseFixedMarginalParameters;
 
   arma::vec m_WorkingEigenValues;
-  arma::vec m_DeltaDiagonal;
+  arma::rowvec m_DeltaDiagonal;
 
   arma::uvec m_PointLabels;
 
@@ -156,8 +160,6 @@ private:
   Rcpp::IntegerMatrix m_KGrid;
   Rcpp::NumericVector m_KSquaredNorms;
   Rcpp::IntegerVector m_KWeights;
-
-  static const double m_Epsilon;
 };
 
 #endif /* BASELOGLIKELIHOOD_H */

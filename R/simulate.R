@@ -53,44 +53,79 @@ rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
   alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
   nu1 = 10, nu2 = 10, nu12 = 10, L = 1, ncores = parallel::detectCores(logical = FALSE),
   progress = 0,
-  Kspec="Kspecmatern",
-  testtau="testtaumatern") {
-  testtau<-get(testtau)
-  if(!testtau(tau,rho1,rho2,alpha1,alpha2,alpha12)){stop('invalid value for tau')}
+  Kspec = "Kspecmatern",
+  testtau = "testtaumatern") {
+  testtau <- get(testtau)
+  if (!testtau(tau, rho1, rho2, alpha1, alpha2, alpha12)) {
+    stop('invalid value for tau')
+  }
 
   #step1
-  expnum <- (rho1+rho2) * L^2
-  if(Kspec=="Kspecbessel"){prec0<-0.95}
-  else{prec0 <- 0.99}
-  Kspec<-get(Kspec)
+  expnum <- (rho1 + rho2) * L ^ 2
+  if (Kspec=="Kspecbessel")
+    prec0 <- 0.95
+  else
+    prec0 <- 0.99
+  Kspec <- get(Kspec)
 
-  #prec0 <- 0.95 #for bessel
   trunc <- 1
   prec <- 0
-  maxtrunc=1000
-  sumdiag=function(r,K,...){sum(diag(K(r / L,...)))}
+  maxtrunc <- 1000
+  sumdiag <- function(r,K,...) {sum(diag(K(r / L,...)))}
   while (prec <= prec0 & (2 * trunc) <= maxtrunc) {
     trunc <- 2 * trunc
     index1a <- c(rep(0, trunc), 1:trunc)
     index2a <- c(1:trunc, rep(0, trunc))
     index1 <- rep(1:trunc, trunc)
     index2 <- rep(1:trunc, each = trunc)
-    eigo <- sumdiag(0,Kspec,rho1,rho2,alpha1,alpha2,alpha12,tau)
-    eiga <- sapply(sqrt((index1a)^2 + (index2a)^2),sumdiag,Kspec,rho1,rho2,alpha1,alpha2,alpha12,tau)
-    eig <- sapply(sqrt((index1)^2 + (index2)^2),sumdiag,Kspec,rho1,rho2,alpha1,alpha2,alpha12,tau)
-    prec <- (eigo + 2 * sum(eiga) + 4 * sum(eig))/expnum
+    eigo <- sumdiag(0, Kspec, rho1, rho2, alpha1, alpha2, alpha12, tau)
+    eiga <-
+      sapply(sqrt((index1a) ^ 2 + (index2a) ^ 2),
+             sumdiag,
+             Kspec,
+             rho1,
+             rho2,
+             alpha1,
+             alpha2,
+             alpha12,
+             tau)
+    eig <-
+      sapply(sqrt((index1) ^ 2 + (index2) ^ 2),
+             sumdiag,
+             Kspec,
+             rho1,
+             rho2,
+             alpha1,
+             alpha2,
+             alpha12,
+             tau)
+    prec <- (eigo + 2 * sum(eiga) + 4 * sum(eig)) / expnum
   }
-  N=max(index1a)
 
+  N <- max(index1a)
 
   #step2
-  if(progress>0) cat("Spectral decomposition...")
+  if (progress > 0) cat("Spectral decomposition...")
+  # print("before c++")
   l <- rbidpp_impl(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, ncores)
+  # print("after c++")
   kkindex <- l$kkindex
   V <- l$V
 
-  print(dim(kkindex))
-  print(dim(V))
+  ordering_idx <- kkindex %>%
+    `colnames<-`(c("x", "y")) %>%
+    as_tibble() %>%
+    mutate(norm2 = x^2 + y^2, index = 1:n()) %>%
+    arrange(norm2, x, y) %>%
+    pull(index)
+  kkindex <- kkindex[ordering_idx, ]
+  V <- V[, ordering_idx]
+
+  # return(kkindex)
+
+  # print(dim(kkindex))
+  # print(dim(V))
+  # print(map(1:ncol(kkindex), ~ c(0, L)))
 
   #step3 : cf the functions below
   X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat::boxx(map(1:ncol(kkindex), ~ c(0, L))))

@@ -45,7 +45,7 @@ mle <- function(data,
       alpha2 <- initial_guess[["alpha2"]]
       init <- c(alpha1, alpha2)
       marginal_parameters <- data %>%
-        spatstat::split.ppp() %>%
+        spatstat.geom::split.ppp() %>%
         purrr::map2(
           .y = init,
           .f = mle,
@@ -55,10 +55,11 @@ mle <- function(data,
           N = N,
           verbose_level = verbose_level
         ) %>%
-        purrr::map_dbl("par")
+        purrr::map("par") %>%
+        purrr::map_dbl("alpha")
     } else { # Naive initialization
       marginal_parameters <- data %>%
-        spatstat::split.ppp() %>%
+        spatstat.geom::split.ppp() %>%
         purrr::map(
           .f = mle,
           model = model,
@@ -67,14 +68,15 @@ mle <- function(data,
           N = N,
           verbose_level = verbose_level
         ) %>%
-        purrr::map_dbl("par")
+        purrr::map("par") %>%
+        purrr::map_dbl("alpha")
     }
   }
 
   lower_bound <- c(data$window$xrange[1], data$window$yrange[1])
   upper_bound <- c(data$window$xrange[2], data$window$yrange[2])
 
-  nd_grid <- generate_nd_grid(N, dim(points)[2])
+  nd_grid <- generate_nd_grid(N, dim(points)[2], lower_bound, upper_bound)
 
   if (!is.null(marks) && !is.null(initial_guess)) {
     if (fixed_marginal_parameters) {
@@ -82,22 +84,20 @@ mle <- function(data,
       rho2 <- initial_guess[["rho2"]]
       alpha1 <- marginal_parameters[1]
       alpha2 <- marginal_parameters[2]
-      alpha12 <- initial_guess[["alpha12"]]
-      if (!is.finite(alpha12)) alpha12 <- 1
+      k12 <- initial_guess[["k12"]]
       tau <- initial_guess[["tau"]]
       initial_guess <- NULL
-      if (validate_init(rho1, rho2, alpha1, alpha2, alpha12, tau, 2))
-        initial_guess <- c(alpha12, tau)
+      if (validate_init(rho1, rho2, alpha1, alpha2, k12, tau, 2))
+        initial_guess <- c(k12, tau)
       else
         message("Unfeasible initial guess")
     }
     else {
       alpha1 <- initial_guess[["alpha1"]]
       alpha2 <- initial_guess[["alpha2"]]
-      alpha12 <- initial_guess[["alpha12"]]
-      if (!is.finite(alpha12)) alpha12 <- 1
+      k12 <- initial_guess[["k12"]]
       tau <- initial_guess[["tau"]]
-      initial_guess <- c(alpha1, alpha2, alpha12, tau)
+      initial_guess <- c(alpha1, alpha2, k12, tau)
     }
   }
 
@@ -111,14 +111,11 @@ mle <- function(data,
   )
 }
 
-validate_init <- function(rho1, rho2, alpha1, alpha2, alpha12, tau, dimension) {
-  if (is.na(alpha12)) {
-    message("alpha12 is NA")
-    return(FALSE)
-  }
+validate_init <- function(rho1, rho2, alpha1, alpha2, k12, tau, dimension) {
   k1 <- rho1 * alpha1^dimension * pi^(dimension / 2)
   k2 <- rho2 * alpha2^dimension * pi^(dimension / 2)
-  k12 <- tau * sqrt(rho1 * rho2) * alpha12^dimension * pi^(dimension / 2)
+  alpha12_min <- sqrt((alpha1 * alpha1 + alpha2 * alpha2) / 2) # Gaussian-specific
+  k12_min <- tau * sqrt(rho1 * rho2) * alpha12_min^dimension * pi^(dimension / 2) # Gaussian-specific
   k12_ub <- sqrt(max(0, min(k1 * k2, (1-k1)*(1-k2)-sqrt(.Machine$double.eps))))
   if (k12 > k12_ub) {
     message("k12 exceeds upper bound")
@@ -126,9 +123,9 @@ validate_init <- function(rho1, rho2, alpha1, alpha2, alpha12, tau, dimension) {
     print(k12_ub)
     return(FALSE)
   }
-  if (2 * alpha12^2 < alpha1^2 + alpha2^2) {
+  if (k12_min > k12_ub) {
     message("alpha12 is below lower bound")
-    return(FALSE) # Gaussian-specific
+    return(FALSE)
   }
   TRUE
 }

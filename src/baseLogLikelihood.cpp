@@ -4,7 +4,8 @@
 #include <omp.h>
 #endif
 
-const double BaseLogLikelihood::m_Epsilon = std::sqrt(arma::datum::eps);
+const double BaseLogLikelihood::m_ZeroValue = std::sqrt(std::numeric_limits<double>::epsilon());
+const double BaseLogLikelihood::m_PiValue = M_PI;
 
 void BaseLogLikelihood::SetFirstAlpha(const double val)
 {
@@ -18,40 +19,20 @@ void BaseLogLikelihood::SetSecondAlpha(const double val)
   m_SecondAmplitude = this->RetrieveAmplitudeFromParameters(m_SecondIntensity, val, m_DomainDimension);
 }
 
-void BaseLogLikelihood::SetCrossParameters(const double alpha12, const double tau)
+void BaseLogLikelihood::SetCrossParameters(const double k12, const double tau)
 {
+  m_CrossAmplitude = k12;
   m_Correlation = tau;
-
-  if (m_Correlation < m_Epsilon)
-  {
-    m_Correlation = 0.0;
-    m_CrossAlpha = std::sqrt(this->GetSquaredCrossAlphaLowerBound());
-    m_CrossAmplitude = 0.0;
-    return;
-  }
-
-  m_CrossAlpha = alpha12;
-  m_CrossAmplitude = this->RetrieveAmplitudeFromParameters(
-    tau * std::sqrt(m_FirstIntensity * m_SecondIntensity),
-    alpha12,
-    m_DomainDimension
-  );
+  m_CrossIntensity = tau * std::sqrt(m_FirstIntensity * m_SecondIntensity);
+  m_CrossAlpha = (m_Correlation < m_ZeroValue) ? NA_REAL : this->RetrieveAlphaFromParameters(m_CrossAmplitude, m_CrossIntensity, m_DomainDimension);
 }
 
-double BaseLogLikelihood::GetSquaredCrossAlphaUpperBound() const
+double BaseLogLikelihood::GetCrossAmplitudeUpperBound() const
 {
-  double weightValue = std::min(1.0, (1.0 / m_FirstAmplitude - 1.0) * (1.0/ m_SecondAmplitude - 1.0));
-  double squaredCorrelationUpperBound = weightValue * std::pow(m_FirstAlpha * m_SecondAlpha / this->GetSquaredCrossAlphaLowerBound(), (double)m_DomainDimension);
-  double squaredCorrelationLowerBound = 0.1 * squaredCorrelationUpperBound;
-  return m_FirstAlpha * m_SecondAlpha * std::pow(weightValue / squaredCorrelationLowerBound, 1.0 / m_DomainDimension);
-}
-
-double BaseLogLikelihood::GetSquaredCrossAmplitudeUpperBound() const
-{
-  double normalizationFactor = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_Epsilon * m_Epsilon;
+  double normalizationFactor = (1.0 - m_FirstAmplitude) * (1.0 - m_SecondAmplitude) - m_ZeroValue * m_ZeroValue;
   normalizationFactor = std::min(normalizationFactor, m_FirstAmplitude * m_SecondAmplitude);
   normalizationFactor = std::max(normalizationFactor, 0.0);
-  return normalizationFactor;
+  return std::sqrt(normalizationFactor);
 }
 
 void BaseLogLikelihood::SetInputData(
@@ -159,7 +140,7 @@ void BaseLogLikelihood::ComputeLogSpectrum()
 
     traceValue += (k11Value + k22Value) * weightValue;
 
-    if (traceValue > m_RelativeTolerance * (m_FirstIntensity + m_SecondIntensity) && kSquaredNorm != prevKSquaredNorm)
+    if (traceValue > m_RelativeTolerance * (m_FirstIntensity + m_SecondIntensity) * m_DomainVolume && kSquaredNorm != prevKSquaredNorm)
       break;
 
     double k12Value = (m_NumberOfMarks == 1) ? 0.0 : this->GetK12Value(kSquaredNorm);
@@ -179,7 +160,7 @@ void BaseLogLikelihood::ComputeLogSpectrum()
 
     if (m_NumberOfMarks == 2)
     {
-      double mValue = (k12Value < m_Epsilon) ? 0.0 : (-k11Value + k22Value + dValue) / (2.0 * k12Value);
+      double mValue = (k12Value < m_ZeroValue) ? 0.0 : (-k11Value + k22Value + dValue) / (2.0 * k12Value);
       double mValueDeriv = std::sqrt(1.0 + mValue * mValue);
       m_WorkingEigenVectors(0, 0) = 1.0 / mValueDeriv;
       m_WorkingEigenVectors(1, 0) = mValue / mValueDeriv;
@@ -233,7 +214,7 @@ void BaseLogLikelihood::ComputeLogDeterminant()
 
     arma::mat cosineValues(m_ActualTruncationIndex + 1, m_DomainDimension);
     cosineValues.row(0).fill(1.0);
-    cosineValues.row(1) = arma::cos(2.0 * M_PI * (m_DataPoints.row(i) - m_DataPoints.row(j)));
+    cosineValues.row(1) = arma::cos(2.0 * m_PiValue * (m_DataPoints.row(i) - m_DataPoints.row(j)) % m_DeltaDiagonal);
     for (unsigned int l = 2;l < m_ActualTruncationIndex + 1;++l)
       cosineValues.row(l) = 2.0 * cosineValues.row(1) % cosineValues.row(l - 1) - cosineValues.row(l - 2);
 
@@ -248,7 +229,7 @@ void BaseLogLikelihood::ComputeLogDeterminant()
     }
   }
 
-  m_DataLMatrix.clean(arma::datum::eps);
+  m_DataLMatrix.clean(m_ZeroValue);
   arma::log_det(m_LogDeterminant, sign, m_DataLMatrix);
 }
 
@@ -304,27 +285,27 @@ void BaseLogLikelihood::SetModelParameters(const arma::vec &params)
 
 bool BaseLogLikelihood::CheckModelParameters()
 {
-  if (m_FirstAmplitude < m_Epsilon || m_FirstAmplitude > 1.0 - m_Epsilon)
+  if (m_FirstAmplitude < m_ZeroValue || m_FirstAmplitude > 1.0 - m_ZeroValue)
     return false;
 
   if (m_NumberOfParameters == 2)
   {
-    if (m_CrossAlpha * m_CrossAlpha < this->GetSquaredCrossAlphaLowerBound())
+    if (m_CrossAmplitude < 0 || m_CrossAmplitude > this->GetCrossAmplitudeUpperBound())
       return false;
 
-    if (m_CrossAmplitude * m_CrossAmplitude > this->GetSquaredCrossAmplitudeUpperBound())
+    if (m_Correlation < 0 || this->RetrieveAmplitudeFromParameters(m_CrossIntensity, this->GetCrossAlphaLowerBound(), m_DomainDimension) > this->GetCrossAmplitudeUpperBound())
       return false;
   }
 
   if (m_NumberOfParameters == 4)
   {
-    if (m_SecondAmplitude < m_Epsilon || m_SecondAmplitude > 1.0 - m_Epsilon)
+    if (m_SecondAmplitude < m_ZeroValue || m_SecondAmplitude > 1.0 - m_ZeroValue)
       return false;
 
-    if (m_CrossAlpha * m_CrossAlpha < this->GetSquaredCrossAlphaLowerBound())
+    if (m_CrossAmplitude < 0 || m_CrossAmplitude > this->GetCrossAmplitudeUpperBound())
       return false;
 
-    if (m_CrossAmplitude * m_CrossAmplitude > this->GetSquaredCrossAmplitudeUpperBound())
+    if (m_Correlation < 0 || this->RetrieveAmplitudeFromParameters(m_CrossIntensity, this->GetCrossAlphaLowerBound(), m_DomainDimension) > this->GetCrossAmplitudeUpperBound())
       return false;
   }
 

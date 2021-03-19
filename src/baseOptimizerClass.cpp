@@ -5,15 +5,19 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
 {
   if (parameters.n_elem == 2)
   {
-    parameters(0) = std::sqrt((likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) * parameters(0) + likelihoodPointer->GetSquaredCrossAlphaLowerBound());
+    // Retrieve k12max and k12min
+    double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
+    double k12min = parameters(1) * k12max;
 
-    double crossAmplitude = std::sqrt(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(1));
-    double crossIntensity = likelihoodPointer->RetrieveIntensityFromParameters(
-      crossAmplitude,
-      parameters(0),
-      likelihoodPointer->GetDomainDimension()
-    );
-    parameters(1) = crossIntensity / std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+    // Retrieve k12
+    parameters(0) *= (k12max - k12min);
+    parameters(0) += k12min;
+
+    // retrieve tau
+    double rho1 = likelihoodPointer->GetFirstIntensity();
+    double rho2 = likelihoodPointer->GetSecondIntensity();
+    unsigned int dimension = likelihoodPointer->GetDomainDimension();
+    parameters(1) = k12min / likelihoodPointer->RetrieveAmplitudeFromParameters(std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
     return;
   }
@@ -23,29 +27,33 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
     likelihoodPointer->GetFirstIntensity(),
     likelihoodPointer->GetDomainDimension()
   );
+  likelihoodPointer->SetFirstAlpha(parameters(0));
 
   if (parameters.n_elem == 1)
     return;
-
-  likelihoodPointer->SetFirstAlpha(parameters(0));
 
   parameters(1) = likelihoodPointer->RetrieveAlphaFromParameters(
     parameters(1),
     likelihoodPointer->GetSecondIntensity(),
     likelihoodPointer->GetDomainDimension()
   );
-
   likelihoodPointer->SetSecondAlpha(parameters(1));
 
-  parameters(2) = std::sqrt((likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) * parameters(2) + likelihoodPointer->GetSquaredCrossAlphaLowerBound());
+  // set crossing parameters
 
-  double crossAmplitude = std::sqrt(likelihoodPointer->GetSquaredCrossAmplitudeUpperBound() * parameters(3));
-  double crossIntensity = likelihoodPointer->RetrieveIntensityFromParameters(
-    crossAmplitude,
-    parameters(2),
-    likelihoodPointer->GetDomainDimension()
-  );
-  parameters(3) = crossIntensity / std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
+  // Retrieve k12max and k12min
+  double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
+  double k12min = parameters(3) * k12max;
+
+  // Retrieve k12
+  parameters(2) *= (k12max - k12min);
+  parameters(2) += k12min;
+
+  // retrieve tau
+  double rho1 = likelihoodPointer->GetFirstIntensity();
+  double rho2 = likelihoodPointer->GetSecondIntensity();
+  unsigned int dimension = likelihoodPointer->GetDomainDimension();
+  parameters(3) = k12min / likelihoodPointer->RetrieveAmplitudeFromParameters(std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 }
 
 void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &parameters,
@@ -53,24 +61,19 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
 {
   if (parameters.n_elem == 2)
   {
-    double crossIntensity = parameters(1) * std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
-    double crossAmplitude = likelihoodPointer->RetrieveAmplitudeFromParameters(
-      crossIntensity,
-      parameters(0),
-      likelihoodPointer->GetDomainDimension()
-    );
+    // Retrieve k12max and k12min
+    double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
+    double rho1 = likelihoodPointer->GetFirstIntensity();
+    double rho2 = likelihoodPointer->GetSecondIntensity();
+    unsigned int dimension = likelihoodPointer->GetDomainDimension();
+    double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(1) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
-    parameters(0) = (parameters(0) * parameters(0) - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) / (likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound());
-    if (parameters(0) < 0)
-      parameters(0) = 0.0;
-    if (parameters(0) > 1.0)
-      parameters(0) = 1.0;
+    // Scale k12
+    parameters(0) -= k12min;
+    parameters(0) /= (k12max - k12min);
 
-    parameters(1) = crossAmplitude * crossAmplitude / likelihoodPointer->GetSquaredCrossAmplitudeUpperBound();
-    if (parameters(1) < 0)
-      parameters(1) = 0.0;
-    if (parameters(1) > 1.0)
-      parameters(1) = 1.0;
+    // Scale tau
+    parameters(1) = k12min / k12max;
 
     return;
   }
@@ -92,24 +95,19 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     likelihoodPointer->GetDomainDimension()
   );
 
-  double crossIntensity = parameters(3) * std::sqrt(likelihoodPointer->GetFirstIntensity() * likelihoodPointer->GetSecondIntensity());
-  double crossAmplitude = likelihoodPointer->RetrieveAmplitudeFromParameters(
-    crossIntensity,
-    parameters(2),
-    likelihoodPointer->GetDomainDimension()
-  );
+  // Retrieve k12max and k12min
+  double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
+  double rho1 = likelihoodPointer->GetFirstIntensity();
+  double rho2 = likelihoodPointer->GetSecondIntensity();
+  unsigned int dimension = likelihoodPointer->GetDomainDimension();
+  double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(3) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
-  parameters(2) = (parameters(2) * parameters(2) - likelihoodPointer->GetSquaredCrossAlphaLowerBound()) / (likelihoodPointer->GetSquaredCrossAlphaUpperBound() - likelihoodPointer->GetSquaredCrossAlphaLowerBound());
-  if (parameters(2) < 0)
-    parameters(2) = 0.0;
-  if (parameters(2) > 1.0)
-    parameters(2) = 1.0;
+  // Scale k12
+  parameters(2) -= k12min;
+  parameters(2) /= (k12max - k12min);
 
-  parameters(3) = crossAmplitude * crossAmplitude / likelihoodPointer->GetSquaredCrossAmplitudeUpperBound();
-  if (parameters(3) < 0)
-    parameters(3) = 0.0;
-  if (parameters(3) > 1.0)
-    parameters(3) = 1.0;
+  // Scale tau
+  parameters(3) = k12min / k12max;
 }
 
 double BaseOptimizerFunction::MaximizeLikelihoodCostFunction(unsigned n,
@@ -135,8 +133,8 @@ double BaseOptimizerFunction::MaximizeLikelihood(arma::vec &parameters,
   unsigned int numberOfParameters = likelihoodPointer->GetNumberOfParameters();
   m_LowerBounds.resize(numberOfParameters);
   m_UpperBounds.resize(numberOfParameters);
-  m_LowerBounds.fill(std::sqrt(arma::datum::eps));
-  m_UpperBounds.fill(1.0 - std::sqrt(arma::datum::eps));
+  m_LowerBounds.fill(likelihoodPointer->m_ZeroValue);
+  m_UpperBounds.fill(1.0 - likelihoodPointer->m_ZeroValue);
 
   if (numberOfParameters > 1)
   {
@@ -164,8 +162,10 @@ double BaseOptimizerFunction::MaximizeLikelihood(arma::vec &parameters,
 
   if (exitCode < 0)
   {
+    Rcpp::Rcout << "Exit code:   " << exitCode << std::endl;
     Rcpp::Rcout << "Function value:   " << fVal << std::endl;
-    Rcpp::Rcout << "Parameter values: " << parameters << std::endl;
+    Rcpp::Rcout << "Parameter values: " << parameters.as_row() << std::endl;
+    Rcpp::Rcout << (parameters[1] >= m_LowerBounds[1]) << " " << (parameters[1] <= m_UpperBounds[1]) << std::endl;
     Rcpp::Rcout << "Lower bounds:     " << m_LowerBounds.as_row() << std::endl;
     Rcpp::Rcout << "Upper bounds:     " << m_UpperBounds.as_row() << std::endl;
     Rcpp::stop("NLOPT optimization failed.");

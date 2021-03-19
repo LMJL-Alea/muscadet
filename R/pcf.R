@@ -14,15 +14,15 @@ compute_tau <- function(beta_max, M, r, y) {
 }
 
 combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("bcv", "SJ")) {
-  alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(
-    lambda = spatstat::intensity(x),
+  alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppGauss(
+    lambda = spatstat.geom::intensity(x),
     d = 2
   ))
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
   alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
   df <- bw %>%
     purrr::map(~ {
-      pcfemp <- spatstat::pcf(x, bw = .x, divisor = divisor, var.approx = TRUE)
+      pcfemp <- spatstat.core::pcf(x, bw = .x, divisor = divisor, var.approx = TRUE)
       c(
         alpha = optimise(
           f = contrast_marginal,
@@ -72,19 +72,19 @@ combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("
 estimate <- function(X,
                      model = "Gauss",
                      method = "PCF",
-                     rmin_alpha = 22,
-                     rmin_alpha12 = 22,
-                     rmin_tau = 22,
+                     rmin_alpha = 2,
+                     rmin_alpha12 = 2,
+                     rmin_tau = 2,
                      q = 0.5,
                      p = 2,
                      divisor_marginal = "d",
                      divisor_cross = "d",
                      bw_marginal = NULL,
                      bw_cross = NULL) {
-  Xs <- spatstat::split.ppp(X)
+  Xs <- spatstat.geom::split.ppp(X)
 
   # First estimate marginal intensities
-  rho2 <- spatstat::intensity(X)
+  rho2 <- spatstat.geom::intensity(X)
   rho1 <- as.numeric(rho2[1])
   rho2 <- as.numeric(rho2[2])
 
@@ -111,7 +111,7 @@ estimate <- function(X,
   )
 
   # Get cross PCF for estimating tau and alpha12
-  pcfemp <- spatstat::pcfcross(X, bw = bw_cross, divisor = divisor_cross)
+  pcfemp <- spatstat.core::pcfcross(X, bw = bw_cross, divisor = divisor_cross)
 
   # Model-dependent variables
   # Notations: beta = 1 / alpha12^2
@@ -171,8 +171,13 @@ estimate <- function(X,
       rho2 = rho2,
       alpha1 = alpha1,
       alpha2 = alpha2,
-      alpha12 = sqrt(gamma / tau / sqrt(rho1 * rho2) / pi),
-      tau = tau
+      k12 = gamma,
+      tau = tau,
+      alpha12 = ifelse(
+        tau < sqrt(.Machine$double.eps),
+        NA,
+        sqrt(gamma / tau / sqrt(rho1 * rho2) / pi)
+      )
     ))
 
   # Code for MLE
