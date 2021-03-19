@@ -10,8 +10,13 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
     double k12min = parameters(1) * k12max;
 
     // Retrieve k12
-    parameters(0) *= (k12max - k12min);
-    parameters(0) += k12min;
+    if (k12min < likelihoodPointer->m_ZeroValue)
+      parameters(0) = k12min;
+    else
+    {
+      parameters(0) *= (k12max - k12min);
+      parameters(0) += k12min;
+    }
 
     // retrieve tau
     double rho1 = likelihoodPointer->GetFirstIntensity();
@@ -46,8 +51,13 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
   double k12min = parameters(3) * k12max;
 
   // Retrieve k12
-  parameters(2) *= (k12max - k12min);
-  parameters(2) += k12min;
+  if (k12min < likelihoodPointer->m_ZeroValue)
+    parameters(2) = k12min;
+  else
+  {
+    parameters(2) *= (k12max - k12min);
+    parameters(2) += k12min;
+  }
 
   // retrieve tau
   double rho1 = likelihoodPointer->GetFirstIntensity();
@@ -69,8 +79,13 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(1) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
     // Scale k12
-    parameters(0) -= k12min;
-    parameters(0) /= (k12max - k12min);
+    if (k12min < likelihoodPointer->m_ZeroValue)
+      parameters(0) = 0.0;
+    else
+    {
+      parameters(0) -= k12min;
+      parameters(0) /= (k12max - k12min);
+    }
 
     // Scale tau
     parameters(1) = k12min / k12max;
@@ -103,8 +118,13 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
   double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(3) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
   // Scale k12
-  parameters(2) -= k12min;
-  parameters(2) /= (k12max - k12min);
+  if (k12min < likelihoodPointer->m_ZeroValue)
+    parameters(2) = 0.0;
+  else
+  {
+    parameters(2) -= k12min;
+    parameters(2) /= (k12max - k12min);
+  }
 
   // Scale tau
   parameters(3) = k12min / k12max;
