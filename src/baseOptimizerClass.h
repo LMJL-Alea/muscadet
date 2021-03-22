@@ -5,6 +5,7 @@
 
 #include <RcppArmadillo.h>
 #include <nloptrAPI.h>
+#include <memory>
 
 class BaseOptimizerFunction
 {
