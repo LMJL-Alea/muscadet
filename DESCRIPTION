@@ -24,12 +24,16 @@ RcppModules: DPP
 Depends: R (>= 3.5.0)
 Imports: 
     Rcpp,
-    spatstat,
+    spatstat.core,
+    spatstat.geom,
     nloptr (>= 1.2.2),
     rlang,
     dplyr,
     tidyr,
-    magrittr
+    magrittr,
+    purrr,
+    tibble,
+    methods
 Remotes: jyypma/nloptr
 URL: https://github.com/astamm/mediator
 BugReports: https://github.com/astamm/mediator/issues

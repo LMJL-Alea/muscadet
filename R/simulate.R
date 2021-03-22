@@ -14,11 +14,11 @@
 #' @param Kspec A function specifying the kernel to be used (default: \code{Kspecbessel}).
 #' @param testtau A function specifying the upper bound for the cross-correlation (default: \code{testtaubessel}).
 #'
-#' @return A \code{\link[spatstat]{ppp}} object containing the simulated point pattern.
+#' @return A \code{\link[spatstat.geom]{ppp}} object containing the simulated point pattern.
 #' @export
 #'
 #' @examples
-#' pp <- rbidpp()
+#' #pp <- rbidpp()
 rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
                    alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
                    nu1 = 10, nu2 = 10, nu12 = 10, L = 1,
@@ -114,10 +114,10 @@ rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
 
   ordering_idx <- kkindex %>%
     `colnames<-`(c("x", "y")) %>%
-    as_tibble() %>%
-    mutate(norm2 = x^2 + y^2, index = 1:n()) %>%
-    arrange(norm2, x, y) %>%
-    pull(index)
+    tibble::as_tibble() %>%
+    dplyr::mutate(norm2 = x^2 + y^2, index = 1:n()) %>%
+    dplyr::arrange(norm2, x, y) %>%
+    dplyr::pull(index)
   kkindex <- kkindex[ordering_idx, ]
   V <- V[, ordering_idx]
 

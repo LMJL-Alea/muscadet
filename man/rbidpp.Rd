@@ -51,11 +51,11 @@ rbidpp(
 \item{testtau}{A function specifying the upper bound for the cross-correlation (default: \code{testtaubessel}).}
 }
 \value{
-A \code{\link[spatstat]{ppp}} object containing the simulated point pattern.
+A \code{\link[spatstat.geom]{ppp}} object containing the simulated point pattern.
 }
 \description{
 Random generation of point patterns from a cross-type DPP
 }
 \examples{
-pp <- rbidpp()
+#pp <- rbidpp()
 }

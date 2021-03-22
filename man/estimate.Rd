@@ -20,7 +20,7 @@ estimate(
 )
 }
 \arguments{
-\item{X}{a \code{\link[spatstat]{ppp}} object storing the point pattern.}
+\item{X}{a \code{\link[spatstat.geom]{ppp}} object storing the point pattern.}
 
 \item{rmin_alpha}{The lower bound on distances that should be taken into
 account for estimating marginal alpha parameters (default: index 1).}
@@ -33,9 +33,6 @@ account for estimating the correlation (default: index 31).}
 
 \item{p}{Power used in the marginal contrasts for estimating \code{alpha1}
 and \code{alpha2} (default: 0.2).}
-
-\item{tau_min}{Correlation value used to compute a suitable upper bound for
-the crossing alpha parameter (default: 0.1).}
 }
 \value{
 A list with the estimated model parameters in the following order:
@@ -46,13 +43,13 @@ A list with the estimated model parameters in the following order:
 Estimation of Stationary Bivariate 2-dimensional DPP
 }
 \examples{
-res <- purrr::map_df(sim_gauss5, estimate)
-boxplot(res$alpha1)
-abline(h = 0.03, col = "red")
-boxplot(res$alpha2)
-abline(h = 0.03, col = "red")
-boxplot(res$alpha12)
-abline(h = 0.035, col = "red")
-boxplot(res$tau)
-abline(h = 0.5, col = "red")
+#res <- purrr::map_df(sim_gauss5, estimate)
+#boxplot(res$alpha1)
+#abline(h = 0.03, col = "red")
+#boxplot(res$alpha2)
+#abline(h = 0.03, col = "red")
+#boxplot(res$alpha12)
+#abline(h = 0.035, col = "red")
+#boxplot(res$tau)
+#abline(h = 0.5, col = "red")
 }
