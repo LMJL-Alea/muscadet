@@ -10,7 +10,7 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
     double k12min = parameters(1) * k12max;
 
     // Retrieve k12
-    if (k12min < likelihoodPointer->m_ZeroValue)
+    if (k12min < likelihoodPointer->m_ZeroValue || k12max - k12min < likelihoodPointer->m_ZeroValue)
       parameters(0) = k12min;
     else
     {
@@ -51,7 +51,7 @@ void BaseOptimizerFunction::TransformScaledToUnscaledParameters(arma::vec &param
   double k12min = parameters(3) * k12max;
 
   // Retrieve k12
-  if (k12min < likelihoodPointer->m_ZeroValue)
+  if (k12min < likelihoodPointer->m_ZeroValue || k12max - k12min < likelihoodPointer->m_ZeroValue)
     parameters(2) = k12min;
   else
   {
@@ -71,15 +71,20 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
 {
   if (parameters.n_elem == 2)
   {
-    // Retrieve k12max and k12min
+    // Scale k12max and k12min
     double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
     double rho1 = likelihoodPointer->GetFirstIntensity();
     double rho2 = likelihoodPointer->GetSecondIntensity();
     unsigned int dimension = likelihoodPointer->GetDomainDimension();
     double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(1) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
+    if (parameters(0) < k12min)
+      parameters(0) = k12min;
+    if (parameters(0) > k12max)
+      parameters(0) = k12max;
+
     // Scale k12
-    if (k12min < likelihoodPointer->m_ZeroValue)
+    if (k12min < likelihoodPointer->m_ZeroValue || k12max - k12min < likelihoodPointer->m_ZeroValue)
       parameters(0) = 0.0;
     else
     {
@@ -110,15 +115,20 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     likelihoodPointer->GetDomainDimension()
   );
 
-  // Retrieve k12max and k12min
+  // Scale k12max and k12min
   double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
   double rho1 = likelihoodPointer->GetFirstIntensity();
   double rho2 = likelihoodPointer->GetSecondIntensity();
   unsigned int dimension = likelihoodPointer->GetDomainDimension();
   double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(3) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
 
+  if (parameters(2) < k12min)
+    parameters(2) = k12min;
+  if (parameters(2) > k12max)
+    parameters(2) = k12max;
+
   // Scale k12
-  if (k12min < likelihoodPointer->m_ZeroValue)
+  if (k12min < likelihoodPointer->m_ZeroValue || k12max - k12min < likelihoodPointer->m_ZeroValue)
     parameters(2) = 0.0;
   else
   {

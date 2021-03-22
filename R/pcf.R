@@ -134,7 +134,7 @@ estimate <- function(X,
   gamma_max <- sqrt(max(0, min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps))))
 
   if (gamma_max - gamma_min < sqrt(.Machine$double.eps))
-    gamma <- gamma_max
+    gamma <- gamma_min
   else {
     contrast_cross <- function(gamma) {
       r <- pcfemp$r[rmin_alpha12:length(pcfemp$r)]
