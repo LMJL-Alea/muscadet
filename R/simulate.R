@@ -19,9 +19,18 @@
 #'
 #' @examples
 #' #pp <- rbidpp()
-rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
-                   alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
-                   nu1 = 10, nu2 = 10, nu12 = 10, L = 1,
+rbidpp <- function(n = 1,
+                   seed = 1234,
+                   rho1 = 100,
+                   rho2 = 100,
+                   tau = 0.2,
+                   alpha1 = 0.03,
+                   alpha2 = 0.03,
+                   alpha12 = 0.05,
+                   nu1 = 10,
+                   nu2 = 10,
+                   nu12 = 10,
+                   L = 1,
                    progress = TRUE,
                    ncores = parallel::detectCores(logical = FALSE),
                    Kspec = "Kspecmatern",
@@ -128,7 +137,7 @@ rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
   # print(map(1:ncol(kkindex), ~ c(0, L)))
 
   #step3 : cf the functions below
-  X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat::boxx(map(1:ncol(kkindex), ~ c(0, L))))
+  X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat.geom::boxx(map(1:ncol(kkindex), ~ c(0, L))))
   return(X)
 }
 
@@ -137,14 +146,14 @@ rbidpp <- function(n = 1, seed = 1234, rho1 = 100, rho2 = 100, tau = 0.2,
 
 ## Generates an empty point pattern
 emptyppx <- function(W, simplify = TRUE){
-  W <- spatstat::as.boxx(W)
+  W <- spatstat.geom::as.boxx(W)
   r <- W$ranges
   d <- ncol(r)
   if(simplify){
     if(d==2)
-      return(spatstat::ppp(numeric(0), numeric(0), window = spatstat::as.owin(W)))
+      return(spatstat.geom::ppp(numeric(0), numeric(0), window = spatstat.geom::as.owin(W)))
     if(d==3)
-      return(spatstat::pp3(numeric(0), numeric(0), numeric(0), W))
+      return(spatstat.geom::pp3(numeric(0), numeric(0), numeric(0), W))
   }
   rslt <- replicate(d, numeric(0), simplify=FALSE)
   names(rslt) <- paste("x",1:d,sep="")
@@ -157,11 +166,11 @@ emptyppx <- function(W, simplify = TRUE){
 ##Generates a multidimensional projection DPP  : adaptation from rdppp of spatstat (all changed lines are indicated by -fred)
 #rdppp <- function(index, basis = "fourierbasis", window = boxx(rep(list(0:1), ncol(index))), -fred
 #                  reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...) -fred
-rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat::boxx(rep(list(0:1), ncol(index))),
+rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat.geom::boxx(rep(list(0:1), ncol(index))),
                        reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...) #-fred
 {
   ##Check if really multi -fred
-  if(is.null(V)){return(rdppp(index,basis = "fourierbasis", window = spatstat::boxx(rep(list(0:1),ncol(index))), reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...))} #-fred
+  if(is.null(V)){return(rdppp(index,basis = "fourierbasis", window = spatstat.geom::boxx(rep(list(0:1),ncol(index))), reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...))} #-fred
   if(is.matrix(V) & debug){warning(paste(sQuote("debug"),"is not available for multidimensional DPPs"));debug=FALSE} #-fred
   if(is.matrix(V) & !is.null(given)){warning(paste(sQuote("given"),"is not available for multidimensional DPPs"));given=NULL} #-fred
 
@@ -174,7 +183,7 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
     stop(paste(sQuote("progress"), "must be a numeric greater than or equal to 1"))
   index <- as.matrix(index)
   d <- ncol(index)
-  window <- spatstat::as.boxx(window)
+  window <- spatstat.geom::as.boxx(window)
   ranges <- window$ranges
   boxlengths <- as.numeric(ranges[2L, ] - ranges[1L, ])
   if(ncol(ranges)!=d)
@@ -189,10 +198,10 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
     if (!(is.numeric(tmp) || is.complex(tmp)))
       stop(paste("Output of", sQuote("basis"), "must be numeric or complex"))
     basis <- function(x, k, boxlengths){
-      userbasis(x, k, spatstat::boxx(lapply(boxlengths, function(x) list(c(0,x)))))
+      userbasis(x, k, spatstat.geom::boxx(lapply(boxlengths, function(x) list(c(0,x)))))
     }
   } else{
-    basis <- spatstat::fourierbasisraw
+    basis <- spatstat.geom::fourierbasisraw
   }
 
   ## Number of points to simulate:
@@ -203,12 +212,12 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
   ## Resolve `given` for pseudo conditional simulation
   if(!is.null(given)){
     # Make sure `given` is a list of point patterns
-    if(spatstat::is.ppp(given) || spatstat::is.pp3(given) || spatstat::is.ppx(given)){
+    if(spatstat.geom::is.ppp(given) || spatstat.geom::is.pp3(given) || spatstat.geom::is.ppx(given)){
       given <- list(given)
     }
-    stopifnot(all(sapply(given, function(x){ spatstat::is.ppp(x) || spatstat::is.pp3(x) || spatstat::is.ppx(x)})))
+    stopifnot(all(sapply(given, function(x){ spatstat.geom::is.ppp(x) || spatstat.geom::is.pp3(x) || spatstat.geom::is.ppx(x)})))
     # Check that the window (or its boundingbox) is inside the simulation window
-    Wgiven <- lapply(given, function(x) spatstat::as.boxx(domain(x)))
+    Wgiven <- lapply(given, function(x) spatstat.geom::as.boxx(domain(x)))
     stopifnot(all(sapply(Wgiven,
                          function(w){
                            all(w$ranges[1,] >= ranges[1,]) && all(w$ranges[2,] <= ranges[2,])
@@ -252,7 +261,7 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
   }
 
   if (n==1)
-    return(spatstat::ppp(x[1,1],x[1,2], window = spatstat::as.owin(window),marks=as.factor(type[1]))) #-fred
+    return(spatstat.geom::ppp(x[1,1],x[1,2], window = spatstat.geom::as.owin(window),marks=as.factor(type[1]))) #-fred
   #return(ppx(x, window, simplify = TRUE))-fred
 
   # First vector of basis-functions evaluated at first point:
@@ -269,7 +278,7 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
   for(i in (n-1):1){
     ## Print progress:
     if(progress>0)
-      spatstat::progressreport(n-i, n, every=progress)
+      spatstat.geom::progressreport(n-i, n, every=progress)
     ## Aux. variable to count number of rejection steps:
     tries <- 0
     # Debug info:
@@ -284,7 +293,7 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
         if(i>(n-ngiven)){
           newx <- coordsgiven[n-i+1,,drop=FALSE]
         } else{
-          while(any(sapply(Wgiven, function(w) spatstat::inside.boxx(as.hyperframe(newx), w = w))))
+          while(any(sapply(Wgiven, function(w) spatstat.geom::inside.boxx(as.hyperframe(newx), w = w))))
             newx <- matrix(runif(d,as.numeric(ranges[1,]),as.numeric(ranges[2,])),ncol=d)
         }
       }
@@ -348,7 +357,7 @@ rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat:
   } ## END OF MAIN FOR LOOP
   # Save points as point pattern:
   #X <- ppx(x, window, simplify = TRUE)  -fred
-  X <- spatstat::ppp(x[,1],x[,2], window = spatstat::as.owin(window), marks=as.factor(type)) #-fred
+  X <- spatstat.geom::ppp(x[,1],x[,2], window = spatstat.geom::as.owin(window), marks=as.factor(type)) #-fred
 
   # Debug info:
   if(debug){
