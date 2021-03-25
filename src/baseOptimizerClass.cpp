@@ -92,8 +92,18 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
       parameters(0) /= (k12max - k12min);
     }
 
+    if (parameters(0) < 0)
+      parameters(0) = 0;
+    if (parameters(0) > 1)
+      parameters(0) = 1;
+
     // Scale tau
     parameters(1) = k12min / k12max;
+
+    if (parameters(1) < 0)
+      parameters(1) = 0;
+    if (parameters(1) > 1)
+      parameters(1) = 1;
 
     return;
   }
@@ -105,6 +115,11 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     likelihoodPointer->GetDomainDimension()
   );
 
+  if (parameters(0) < likelihoodPointer->m_ZeroValue)
+    parameters(0) = likelihoodPointer->m_ZeroValue;
+  if (parameters(0) > 1 - likelihoodPointer->m_ZeroValue)
+    parameters(0) = 1 - likelihoodPointer->m_ZeroValue;
+
   if (parameters.n_elem == 1)
     return;
 
@@ -114,6 +129,11 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     parameters(1),
     likelihoodPointer->GetDomainDimension()
   );
+
+  if (parameters(1) < likelihoodPointer->m_ZeroValue)
+    parameters(1) = likelihoodPointer->m_ZeroValue;
+  if (parameters(1) > 1 - likelihoodPointer->m_ZeroValue)
+    parameters(1) = 1 - likelihoodPointer->m_ZeroValue;
 
   // Scale k12max and k12min
   double k12max = likelihoodPointer->GetCrossAmplitudeUpperBound();
@@ -136,8 +156,18 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
     parameters(2) /= (k12max - k12min);
   }
 
+  if (parameters(2) < 0)
+    parameters(2) = 0;
+  if (parameters(2) > 1)
+    parameters(2) = 1;
+
   // Scale tau
   parameters(3) = k12min / k12max;
+
+  if (parameters(3) < 0)
+    parameters(3) = 0;
+  if (parameters(3) > 1)
+    parameters(3) = 1;
 }
 
 double BaseOptimizerFunction::MaximizeLikelihoodCostFunction(unsigned n,
