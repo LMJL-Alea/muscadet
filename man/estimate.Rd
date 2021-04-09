@@ -20,28 +20,68 @@ estimate(
 )
 }
 \arguments{
-\item{X}{a \code{\link[spatstat.geom]{ppp}} object storing the point pattern.}
+\item{X}{A \code{\link[spatstat.geom]{ppp}} object storing the point pattern.}
+
+\item{model}{A string specifying the model to be fitted. Choices are
+\code{"Gauss"} or \code{"Bessel"}. Defaults to \code{"Gauss"}.}
+
+\item{method}{A string specifying the estimation method. Choices are \code{"PCF"}.
+Defaults to \code{"PCF"}.}
 
 \item{rmin_alpha}{The lower bound on distances that should be taken into
-account for estimating marginal alpha parameters (default: index 1).}
+account for estimating marginal alpha parameters (default: index 2).}
 
 \item{rmin_alpha12}{The lower bound on distances that should be taken into
-account for estimating the crossing alpha parameter (default: index 1).}
+account for estimating the crossing alpha parameter (default: index 2).}
 
 \item{rmin_tau}{The lower bound on distances that should be taken into
-account for estimating the correlation (default: index 31).}
+account for estimating the correlation (default: index 2).}
 
-\item{p}{Power used in the marginal contrasts for estimating \code{alpha1}
-and \code{alpha2} (default: 0.2).}
+\item{q}{Power for pointwise evaluations of the PCF. Defaults to \code{0.5}.}
+
+\item{p}{Power for the distance between empirical and moodel-based PCF
+values. Defaults to \code{2}.}
+
+\item{divisor_marginal}{Choice of divisor in the estimation formula. Choices
+are \code{"r"} or \code{"d"}. See Section Empirical estimation of the pair
+correlation function for more details. Defaults to \code{"d"}.}
+
+\item{divisor_cross}{Choice of divisor in the estimation formula. Choices are
+\code{"r"} or \code{"d"}. See Section Empirical estimation of the pair correlation
+function for more details. Defaults to \code{"d"}.}
+
+\item{bw_marginal}{A character vector specifying the bandwidths that should
+be used to compute the empirical PCF for estimating the marginal
+parameters. Choices are \code{"NULL"}, \code{"nrd0"}, \code{"nrd"}, \code{"ucv"}, \code{"bcv"} or
+\code{"SJ"}. Defaults to \code{NULL} which uses \code{\link[spatstat.core]{pcf}}
+default bandwidth.}
+
+\item{bw_cross}{A string specifying the bandwidth that should be used to
+compute the empirical PCF for estimating the cross-type parameters. Choices
+are \code{"NULL"}, \code{"nrd0"}, \code{"nrd"}, \code{"ucv"}, \code{"bcv"} or \code{"SJ"}. Defaults to
+\code{NULL} which uses \code{\link[spatstat.core]{pcfcross}} default bandwidth.}
 }
 \value{
 A list with the estimated model parameters in the following order:
-\code{rho1}, \code{rho2}, \code{alpha1}, \code{alpha2}, \code{alpha12} and
-\code{tau}.
+\code{rho1}, \code{rho2}, \code{alpha1}, \code{alpha2}, \code{k12}, \code{alpha12} and \code{tau}.
 }
 \description{
 Estimation of Stationary Bivariate 2-dimensional DPP
 }
+\section{Empirical estimation of the pair correlation function}{
+ The empirical
+PCF is computed as a kernel estimate of the PCF in which the contribution
+from an interpoint distance $d_{ij}$ to the estimate of $g(r)$ is divided:
+\itemize{
+\item either by $r$ using optional argument \code{divisor = "r"} in the functions
+\code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
+\item or by $d_{ij}$ using optional argument \code{divisor = "d"} in the functions
+\code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
+it is intended to improve the bias of the estimator when $r$ is close to
+zero.
+}
+}
+
 \examples{
 #res <- purrr::map_df(sim_gauss5, estimate)
 #boxplot(res$alpha1)

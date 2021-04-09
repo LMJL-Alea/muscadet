@@ -18,43 +18,86 @@ combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("
     lambda = spatstat.geom::intensity(x),
     d = 2
   ))
+
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
   alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
+
+  if (is.null(bw))
+    return(.compute_alpha_and_precision(x, bw, divisor, alpha_lb, alpha_ub, p, q, rmin_alpha)$alpha)
+
   df <- bw %>%
-    purrr::map(~ {
-      pcfemp <- spatstat.core::pcf(x, bw = .x, divisor = divisor, var.approx = TRUE)
-      c(
-        alpha = stats::optimise(
-          f = contrast_marginal,
-          interval = c(alpha_lb, alpha_ub),
-          r = pcfemp$r[rmin_alpha:length(pcfemp$r)],
-          y = pcfemp$iso[rmin_alpha:length(pcfemp$r)],
-          q = q,
-          p = p
-        )$minimum,
-        precision = 1 / mean(pcfemp$v[-1])
-      )
-    }) %>%
+    purrr::map(
+      .f = .compute_alpha_and_precision,
+      x = x, divisor = divisor,
+      alpha_lb = alpha_lb, alpha_ub = alpha_ub,
+      p = p, q = q,
+      rmin = rmin_alpha
+    ) %>%
     purrr::transpose() %>%
     purrr::simplify_all()
+
   sum(df$precision * df$alpha) / sum(df$precision)
+}
+
+.compute_alpha_and_precision <- function(x, bw, divisor, alpha_lb, alpha_ub, p, q, rmin) {
+  pcfemp <- spatstat.core::pcf(x, bw = bw, divisor = divisor, var.approx = TRUE)
+  list(
+    alpha = stats::optimise(
+      f = contrast_marginal,
+      interval = c(alpha_lb, alpha_ub),
+      r = pcfemp$r[rmin:length(pcfemp$r)],
+      y = pcfemp$iso[rmin:length(pcfemp$r)],
+      q = q,
+      p = p
+    )$minimum,
+    precision = 1 / mean(pcfemp$v[-1])
+  )
 }
 
 #' Estimation of Stationary Bivariate 2-dimensional DPP
 #'
-#' @param X a \code{\link[spatstat.geom]{ppp}} object storing the point pattern.
+#' @section Empirical estimation of the pair correlation function: The empirical
+#'   PCF is computed as a kernel estimate of the PCF in which the contribution
+#'   from an interpoint distance $d_{ij}$ to the estimate of $g(r)$ is divided:
+#'   - either by $r$ using optional argument `divisor = "r"` in the functions
+#'   \code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
+#'   - or by $d_{ij}$ using optional argument `divisor = "d"` in the functions
+#'   \code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
+#'   it is intended to improve the bias of the estimator when $r$ is close to
+#'   zero.
+#'
+#' @param X A \code{\link[spatstat.geom]{ppp}} object storing the point pattern.
+#' @param model A string specifying the model to be fitted. Choices are
+#'   `"Gauss"` or `"Bessel"`. Defaults to `"Gauss"`.
+#' @param method A string specifying the estimation method. Choices are `"PCF"`.
+#'   Defaults to `"PCF"`.
 #' @param rmin_alpha The lower bound on distances that should be taken into
-#'   account for estimating marginal alpha parameters (default: index 1).
+#'   account for estimating marginal alpha parameters (default: index 2).
 #' @param rmin_alpha12 The lower bound on distances that should be taken into
-#'   account for estimating the crossing alpha parameter (default: index 1).
+#'   account for estimating the crossing alpha parameter (default: index 2).
 #' @param rmin_tau The lower bound on distances that should be taken into
-#'   account for estimating the correlation (default: index 31).
-#' @param p Power used in the marginal contrasts for estimating \code{alpha1}
-#'   and \code{alpha2} (default: 0.2).
+#'   account for estimating the correlation (default: index 2).
+#' @param p Power for the distance between empirical and moodel-based PCF
+#'   values. Defaults to `2`.
+#' @param q Power for pointwise evaluations of the PCF. Defaults to `0.5`.
+#' @param divisor_marginal Choice of divisor in the estimation formula. Choices
+#'   are `"r"` or `"d"`. See Section Empirical estimation of the pair
+#'   correlation function for more details. Defaults to `"d"`.
+#' @param divisor_cross Choice of divisor in the estimation formula. Choices are
+#'   `"r"` or `"d"`. See Section Empirical estimation of the pair correlation
+#'   function for more details. Defaults to `"d"`.
+#' @param bw_marginal A character vector specifying the bandwidths that should
+#'   be used to compute the empirical PCF for estimating the marginal
+#'   parameters. Choices are `"NULL"`, `"nrd0"`, `"nrd"`, `"ucv"`, `"bcv"` or
+#'   `"SJ"`. Defaults to `NULL` which uses \code{\link[spatstat.core]{pcf}}
+#'   default bandwidth.
+#' @param bw_cross A string specifying the bandwidth that should be used to
+#'   compute the empirical PCF for estimating the cross-type parameters. Choices
+#'   are `"NULL"`, `"nrd0"`, `"nrd"`, `"ucv"`, `"bcv"` or `"SJ"`. Defaults to
+#'   `NULL` which uses \code{\link[spatstat.core]{pcfcross}} default bandwidth.
 #'
 #' @return A list with the estimated model parameters in the following order:
-#'   \code{rho1}, \code{rho2}, \code{alpha1}, \code{alpha2}, \code{alpha12} and
-#'   \code{tau}.
+#'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`.
 #' @export
 #'
 #' @examples
@@ -79,6 +122,13 @@ estimate <- function(X,
                      divisor_cross = "d",
                      bw_marginal = NULL,
                      bw_cross = NULL) {
+  divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
+  divisor_cross <- match.arg(divisor_cross, c("d", "r"))
+  if (!is.null(bw_marginal))
+    bw_marginal <- match.arg(bw_marginal, c("nrd0", "nrd", "ucv", "bcv", "SJ"))
+  if (!is.null(bw_cross))
+    bw_cross <- match.arg(bw_cross, c("nrd0", "nrd", "ucv", "bcv", "SJ"))
+
   Xs <- spatstat.geom::split.ppp(X)
 
   # First estimate marginal intensities
@@ -94,7 +144,7 @@ estimate <- function(X,
     rmin_alpha = rmin_alpha,
     q = q,
     p = p,
-    bw = c("bcv", "SJ")
+    bw = bw_marginal
   )
 
   # Estimate alpha2
@@ -105,7 +155,7 @@ estimate <- function(X,
     rmin_alpha = rmin_alpha,
     q = q,
     p = p,
-    bw = c("bcv", "SJ")
+    bw = bw_marginal
   )
 
   # Get cross PCF for estimating tau and alpha12
