@@ -51,8 +51,10 @@ Rcpp::List rbidpp_impl(const int N,
     arma::mat22 workKernelMatrix;
     Rcpp::NumericVector workBernoulli(1);
     arma::irowvec2 workIndices;
+
+#ifdef _OPENMP
     unsigned int threadId = omp_get_thread_num();
-    // printf("Hello world from omp thread %d\n", threadId);
+#endif
 
     workIndices(0) = i;
 
