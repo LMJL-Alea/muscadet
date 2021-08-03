@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // CtildeStat2d_cpp
 NumericMatrix CtildeStat2d_cpp(NumericVector x, NumericVector y, double lambdao, NumericVector lambdaa, NumericVector lambda, IntegerVector k1a, IntegerVector k2a);
 RcppExport SEXP _mediator_CtildeStat2d_cpp(SEXP xSEXP, SEXP ySEXP, SEXP lambdaoSEXP, SEXP lambdaaSEXP, SEXP lambdaSEXP, SEXP k1aSEXP, SEXP k2aSEXP) {

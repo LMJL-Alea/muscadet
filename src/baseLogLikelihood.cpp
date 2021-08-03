@@ -229,7 +229,7 @@ void BaseLogLikelihood::ComputeLogDeterminant()
     }
   }
 
-  m_DataLMatrix.clean(m_ZeroValue);
+  // m_DataLMatrix.clean(m_ZeroValue);
   m_LogDeterminant = arma::log_det_sympd(m_DataLMatrix);
 }
 
