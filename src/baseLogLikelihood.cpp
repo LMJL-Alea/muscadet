@@ -230,7 +230,9 @@ void BaseLogLikelihood::ComputeLogDeterminant()
   }
 
   // m_DataLMatrix.clean(m_ZeroValue);
-  m_LogDeterminant = arma::log_det_sympd(m_DataLMatrix);
+  bool sdp = arma::log_det_sympd(m_LogDeterminant, m_DataLMatrix);
+  if (!sdp)
+    arma::log_det(m_LogDeterminant, sign, m_DataLMatrix);
 }
 
 double BaseLogLikelihood::GetValue(const arma::vec& x)
