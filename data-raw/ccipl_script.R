@@ -3,7 +3,7 @@ library(mediator)
 
 load("simulations.rda")
 
-simulations <- mutate(simulations, pcf = map(sim, estimate))
+simulations <- mutate(simulations, pcf = map(sim, ~ map(.x, estimate)))
 
 save(simulations, file = "simulations_pcf.rda", version = 3, compress = "xz")
 
@@ -41,50 +41,34 @@ mle_grouped <- function(data_list,
     mutate(fmin = map_dbl(fit, "value"))
 }
 
+toto=mle_grouped(simulations$sim[[2]], fixed_marginal_parameters = FALSE, num_threads = 6)
+
 simulations_L1 <- simulations[1:3, ] %>%
   mutate(
-    mle2_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = TRUE),
-    mle2_ipcf = map(sim, mle_grouped,
-                    fixed_marginal_parameters = TRUE,
-                    initial_guess = pcf),
-    mle4_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = FALSE),
-    mle4_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = FALSE,
-                    initial_guess = pcf)
+    mle2_imid = map(sim, mle_grouped, fixed_marginal_parameters = TRUE),
+    mle2_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = TRUE),
+    mle4_imid = map(sim, mle_grouped, fixed_marginal_parameters = FALSE),
+    mle4_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = FALSE)
   )
 
 save(simulations_L1, file = "mle_L1.rda", version = 3, compress = "xz")
 
 simulations_L2 <- simulations[4:6, ] %>%
   mutate(
-    mle2_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = TRUE),
-    mle2_ipcf = map(sim, mle_grouped,
-                    fixed_marginal_parameters = TRUE,
-                    initial_guess = pcf),
-    mle4_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = FALSE),
-    mle4_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = FALSE,
-                    initial_guess = pcf)
+    mle2_imid = map(sim, mle_grouped, fixed_marginal_parameters = TRUE),
+    mle2_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = TRUE),
+    mle4_imid = map(sim, mle_grouped, fixed_marginal_parameters = FALSE),
+    mle4_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = FALSE)
   )
 
 save(simulations_L2, file = "mle_L2.rda", version = 3, compress = "xz")
 
 simulations_L3 <- simulations[7:9, ] %>%
   mutate(
-    mle2_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = TRUE),
-    mle2_ipcf = map(sim, mle_grouped,
-                    fixed_marginal_parameters = TRUE,
-                    initial_guess = pcf),
-    mle4_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = FALSE),
-    mle4_imid = map(sim, mle_grouped,
-                    fixed_marginal_parameters = FALSE,
-                    initial_guess = pcf)
+    mle2_imid = map(sim, mle_grouped, fixed_marginal_parameters = TRUE),
+    mle2_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = TRUE),
+    mle4_imid = map(sim, mle_grouped, fixed_marginal_parameters = FALSE),
+    mle4_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = FALSE)
   )
 
 save(simulations_L3, file = "mle_L3.rda", version = 3, compress = "xz")

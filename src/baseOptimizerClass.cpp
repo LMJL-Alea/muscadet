@@ -140,7 +140,11 @@ void BaseOptimizerFunction::TransformUnscaledToScaledParameters(arma::vec &param
   double rho1 = likelihoodPointer->GetFirstIntensity();
   double rho2 = likelihoodPointer->GetSecondIntensity();
   unsigned int dimension = likelihoodPointer->GetDomainDimension();
-  double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(parameters(3) * std::sqrt(rho1 * rho2), likelihoodPointer->GetCrossAlphaLowerBound(), dimension);
+  double k12min = likelihoodPointer->RetrieveAmplitudeFromParameters(
+    parameters(3) * std::sqrt(rho1 * rho2),
+    likelihoodPointer->GetCrossAlphaLowerBound(),
+    dimension
+  );
 
   if (parameters(2) < k12min)
     parameters(2) = k12min;

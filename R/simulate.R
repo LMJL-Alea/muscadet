@@ -1,3 +1,24 @@
+validate_parameter_set <- function(rho1, rho2, tau,
+                                   alpha1, alpha2, alpha12,
+                                   model = "gauss", dimension = 2) {
+  switch (model,
+    gauss = {
+      k11 <- rho1 * alpha1^dimension * pi^(dimension/2)
+      k22 <- rho2 * alpha2^dimension * pi^(dimension/2)
+      k12sq <- rho1 * rho2 * pi^dimension * tau^2 * alpha12^(2*dimension)
+      k11 < 1 && k22 < 1 && k12sq < min(k11*k22, (1- k11)*(1-k22)) &&
+        2 * alpha12^2 >= alpha1^2 + alpha2^2
+    },
+    bessel = {
+      k11 <- rho1 * alpha1^dimension * (2*pi)^(dimension/2) * gamma(1+dimension/2) /  dimension^(dimension/2)
+      k22 <- rho2 * alpha2^dimension * (2*pi)^(dimension/2) * gamma(1+dimension/2) /  dimension^(dimension/2)
+      k12sq <- rho1 * rho2 * (2*pi)^dimension * tau^2 * alpha12^(2*dimension) * gamma(1+dimension/2)^2 / dimension^dimension
+      k11 < 1 && k22 < 1 && k12sq < min(k11*k22, (1- k11)*(1-k22)) &&
+        alpha12 >= max(alpha1, alpha2)
+    }
+  )
+}
+
 #' Random generation of point patterns from a cross-type DPP
 #'
 #' @param n Number of samples to draw (default: \code{1L}).
@@ -36,11 +57,9 @@ rbidpp <- function(n = 1,
                    Kspec = "Kspecmatern",
                    testtau = "testtaumatern")
 {
-  set.seed(seed)
+  withr::local_seed(seed)
 
   if (progress && requireNamespace("progressr", quietly = TRUE)) {
-    progressr::handlers(global = TRUE)
-    progressr::handlers("progress")
     p <- progressr::progressor(along = 1:n)
   }
 
@@ -124,7 +143,7 @@ rbidpp <- function(n = 1,
   ordering_idx <- kkindex %>%
     `colnames<-`(c("x", "y")) %>%
     tibble::as_tibble() %>%
-    dplyr::mutate(norm2 = x^2 + y^2, index = 1:n()) %>%
+    dplyr::mutate(norm2 = x^2 + y^2, index = 1:dplyr::n()) %>%
     dplyr::arrange(norm2, x, y) %>%
     dplyr::pull(index)
   kkindex <- kkindex[ordering_idx, ]
