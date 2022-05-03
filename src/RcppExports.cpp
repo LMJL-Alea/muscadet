@@ -7,9 +7,14 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // EstimateBessel
 arma::mat EstimateBessel(const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_EstimateBessel(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+RcppExport SEXP _muscadet_EstimateBessel(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -28,7 +33,7 @@ END_RCPP
 }
 // EvaluateBessel
 double EvaluateBessel(const arma::vec& p, const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2);
-RcppExport SEXP _mediator_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
+RcppExport SEXP _muscadet_EvaluateBessel(SEXP pSEXP, SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,7 +50,7 @@ END_RCPP
 }
 // InitializeBessel
 arma::mat InitializeBessel(const arma::mat& X, const arma::uvec& labels, const arma::vec& lb, const arma::vec& ub, const double rho1, const double rho2, const double alpha1, const double alpha2, const bool estimate_alpha);
-RcppExport SEXP _mediator_InitializeBessel(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
+RcppExport SEXP _muscadet_InitializeBessel(SEXP XSEXP, SEXP labelsSEXP, SEXP lbSEXP, SEXP ubSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP estimate_alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -64,13 +69,13 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mediator_EstimateBessel", (DL_FUNC) &_mediator_EstimateBessel, 9},
-    {"_mediator_EvaluateBessel", (DL_FUNC) &_mediator_EvaluateBessel, 7},
-    {"_mediator_InitializeBessel", (DL_FUNC) &_mediator_InitializeBessel, 9},
+    {"_muscadet_EstimateBessel", (DL_FUNC) &_muscadet_EstimateBessel, 9},
+    {"_muscadet_EvaluateBessel", (DL_FUNC) &_muscadet_EvaluateBessel, 7},
+    {"_muscadet_InitializeBessel", (DL_FUNC) &_muscadet_InitializeBessel, 9},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_mediator(DllInfo *dll) {
+RcppExport void R_init_muscadet(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

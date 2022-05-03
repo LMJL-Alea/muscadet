@@ -1,3 +1,3 @@
-#' @useDynLib mediator
+#' @useDynLib muscadet
 #' @importFrom Rcpp sourceCpp
 NULL

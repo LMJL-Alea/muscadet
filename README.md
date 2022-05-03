@@ -1,16 +1,16 @@
-# mediator
+# muscadet
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of mediator is to ...
+The goal of muscadet is to ...
 
 ## Installation
 
-You can install the development version of mediator as follows:
+You can install the development version of muscadet as follows:
 ``` r
 # install.packages("remotes")
-remotes::install_github("astamm/mediator")
+remotes::install_github("astamm/muscadet")
 ```
 
 ## Example
@@ -18,6 +18,6 @@ remotes::install_github("astamm/mediator")
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-library(mediator)
+library(muscadet)
 ## basic example code
 ```

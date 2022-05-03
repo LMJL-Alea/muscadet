@@ -31,14 +31,14 @@
 #'   estimate_alpha = FALSE
 #' )
 EstimateBessel <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call('_mediator_EstimateBessel', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+    .Call('_muscadet_EstimateBessel', PACKAGE = 'muscadet', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 
 EvaluateBessel <- function(p, X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_) {
-    .Call('_mediator_EvaluateBessel', PACKAGE = 'mediator', p, X, labels, lb, ub, rho1, rho2)
+    .Call('_muscadet_EvaluateBessel', PACKAGE = 'muscadet', p, X, labels, lb, ub, rho1, rho2)
 }
 
 InitializeBessel <- function(X, labels, lb, ub, rho1 = NA_real_, rho2 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, estimate_alpha = TRUE) {
-    .Call('_mediator_InitializeBessel', PACKAGE = 'mediator', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
+    .Call('_muscadet_InitializeBessel', PACKAGE = 'muscadet', X, labels, lb, ub, rho1, rho2, alpha1, alpha2, estimate_alpha)
 }
 

@@ -1,5 +1,5 @@
-Package: mediator
-Title: MultivariatE DetermInAnTal pOint pRocesses
+Package: muscadet
+Title: Multimark Statistical Analysis of Determinantal Point Processes
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Aymeric",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "aymeric@stamm.fr",
            comment = c(ORCID = "0000-0002-8725-3654"))
-Description: This package implements stationary bivariate Gaussian 
+Description: This package implements stationary multi-mark Gaussian 
     and Bessel determinantal point processes. It is possible to 
     simulate points from a given set of parameters or to retrieve 
     model parameters from a given set of points.
@@ -15,7 +15,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.2
 LinkingTo:
     RcppEnsmallen,
     RcppArmadillo,
@@ -24,7 +24,7 @@ LinkingTo:
 Imports: 
     Rcpp,
     spatstat
-URL: https://github.com/astamm/mediator
-BugReports: https://github.com/astamm/mediator/issues
+URL: https://github.com/astamm/muscadet
+BugReports: https://github.com/astamm/muscadet/issues
 Suggests: 
     furrr

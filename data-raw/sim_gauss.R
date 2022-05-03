@@ -16,7 +16,7 @@ tau <- seq(0, floor(10 * max_tau) / 10, by = 0.1)
 # Run simulations
 sims <- purrr::imap(tau, ~ {
   writeLines(paste("- Simulating bivariate Gaussian DPP with correlation", .x))
-  sim <- mediator::simulate(
+  sim <- muscadet::simulate(
     n = R,
     seed = 1234,
     rho1 = rho1,
