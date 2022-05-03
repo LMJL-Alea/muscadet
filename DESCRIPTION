@@ -1,5 +1,5 @@
-Package: mediator
-Title: MultivariatE DetermInAnTal pOint pRocesses
+Package: muscadet
+Title: Multi-mark Statistical Analysis of Determinantal Point Processes
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Aymeric",
@@ -35,8 +35,8 @@ Imports:
     tibble,
     methods,
     withr
-URL: https://github.com/astamm/mediator
-BugReports: https://github.com/astamm/mediator/issues
+URL: https://github.com/astamm/muscadet
+BugReports: https://github.com/astamm/muscadet/issues
 Suggests: 
     furrr,
     progressr

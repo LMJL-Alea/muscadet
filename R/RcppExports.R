@@ -2,15 +2,15 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 CtildeStat2d_cpp <- function(x, y, lambdao, lambdaa, lambda, k1a, k2a) {
-    .Call(`_mediator_CtildeStat2d_cpp`, x, y, lambdao, lambdaa, lambda, k1a, k2a)
+    .Call(`_muscadet_CtildeStat2d_cpp`, x, y, lambdao, lambdaa, lambda, k1a, k2a)
 }
 
 #' @export
 log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, marks = NULL, num_threads = 1L, N = 50L, verbose_level = 0L) {
-    .Call(`_mediator_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, verbose_level)
+    .Call(`_muscadet_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, verbose_level)
 }
 
 rbidpp_impl <- function(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, nbThreads) {
-    .Call(`_mediator_rbidpp_impl`, N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, nbThreads)
+    .Call(`_muscadet_rbidpp_impl`, N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, nbThreads)
 }
 

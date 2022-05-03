@@ -1,4 +1,4 @@
-library(mediator)
+library(muscadet)
 
 k1 <- 100 * pi * 0.03^2
 k2 <- 100 * pi * 0.03^2

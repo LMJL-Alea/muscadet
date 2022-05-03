@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // CtildeStat2d_cpp
 NumericMatrix CtildeStat2d_cpp(NumericVector x, NumericVector y, double lambdao, NumericVector lambdaa, NumericVector lambda, IntegerVector k1a, IntegerVector k2a);
-RcppExport SEXP _mediator_CtildeStat2d_cpp(SEXP xSEXP, SEXP ySEXP, SEXP lambdaoSEXP, SEXP lambdaaSEXP, SEXP lambdaSEXP, SEXP k1aSEXP, SEXP k2aSEXP) {
+RcppExport SEXP _muscadet_CtildeStat2d_cpp(SEXP xSEXP, SEXP ySEXP, SEXP lambdaoSEXP, SEXP lambdaaSEXP, SEXP lambdaSEXP, SEXP k1aSEXP, SEXP k2aSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -30,7 +30,7 @@ END_RCPP
 }
 // log_likelihood
 arma::vec log_likelihood(const arma::mat& theta, const arma::mat& points, const arma::vec& lower_bound, const arma::vec& upper_bound, const Rcpp::DataFrame& nd_grid, const Rcpp::Nullable<arma::uvec>& marks, const unsigned int num_threads, const unsigned int N, const unsigned int verbose_level);
-RcppExport SEXP _mediator_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP nd_gridSEXP, SEXP marksSEXP, SEXP num_threadsSEXP, SEXP NSEXP, SEXP verbose_levelSEXP) {
+RcppExport SEXP _muscadet_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP nd_gridSEXP, SEXP marksSEXP, SEXP num_threadsSEXP, SEXP NSEXP, SEXP verbose_levelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // rbidpp_impl
 Rcpp::List rbidpp_impl(const int N, const double L, const double rho1, const double rho2, const double alpha1, const double alpha2, const double alpha12, const double tau, const unsigned int nbThreads);
-RcppExport SEXP _mediator_rbidpp_impl(SEXP NSEXP, SEXP LSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP nbThreadsSEXP) {
+RcppExport SEXP _muscadet_rbidpp_impl(SEXP NSEXP, SEXP LSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP nbThreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -70,14 +70,14 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_DPP();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mediator_CtildeStat2d_cpp", (DL_FUNC) &_mediator_CtildeStat2d_cpp, 7},
-    {"_mediator_log_likelihood", (DL_FUNC) &_mediator_log_likelihood, 9},
-    {"_mediator_rbidpp_impl", (DL_FUNC) &_mediator_rbidpp_impl, 9},
+    {"_muscadet_CtildeStat2d_cpp", (DL_FUNC) &_muscadet_CtildeStat2d_cpp, 7},
+    {"_muscadet_log_likelihood", (DL_FUNC) &_muscadet_log_likelihood, 9},
+    {"_muscadet_rbidpp_impl", (DL_FUNC) &_muscadet_rbidpp_impl, 9},
     {"_rcpp_module_boot_DPP", (DL_FUNC) &_rcpp_module_boot_DPP, 0},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_mediator(DllInfo *dll) {
+RcppExport void R_init_muscadet(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

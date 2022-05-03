@@ -1,5 +1,5 @@
 library(tidyverse)
-library(mediator)
+library(muscadet)
 
 load("simulations.rda")
 
