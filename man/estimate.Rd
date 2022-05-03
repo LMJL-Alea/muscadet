@@ -7,7 +7,6 @@
 estimate(
   X,
   model = "Gauss",
-  method = "PCF",
   rmin_alpha = 2,
   rmin_alpha12 = 2,
   rmin_tau = 2,
@@ -16,7 +15,9 @@ estimate(
   divisor_marginal = "d",
   divisor_cross = "d",
   bw_marginal = NULL,
-  bw_cross = NULL
+  bw_cross = NULL,
+  method = "profiling",
+  external_fmin = NULL
 )
 }
 \arguments{
@@ -24,9 +25,6 @@ estimate(
 
 \item{model}{A string specifying the model to be fitted. Choices are
 \code{"Gauss"} or \code{"Bessel"}. Defaults to \code{"Gauss"}.}
-
-\item{method}{A string specifying the estimation method. Choices are \code{"PCF"}.
-Defaults to \code{"PCF"}.}
 
 \item{rmin_alpha}{The lower bound on distances that should be taken into
 account for estimating marginal alpha parameters (default: index 2).}
@@ -60,6 +58,9 @@ default bandwidth.}
 compute the empirical PCF for estimating the cross-type parameters. Choices
 are \code{"NULL"}, \code{"nrd0"}, \code{"nrd"}, \code{"ucv"}, \code{"bcv"} or \code{"SJ"}. Defaults to
 \code{NULL} which uses \code{\link[spatstat.core]{pcfcross}} default bandwidth.}
+
+\item{method}{A string specifying the estimation method. Choices are \code{"PCF"}.
+Defaults to \code{"PCF"}.}
 }
 \value{
 A list with the estimated model parameters in the following order:

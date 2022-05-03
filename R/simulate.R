@@ -158,6 +158,41 @@ rbidpp <- function(n = 1,
   #step3 : cf the functions below
   X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat.geom::boxx(map(1:ncol(kkindex), ~ c(0, L))))
   return(X)
+
+  #step2
+  if(progress>0) cat("Spectral decomposition...")
+  M=2
+  kk=as.matrix(expand.grid(-N:N,-N:N))
+  Vfull=NULL
+  eigenvalues=NULL
+  for(i in 1:nrow(kk)){
+    #print(i)
+    tmp<-eigen(Kspec(sqrt(kk[i,1]^2+kk[i,2]^2),rho1,rho2,alpha1,alpha2,alpha12,tau))
+    eigenvalues=c(eigenvalues,tmp$values)
+    Vfull=cbind(Vfull,tmp$vector)
+  }
+  #dim(Vfull)
+  #length(eigenvalues)
+  kkfull=kronecker(kk,rep(1,M))
+  if(progress>0) cat(" Done.\n")
+
+
+  #step3
+  tmp=rbinom(nrow(kkfull),1,eigenvalues)
+  index <-which(tmp==1)
+  kkindex=kkfull[index,]
+  dim(kkindex)
+  V=Vfull[,index]
+  #dim(V)
+  rm(kkfull)
+  rm(Vfull)
+  gc()
+
+
+  #step4 : cf the functions below
+  # X <- rdpppmulti(kkindex,V,progress=progress)
+  X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat.geom::boxx(map(1:ncol(kkindex), ~ c(0, L))))
+  return(X)
 }
 
 
@@ -186,7 +221,7 @@ emptyppx <- function(W, simplify = TRUE){
 #rdppp <- function(index, basis = "fourierbasis", window = boxx(rep(list(0:1), ncol(index))), -fred
 #                  reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...) -fred
 rdpppmulti <- function(index, V=NULL, basis = "fourierbasis", window = spatstat.geom::boxx(rep(list(0:1), ncol(index))),
-                       reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...) #-fred
+                       reject_max = 1e5, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...) #-fred
 {
   ##Check if really multi -fred
   if(is.null(V)){return(rdppp(index,basis = "fourierbasis", window = spatstat.geom::boxx(rep(list(0:1),ncol(index))), reject_max = 1e4, progress = 0, debug = FALSE, given = NULL, given_max_volume = 0.5, ...))} #-fred
