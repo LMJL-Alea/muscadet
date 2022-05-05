@@ -32,13 +32,14 @@ compute_tau <- function(beta_max, M, r, y) {
 compute_tau2_from_beta <- function(beta, r, y, k12SqMax, rho1, rho2) {
   I1 <- sum(c(0, diff(r)) * (1 - y) * exp(-2*beta*r^2))
   I2 <- sum(c(0, diff(r)) * exp(-4*r^2*beta))
-  # return(I1/I2)
+  if (I2 < sqrt(.Machine$double.eps))
+    return(k12SqMax * beta^2 / rho1 / rho2 / pi^2)
   tauSq <- I1 / I2
   tauSq <- max(0, tauSq)
   min(k12SqMax * beta^2 / rho1 / rho2 / pi^2, tauSq)
 }
 
-combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("bcv", "SJ")) {
+compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2) {
   alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppGauss(
     lambda = spatstat.geom::intensity(x),
     d = 2
@@ -47,38 +48,30 @@ combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
   alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
 
-  if (is.null(bw))
-    return(.compute_alpha_and_precision(x, bw, divisor, alpha_lb, alpha_ub, p, q, rmin_alpha)$alpha)
+  pcfemp <- spatstat.core::pcf(x, bw = "SJ", divisor = divisor)
 
-  df <- bw %>%
-    purrr::map(
-      .f = .compute_alpha_and_precision,
-      x = x, divisor = divisor,
-      alpha_lb = alpha_lb, alpha_ub = alpha_ub,
-      p = p, q = q,
-      rmin = rmin_alpha
-    ) %>%
-    purrr::transpose() %>%
-    purrr::simplify_all()
-
-  sum(df$precision * df$alpha) / sum(df$precision)
-}
-
-.compute_alpha_and_precision <- function(x, bw, divisor, alpha_lb, alpha_ub, p, q, rmin) {
-  pcfemp <- spatstat.core::pcf(x, bw = bw, divisor = divisor, var.approx = TRUE)
-
-  list(
-    alpha = stats::optimise(
-      f = contrast_marginal,
-      interval = c(alpha_lb, alpha_ub),
-      r = pcfemp$r[rmin:length(pcfemp$r)],
-      y = pcfemp$iso[rmin:length(pcfemp$r)],
-      q = 0.5,
-      p = p,
-      tol = .Machine$double.eps
-    )$minimum,
-    precision = 1 / mean(pcfemp$v[-1])
+  opt <- stats::optimise(
+    f = contrast_marginal,
+    interval = c(alpha_lb, alpha_ub),
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    q = q,
+    p = p,
+    tol = .Machine$double.eps
   )
+
+  opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+  nloptr::bobyqa(
+    x0 = opt$minimum,
+    fn = contrast_marginal,
+    lower = alpha_lb,
+    upper = alpha_ub,
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    q = q,
+    p = p,
+    control = opts
+  )$par
 }
 
 #' Estimation of Stationary Bivariate 2-dimensional DPP
@@ -113,15 +106,6 @@ combine_bw_marginal <- function(x, divisor, rmin_alpha, q = 0.5, p = 2, bw = c("
 #' @param divisor_cross Choice of divisor in the estimation formula. Choices are
 #'   `"r"` or `"d"`. See Section Empirical estimation of the pair correlation
 #'   function for more details. Defaults to `"d"`.
-#' @param bw_marginal A character vector specifying the bandwidths that should
-#'   be used to compute the empirical PCF for estimating the marginal
-#'   parameters. Choices are `"NULL"`, `"nrd0"`, `"nrd"`, `"ucv"`, `"bcv"` or
-#'   `"SJ"`. Defaults to `NULL` which uses \code{\link[spatstat.core]{pcf}}
-#'   default bandwidth.
-#' @param bw_cross A string specifying the bandwidth that should be used to
-#'   compute the empirical PCF for estimating the cross-type parameters. Choices
-#'   are `"NULL"`, `"nrd0"`, `"nrd"`, `"ucv"`, `"bcv"` or `"SJ"`. Defaults to
-#'   `NULL` which uses \code{\link[spatstat.core]{pcfcross}} default bandwidth.
 #'
 #' @return A list with the estimated model parameters in the following order:
 #'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`.
@@ -142,20 +126,13 @@ estimate <- function(X,
                      rmin_alpha = 2,
                      rmin_alpha12 = 2,
                      rmin_tau = 2,
-                     q = 0.5,
+                     q = 1,
                      p = 2,
                      divisor_marginal = "d",
                      divisor_cross = "d",
-                     bw_marginal = NULL,
-                     bw_cross = NULL,
-                     method = "profiling",
-                     external_fmin = NULL) {
+                     method = "profiling") {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
-  if (!is.null(bw_marginal))
-    bw_marginal <- match.arg(bw_marginal, c("nrd0", "nrd", "ucv", "bcv", "SJ"))
-  if (!is.null(bw_cross))
-    bw_cross <- match.arg(bw_cross, c("nrd0", "nrd", "ucv", "bcv", "SJ"))
 
   Xs <- spatstat.geom::split.ppp(X)
 
@@ -165,36 +142,25 @@ estimate <- function(X,
   rho2 <- as.numeric(rho2[2])
 
   # Estimate alpha1
-  # pcfemp <- spatstat::pcf(Xs[[1]], bw = bw_marginal, divisor = divisor_marginal)
-  alpha1 <- combine_bw_marginal(
+  alpha1 <- compute_marginal_alpha(
     x = Xs[[1]],
     divisor = divisor_marginal,
-    rmin_alpha = rmin_alpha,
+    rmin = rmin_alpha,
     q = q,
-    p = p,
-    bw = bw_marginal
+    p = p
   )
 
   # Estimate alpha2
-  # pcfemp <- spatstat::pcf(Xs[[2]], bw = bw_marginal, divisor = divisor_marginal)
-  alpha2 <- combine_bw_marginal(
+  alpha2 <- compute_marginal_alpha(
     x = Xs[[2]],
     divisor = divisor_marginal,
-    rmin_alpha = rmin_alpha,
+    rmin = rmin_alpha,
     q = q,
-    p = p,
-    bw = bw_marginal
+    p = p
   )
 
   # Get cross PCF for estimating tau and alpha12
-  # pcfemp <- spatstat.core::pcfcross(X, bw = bw_cross, divisor = divisor_cross)
-  pcfemp <- spatstat.core::pcfcross(X, bw = "SJ", divisor = "d")
-  g <- spatstat.core::pcfcross(X, bw = "SJ", divisor = "r")
-  auto_rmin <- which(g$iso - lag(g$iso) > 0)[1]
-  slope <- (pcfemp$iso[auto_rmin + 1] - pcfemp$iso[auto_rmin]) / (pcfemp$r[auto_rmin + 1] - pcfemp$r[auto_rmin])
-  intercept <- pcfemp$iso[auto_rmin] - slope * pcfemp$r[auto_rmin]
-  pcfemp$iso[1:auto_rmin] <- intercept + slope * pcfemp$r[1:auto_rmin]
-  # rmin_tau <- which(pcfemp$iso - lag(pcfemp$iso) > 0)[1]
+  pcfemp <- spatstat.core::pcfcross(X, bw = "SJ", divisor = divisor_cross)
 
   # Model-dependent variables
   # Notations: beta = 1 / alpha12^2
@@ -203,7 +169,33 @@ estimate <- function(X,
   k2 <- rho2 * pi * alpha2^2
   k12maxSq <- max(0, min(k1 * k2, (1-k1)*(1-k2)-sqrt(.Machine$double.eps)))
   M <- beta_max^2 / (rho1 * rho2 * pi^2) * k12maxSq
-  # cli::cli_alert_info("Done")
+
+  # compute tau first via integrated contrast
+  tau <- compute_tau(
+    r = pcfemp$r[rmin_tau:length(pcfemp$r)],
+    y = pcfemp$iso[rmin_tau:length(pcfemp$r)],
+    beta_max = beta_max,
+    M = M
+  )
+
+  if (tau < .Machine$double.eps^0.5) {
+    return(list(
+      rho1 = rho1,
+      rho2 = rho2,
+      alpha1 = alpha1,
+      alpha2 = alpha2,
+      k12 = 0,
+      tau = tau,
+      alpha12 = ifelse(
+        tau < 1e-4,
+        NA,
+        sqrt(k12 / tau / sqrt(rho1 * rho2) / pi)
+      ),
+      fmin = contrast_cross(1, 0, pcfemp, rmin_alpha12)
+    ))
+  }
+
+  beta_min <- 0
 
   if (method == "profiling") {
     .contrast_cross <- function(x) {
@@ -215,29 +207,35 @@ estimate <- function(X,
         rho1 = rho1,
         rho2 = rho2
       )
-      if (tau2 * rho1 * rho2 * pi^2 / x^2 > k12maxSq)
+
+      if (tau2 * rho1 * rho2 * pi^2 > k12maxSq * x^2) {
         return(1e6)
+      }
+
       contrast_cross(beta = x, tau = sqrt(tau2), pcfemp = pcfemp, rmin = rmin_alpha12)
     }
 
-    opt <- stats::optimise(
-      f = .contrast_cross,
-      interval = c(sqrt(.Machine$double.eps), beta_max),
-      tol = .Machine$double.eps
-    )
-    beta <- opt$minimum
-    fmin <- opt$objective
+    if (abs(beta_max - beta_min) < .Machine$double.eps^0.5) {
+      beta <- beta_max
+      fmin <- .contrast_cross(beta_max)
+    } else {
+      opt <- stats::optimise(
+        f = .contrast_cross,
+        interval = c(beta_min, beta_max),
+        tol = .Machine$double.eps
+      )
 
-    opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
-    opt <- nloptr::bobyqa(
-      x0 = beta,
-      fn = .contrast_cross,
-      lower = sqrt(.Machine$double.eps),
-      upper = beta_max,
-      control = opts
-    )
-    beta <- opt$par
-    fmin <- opt$value
+      opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+      opt <- nloptr::bobyqa(
+        x0 = opt$minimum,
+        fn = .contrast_cross,
+        lower = beta_min,
+        upper = beta_max,
+        control = opts
+      )
+      beta <- opt$par
+      fmin <- opt$value
+    }
 
     tau <- sqrt(compute_tau2_from_beta(
       beta = beta,
@@ -248,62 +246,40 @@ estimate <- function(X,
       rho2 = rho2
     ))
     k12 <- tau * sqrt(rho1 * rho2) * pi / beta
-  } else if (method == "marginalization") {
-    # compute tau first
-    tau <- compute_tau(
-      r = pcfemp$r[rmin_tau:length(pcfemp$r)],
-      y = pcfemp$iso[rmin_tau:length(pcfemp$r)],
-      beta_max = beta_max,
-      M = M
-    )
-
-    # Notations: k12 = tau sqrt(rho1 rho2) pi alpha12^2
-    # = tau * sqrt(rho1 * rho2) * pi / beta
-    if (tau < .Machine$double.eps^0.5) {
-      k12 <- 0
-      fmin <- contrast_cross(1, 0, pcfemp, rmin_alpha12)
-    } else if (abs(tau^2 - M) < 1e-4) {
-      k12 <- tau * sqrt(rho1 * rho2) * pi / beta_max
-      fmin <- contrast_cross(beta_max, sqrt(M), pcfemp, rmin_alpha12)
-    } else {
-      beta_min <- beta_max * tau / sqrt(M)
-
-      .contrast_cross <- function(beta) {
-        contrast_cross(beta, tau, pcfemp, rmin_alpha12)
+  } else {
+    if (abs(beta_max - beta_min) < .Machine$double.eps^0.5) {
+      .contrast_cross <- function(x) {
+        if (!.validate_parameter_set(rho1, rho2, x, beta_max, alpha1, alpha2))
+          return(1e6)
+        contrast_cross(beta_max, x, pcfemp, rmin_alpha12, q = q, p = p)
       }
 
       opt <- stats::optimise(
         f = .contrast_cross,
-        interval = c(beta_min, beta_max),
+        lower = 0,
+        upper = sqrt(M),
         tol = .Machine$double.eps
       )
-      beta <- opt$minimum
-      fmin <- opt$objective
 
-      opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
       opt <- nloptr::bobyqa(
-        x0 = beta,
+        x0 = opt$minimum,
         fn = .contrast_cross,
-        lower = beta_min,
-        upper = beta_max,
-        control = opts
+        lower = 0,
+        upper = sqrt(M),
+        control = list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
       )
 
-      beta <- opt$par
-      fmin <- opt$value
+      beta <- beta_max
+      tau <- opt$par
+    } else {
+      .contrast_cross <- function(x) {
+        if (!.validate_parameter_set(rho1, rho2, x[2], x[1], alpha1, alpha2))
+          return(1e6)
+        contrast_cross(x[1], x[2], pcfemp, rmin_alpha12, q = q, p = p)
+      }
+      lower <- c(beta_min, 0)
+      upper <- c(beta_max, sqrt(M))
 
-      k12 <- tau * sqrt(rho1 * rho2) * pi / beta
-    }
-  } else {
-    .contrast_cross <- function(x) {
-      if (!.validate_parameter_set(rho1, rho2, x[2], x[1], alpha1, alpha2))
-        return(1e6)
-      contrast_cross(x[1], x[2], pcfemp, rmin_alpha12)
-    }
-    lower <- c(0, 0)
-    upper <- c(beta_max, sqrt(M))
-
-    if (is.null(external_fmin)) {
       opt <- nloptr::directL(
         fn = .contrast_cross,
         lower = lower,
@@ -311,27 +287,18 @@ estimate <- function(X,
         control = list(xtol_rel = 1e-6, maxeval = 1e3)
       )
 
-      x0 <- opt$par
       opt <- nloptr::bobyqa(
-        x0 = x0,
+        x0 = opt$par,
         fn = .contrast_cross,
         lower = lower,
         upper = upper,
         control = list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
       )
-    } else {
-      x0 <- (lower + upper) / 2
-      opt <- nloptr::bobyqa(
-        x0 = x0,
-        fn = .contrast_cross,
-        lower = lower,
-        upper = upper,
-        control = list(stopval = external_fmin, maxeval = 1e6)
-      )
+
+      beta <- opt$par[1]
+      tau <- opt$par[2]
     }
 
-    beta <- opt$par[1]
-    tau <- opt$par[2]
     fmin <- opt$value
     if (beta < sqrt(.Machine$double.eps))
       k12 <- sqrt(k12maxSq)
@@ -347,7 +314,7 @@ estimate <- function(X,
     k12 = k12,
     tau = tau,
     alpha12 = ifelse(
-      tau < 1e-4,
+      tau < .Machine$double.eps^0.5,
       NA,
       sqrt(k12 / tau / sqrt(rho1 * rho2) / pi)
     ),

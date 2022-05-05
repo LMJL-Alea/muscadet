@@ -156,7 +156,7 @@ rbidpp <- function(n = 1,
   # print(map(1:ncol(kkindex), ~ c(0, L)))
 
   #step3 : cf the functions below
-  X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat.geom::boxx(map(1:ncol(kkindex), ~ c(0, L))))
+  X <- rdpppmulti(kkindex,V,progress=progress, window = spatstat.geom::boxx(purrr::map(1:ncol(kkindex), ~ c(0, L))))
   return(X)
 
   #step2

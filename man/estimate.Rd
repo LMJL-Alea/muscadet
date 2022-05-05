@@ -10,14 +10,11 @@ estimate(
   rmin_alpha = 2,
   rmin_alpha12 = 2,
   rmin_tau = 2,
-  q = 0.5,
+  q = 1,
   p = 2,
   divisor_marginal = "d",
   divisor_cross = "d",
-  bw_marginal = NULL,
-  bw_cross = NULL,
-  method = "profiling",
-  external_fmin = NULL
+  method = "profiling"
 )
 }
 \arguments{
@@ -47,17 +44,6 @@ correlation function for more details. Defaults to \code{"d"}.}
 \item{divisor_cross}{Choice of divisor in the estimation formula. Choices are
 \code{"r"} or \code{"d"}. See Section Empirical estimation of the pair correlation
 function for more details. Defaults to \code{"d"}.}
-
-\item{bw_marginal}{A character vector specifying the bandwidths that should
-be used to compute the empirical PCF for estimating the marginal
-parameters. Choices are \code{"NULL"}, \code{"nrd0"}, \code{"nrd"}, \code{"ucv"}, \code{"bcv"} or
-\code{"SJ"}. Defaults to \code{NULL} which uses \code{\link[spatstat.core]{pcf}}
-default bandwidth.}
-
-\item{bw_cross}{A string specifying the bandwidth that should be used to
-compute the empirical PCF for estimating the cross-type parameters. Choices
-are \code{"NULL"}, \code{"nrd0"}, \code{"nrd"}, \code{"ucv"}, \code{"bcv"} or \code{"SJ"}. Defaults to
-\code{NULL} which uses \code{\link[spatstat.core]{pcfcross}} default bandwidth.}
 
 \item{method}{A string specifying the estimation method. Choices are \code{"PCF"}.
 Defaults to \code{"PCF"}.}
