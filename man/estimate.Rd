@@ -14,7 +14,8 @@ estimate(
   p = 2,
   divisor_marginal = "d",
   divisor_cross = "d",
-  method = "profiling"
+  method = "profiling",
+  test_correlation = FALSE
 )
 }
 \arguments{

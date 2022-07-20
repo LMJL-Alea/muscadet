@@ -1,3 +1,71 @@
+get_null_tau <- function(X, rho1, rho2, alpha1, alpha2, divisor = "d", rmin = 2) {
+  pcfemp <- spatstat.core::pcfcross(X, bw = "SJ", divisor = divisor)
+  beta_max <- 2 / (alpha1^2 + alpha2^2)
+  k1 <- rho1 * pi * alpha1^2
+  k2 <- rho2 * pi * alpha2^2
+  k12maxSq <- max(0, min(k1 * k2, (1-k1)*(1-k2)-sqrt(.Machine$double.eps)))
+  M <- beta_max^2 / (rho1 * rho2 * pi^2) * k12maxSq
+  compute_tau(
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    beta_max = beta_max,
+    M = M
+  )
+}
+
+compute_bootstrap_stats <- function(rho1, alpha1,
+                                    rho2, alpha2,
+                                    w = list(xrange = c(0, 1), yrange = c(0, 1)),
+                                    B = 100,
+                                    model = "Gauss",
+                                    rmin_alpha = 2,
+                                    rmin_alpha12 = 2,
+                                    rmin_tau = 2,
+                                    q = 1,
+                                    p = 2,
+                                    divisor_marginal = "d",
+                                    divisor_cross = "d",
+                                    method = "profiling") {
+  w <- spatstat.geom::as.owin(w)
+  m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
+  data1 <- simulate(m1, nsim = B, w = w)
+  m2 <- spatstat.core::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
+  data2 <- simulate(m2, nsim = B, w = w)
+  boot_data <- purrr::map2(data1, data2, ~ {
+    spatstat.geom::ppp(
+      x = c(.x$x, .y$x),
+      y = c(.x$y, .y$y),
+      window = w,
+      marks = as.factor(c(rep(1, .x$n), rep(2, .y$n)))
+    )
+  })
+
+  stat1 <- boot_data %>%
+    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) %>%
+    purrr::map_dbl(
+      .f = contrast_cross,
+      beta = 1, tau = 0,
+      rmin = rmin_tau, q = q, p = p
+    )
+
+  stat2 <- boot_data %>%
+    purrr::map(
+      .f = estimate,
+      model = model,
+      rmin_alpha = rmin_alpha,
+      rmin_alpha12 = rmin_alpha12,
+      rmin_tau = rmin_tau,
+      q = q,
+      p = p,
+      divisor_marginal = divisor_marginal,
+      divisor_cross = divisor_cross,
+      method = method
+    ) %>%
+    purrr::map_dbl("tau")
+
+  list(nonparametric = stat1, parametric = stat2)
+}
+
 .validate_parameter_set <- function(rho1, rho2, tau, beta,
                                     alpha1, alpha2, dimension = 2) {
   k11 <- rho1 * alpha1^dimension * pi^(dimension/2)
@@ -130,7 +198,8 @@ estimate <- function(X,
                      p = 2,
                      divisor_marginal = "d",
                      divisor_cross = "d",
-                     method = "profiling") {
+                     method = "profiling",
+                     test_correlation = FALSE) {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
@@ -169,31 +238,6 @@ estimate <- function(X,
   k2 <- rho2 * pi * alpha2^2
   k12maxSq <- max(0, min(k1 * k2, (1-k1)*(1-k2)-sqrt(.Machine$double.eps)))
   M <- beta_max^2 / (rho1 * rho2 * pi^2) * k12maxSq
-
-  # compute tau first via integrated contrast
-  tau <- compute_tau(
-    r = pcfemp$r[rmin_tau:length(pcfemp$r)],
-    y = pcfemp$iso[rmin_tau:length(pcfemp$r)],
-    beta_max = beta_max,
-    M = M
-  )
-
-  if (tau < .Machine$double.eps^0.5) {
-    return(list(
-      rho1 = rho1,
-      rho2 = rho2,
-      alpha1 = alpha1,
-      alpha2 = alpha2,
-      k12 = 0,
-      tau = tau,
-      alpha12 = ifelse(
-        tau < 1e-4,
-        NA,
-        sqrt(k12 / tau / sqrt(rho1 * rho2) / pi)
-      ),
-      fmin = contrast_cross(1, 0, pcfemp, rmin_alpha12)
-    ))
-  }
 
   beta_min <- 0
 
@@ -306,6 +350,43 @@ estimate <- function(X,
       k12 <- min(tau * sqrt(rho1 * rho2) * pi / beta, sqrt(k12maxSq))
   }
 
+  # compute tau first via integrated contrast
+  stat_np_obs <- contrast_cross(
+    beta = 1,
+    tau = 0,
+    pcfemp,
+    rmin = rmin_tau,
+    q = q,
+    p = p
+  )
+  stat_p_obs <- tau
+  null_np_distr <- NULL
+  null_p_distr <- NULL
+  np_reject <- NULL
+  p_reject <- NULL
+  if (test_correlation) {
+    cli::cli_alert_info("Testing for absence of correlation...")
+    null_values <- compute_bootstrap_stats(
+      rho1 = rho1, alpha1 = alpha1,
+      rho2 = rho2, alpha2 = alpha2,
+      w = X$window,
+      B = 1000,
+      model = model,
+      rmin_alpha = rmin_alpha,
+      rmin_alpha12 = rmin_alpha12,
+      rmin_tau = rmin_tau,
+      q = q,
+      p = p,
+      divisor_marginal = divisor_marginal,
+      divisor_cross = divisor_cross,
+      method = method
+    )
+    null_np_distr <- null_values$nonparametric
+    null_p_distr <- null_values$parametric
+    np_reject <- as.logical(stat_np_obs >= sort(null_np_distr)[95])
+    p_reject <- as.logical(stat_p_obs >= sort(null_p_distr)[95])
+  }
+
   list(
     rho1 = rho1,
     rho2 = rho2,
@@ -318,6 +399,12 @@ estimate <- function(X,
       NA,
       sqrt(k12 / tau / sqrt(rho1 * rho2) / pi)
     ),
-    fmin = fmin
+    fmin = fmin,
+    stat_np_obs = stat_np_obs,
+    stat_p_obs = stat_p_obs,
+    null_np_distr = null_np_distr,
+    null_p_distr = null_p_distr,
+    np_reject = np_reject,
+    p_reject = p_reject
   )
 }
