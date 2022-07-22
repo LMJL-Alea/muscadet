@@ -174,9 +174,19 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2) {
 #' @param divisor_cross Choice of divisor in the estimation formula. Choices are
 #'   `"r"` or `"d"`. See Section Empirical estimation of the pair correlation
 #'   function for more details. Defaults to `"d"`.
+#' @param method A character string specifying the estimation method between
+#'   `"profiling"` and `"direct"`. Defaults to `"profiling"`.
+#' @param B An integer value specifying the number of samples to be generated in
+#'   the bootstrap procedure to approximate the distribution of the test
+#'   statistics when testing for absence of correlation between marks. Defaults
+#'   to `0L` which does not perform the test at all.
+#' @param conf_level A numeric value specifying the confidence level when
+#'   testing for absence of correlation between marks. Defaults to `0.95`.
 #'
 #' @return A list with the estimated model parameters in the following order:
-#'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`.
+#'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`. Additional
+#'   information pertaining to the test for absence of correlation between marks
+#'   are returned in the list as well.
 #' @export
 #'
 #' @examples
@@ -199,7 +209,8 @@ estimate <- function(X,
                      divisor_marginal = "d",
                      divisor_cross = "d",
                      method = "profiling",
-                     test_correlation = FALSE) {
+                     B = 0L,
+                     conf_level = 0.95) {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
@@ -364,13 +375,13 @@ estimate <- function(X,
   null_p_distr <- NULL
   np_reject <- NULL
   p_reject <- NULL
-  if (test_correlation) {
+  if (B > 0) {
     cli::cli_alert_info("Testing for absence of correlation...")
     null_values <- compute_bootstrap_stats(
       rho1 = rho1, alpha1 = alpha1,
       rho2 = rho2, alpha2 = alpha2,
       w = X$window,
-      B = 1000,
+      B = B,
       model = model,
       rmin_alpha = rmin_alpha,
       rmin_alpha12 = rmin_alpha12,
@@ -383,8 +394,9 @@ estimate <- function(X,
     )
     null_np_distr <- null_values$nonparametric
     null_p_distr <- null_values$parametric
-    np_reject <- as.logical(stat_np_obs >= sort(null_np_distr)[95])
-    p_reject <- as.logical(stat_p_obs >= sort(null_p_distr)[95])
+    quantile_idx <- round(B * conf_level)
+    np_reject <- as.logical(stat_np_obs >= sort(null_np_distr)[quantile_idx])
+    p_reject <- as.logical(stat_p_obs >= sort(null_p_distr)[quantile_idx])
   }
 
   list(
@@ -394,11 +406,7 @@ estimate <- function(X,
     alpha2 = alpha2,
     k12 = k12,
     tau = tau,
-    alpha12 = ifelse(
-      tau < .Machine$double.eps^0.5,
-      NA,
-      sqrt(k12 / tau / sqrt(rho1 * rho2) / pi)
-    ),
+    alpha12 = sqrt(k12 / tau / sqrt(rho1 * rho2) / pi),
     fmin = fmin,
     stat_np_obs = stat_np_obs,
     stat_p_obs = stat_p_obs,

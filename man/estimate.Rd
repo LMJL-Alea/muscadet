@@ -15,7 +15,8 @@ estimate(
   divisor_marginal = "d",
   divisor_cross = "d",
   method = "profiling",
-  test_correlation = FALSE
+  B = 0L,
+  conf_level = 0.95
 )
 }
 \arguments{
@@ -46,12 +47,22 @@ correlation function for more details. Defaults to \code{"d"}.}
 \code{"r"} or \code{"d"}. See Section Empirical estimation of the pair correlation
 function for more details. Defaults to \code{"d"}.}
 
-\item{method}{A string specifying the estimation method. Choices are \code{"PCF"}.
-Defaults to \code{"PCF"}.}
+\item{method}{A character string specifying the estimation method between
+\code{"profiling"} and \code{"direct"}. Defaults to \code{"profiling"}.}
+
+\item{B}{An integer value specifying the number of samples to be generated in
+the bootstrap procedure to approximate the distribution of the test
+statistics when testing for absence of correlation between marks. Defaults
+to \code{0L} which does not perform the test at all.}
+
+\item{conf_level}{A numeric value specifying the confidence level when
+testing for absence of correlation between marks. Defaults to \code{0.95}.}
 }
 \value{
 A list with the estimated model parameters in the following order:
-\code{rho1}, \code{rho2}, \code{alpha1}, \code{alpha2}, \code{k12}, \code{alpha12} and \code{tau}.
+\code{rho1}, \code{rho2}, \code{alpha1}, \code{alpha2}, \code{k12}, \code{alpha12} and \code{tau}. Additional
+information pertaining to the test for absence of correlation between marks
+are returned in the list as well.
 }
 \description{
 Estimation of Stationary Bivariate 2-dimensional DPP
