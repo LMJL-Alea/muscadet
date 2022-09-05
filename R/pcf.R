@@ -378,8 +378,8 @@ estimate <- function(X,
   if (B > 0) {
     cli::cli_alert_info("Testing for absence of correlation...")
     null_values <- compute_bootstrap_stats(
-      rho1 = rho1, alpha1 = alpha1,
-      rho2 = rho2, alpha2 = alpha2,
+      rho1 = 100, alpha1 = 0.03,
+      rho2 = 100, alpha2 = 0.03,
       w = X$window,
       B = B,
       model = model,
