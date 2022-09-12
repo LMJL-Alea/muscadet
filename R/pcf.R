@@ -59,7 +59,8 @@ compute_bootstrap_stats <- function(rho1, alpha1,
       p = p,
       divisor_marginal = divisor_marginal,
       divisor_cross = divisor_cross,
-      method = method
+      method = method,
+      params = c(rho1, rho2, alpha1, alpha2)
     ) %>%
     purrr::map_dbl("tau")
 
@@ -182,6 +183,9 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2) {
 #'   to `0L` which does not perform the test at all.
 #' @param conf_level A numeric value specifying the confidence level when
 #'   testing for absence of correlation between marks. Defaults to `0.95`.
+#' @param params A length-4 numeric vector specifying values for the marginal
+#'   parameters if known. The order needs to be `rho1`, `rho2`, `alpha1` and
+#'   `alpha2`. Defaults to `NULL`, in which case, they are estimated.
 #'
 #' @return A list with the estimated model parameters in the following order:
 #'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`. Additional
@@ -210,34 +214,42 @@ estimate <- function(X,
                      divisor_cross = "d",
                      method = "profiling",
                      B = 0L,
-                     conf_level = 0.95) {
+                     conf_level = 0.95,
+                     params = NULL) {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
   Xs <- spatstat.geom::split.ppp(X)
 
-  # First estimate marginal intensities
-  rho2 <- spatstat.geom::intensity(X)
-  rho1 <- as.numeric(rho2[1])
-  rho2 <- as.numeric(rho2[2])
+  if (is.null(params)) {
+    # First estimate marginal intensities
+    rho2 <- spatstat.geom::intensity(X)
+    rho1 <- as.numeric(rho2[1])
+    rho2 <- as.numeric(rho2[2])
 
-  # Estimate alpha1
-  alpha1 <- compute_marginal_alpha(
-    x = Xs[[1]],
-    divisor = divisor_marginal,
-    rmin = rmin_alpha,
-    q = q,
-    p = p
-  )
+    # Estimate alpha1
+    alpha1 <- compute_marginal_alpha(
+      x = Xs[[1]],
+      divisor = divisor_marginal,
+      rmin = rmin_alpha,
+      q = q,
+      p = p
+    )
 
-  # Estimate alpha2
-  alpha2 <- compute_marginal_alpha(
-    x = Xs[[2]],
-    divisor = divisor_marginal,
-    rmin = rmin_alpha,
-    q = q,
-    p = p
-  )
+    # Estimate alpha2
+    alpha2 <- compute_marginal_alpha(
+      x = Xs[[2]],
+      divisor = divisor_marginal,
+      rmin = rmin_alpha,
+      q = q,
+      p = p
+    )
+  } else {
+    rho1 <- params[1]
+    rho2 <- params[2]
+    alpha1 <- params[3]
+    alpha2 <- params[4]
+  }
 
   # Get cross PCF for estimating tau and alpha12
   pcfemp <- spatstat.core::pcfcross(X, bw = "SJ", divisor = divisor_cross)
@@ -378,8 +390,8 @@ estimate <- function(X,
   if (B > 0) {
     cli::cli_alert_info("Testing for absence of correlation...")
     null_values <- compute_bootstrap_stats(
-      rho1 = 100, alpha1 = 0.03,
-      rho2 = 100, alpha2 = 0.03,
+      rho1 = rho1, alpha1 = alpha1,
+      rho2 = rho2, alpha2 = alpha2,
       w = X$window,
       B = B,
       model = model,

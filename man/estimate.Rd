@@ -16,7 +16,8 @@ estimate(
   divisor_cross = "d",
   method = "profiling",
   B = 0L,
-  conf_level = 0.95
+  conf_level = 0.95,
+  params = NULL
 )
 }
 \arguments{
@@ -57,6 +58,10 @@ to \code{0L} which does not perform the test at all.}
 
 \item{conf_level}{A numeric value specifying the confidence level when
 testing for absence of correlation between marks. Defaults to \code{0.95}.}
+
+\item{params}{A length-4 numeric vector specifying values for the marginal
+parameters if known. The order needs to be \code{rho1}, \code{rho2}, \code{alpha1} and
+\code{alpha2}. Defaults to \code{NULL}, in which case, they are estimated.}
 }
 \value{
 A list with the estimated model parameters in the following order:
