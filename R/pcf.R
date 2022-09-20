@@ -25,7 +25,8 @@ compute_bootstrap_stats <- function(rho1, alpha1,
                                     p = 2,
                                     divisor_marginal = "d",
                                     divisor_cross = "d",
-                                    method = "profiling") {
+                                    method = "profiling",
+                                    full_bootstrap = TRUE) {
   w <- spatstat.geom::as.owin(w)
   m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
   data1 <- simulate(m1, nsim = B, w = w)
@@ -48,21 +49,38 @@ compute_bootstrap_stats <- function(rho1, alpha1,
       rmin = rmin_tau, q = q, p = p
     )
 
-  stat2 <- boot_data %>%
-    purrr::map(
-      .f = estimate,
-      model = model,
-      rmin_alpha = rmin_alpha,
-      rmin_alpha12 = rmin_alpha12,
-      rmin_tau = rmin_tau,
-      q = q,
-      p = p,
-      divisor_marginal = divisor_marginal,
-      divisor_cross = divisor_cross,
-      method = method,
-      params = c(rho1, rho2, alpha1, alpha2)
-    ) %>%
-    purrr::map_dbl("tau")
+  if (full_bootstrap) {
+    stat2 <- boot_data %>%
+      purrr::map(
+        .f = estimate,
+        model = model,
+        rmin_alpha = rmin_alpha,
+        rmin_alpha12 = rmin_alpha12,
+        rmin_tau = rmin_tau,
+        q = q,
+        p = p,
+        divisor_marginal = divisor_marginal,
+        divisor_cross = divisor_cross,
+        method = method
+      ) %>%
+      purrr::map_dbl("tau")
+  } else {
+    stat2 <- boot_data %>%
+      purrr::map(
+        .f = estimate,
+        model = model,
+        rmin_alpha = rmin_alpha,
+        rmin_alpha12 = rmin_alpha12,
+        rmin_tau = rmin_tau,
+        q = q,
+        p = p,
+        divisor_marginal = divisor_marginal,
+        divisor_cross = divisor_cross,
+        method = method,
+        params = c(rho1, rho2, alpha1, alpha2)
+      ) %>%
+      purrr::map_dbl("tau")
+  }
 
   list(nonparametric = stat1, parametric = stat2)
 }
@@ -186,6 +204,9 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2) {
 #' @param params A length-4 numeric vector specifying values for the marginal
 #'   parameters if known. The order needs to be `rho1`, `rho2`, `alpha1` and
 #'   `alpha2`. Defaults to `NULL`, in which case, they are estimated.
+#' @param full_bootstrap A boolean specifying whether marginal parameters should
+#'   be re-estimated when computing the bootstrapped distribution of the tau
+#'   statistic. Defaults to `TRUE`.
 #'
 #' @return A list with the estimated model parameters in the following order:
 #'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`. Additional
@@ -215,7 +236,8 @@ estimate <- function(X,
                      method = "profiling",
                      B = 0L,
                      conf_level = 0.95,
-                     params = NULL) {
+                     params = NULL,
+                     full_bootstrap = TRUE) {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
@@ -402,7 +424,8 @@ estimate <- function(X,
       p = p,
       divisor_marginal = divisor_marginal,
       divisor_cross = divisor_cross,
-      method = method
+      method = method,
+      full_bootstrap = full_bootstrap
     )
     null_np_distr <- null_values$nonparametric
     null_p_distr <- null_values$parametric

@@ -3,7 +3,7 @@ library(future)
 library(progressr)
 progressr::handlers("rstudio")
 
-R <- 1000
+R <- 10000
 
 data_gen <- function(tau_values) {
   p <- progressor(along = tau_values)
@@ -28,9 +28,9 @@ data_gen <- function(tau_values) {
 }
 
 tau_values <- seq(0, 0.7, by = 0.1)
-plan(multisession, workers = 4)
+plan(multisession, workers = 8)
 with_progress({
-  sim_L1 <- data_gen(tau_values)
+  sim_L1_R10000 <- data_gen(tau_values)
 })
 plan(sequential)
-save(sim_L1, file = "data-raw/sim_L1.RData")
+save(sim_L1_R10000, file = "data-raw/sim_L1_R10000.RData")

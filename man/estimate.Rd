@@ -17,7 +17,8 @@ estimate(
   method = "profiling",
   B = 0L,
   conf_level = 0.95,
-  params = NULL
+  params = NULL,
+  full_bootstrap = TRUE
 )
 }
 \arguments{
@@ -62,6 +63,10 @@ testing for absence of correlation between marks. Defaults to \code{0.95}.}
 \item{params}{A length-4 numeric vector specifying values for the marginal
 parameters if known. The order needs to be \code{rho1}, \code{rho2}, \code{alpha1} and
 \code{alpha2}. Defaults to \code{NULL}, in which case, they are estimated.}
+
+\item{full_bootstrap}{A boolean specifying whether marginal parameters should
+be re-estimated when computing the bootstrapped distribution of the tau
+statistic. Defaults to \code{TRUE}.}
 }
 \value{
 A list with the estimated model parameters in the following order:
