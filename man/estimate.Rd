@@ -92,13 +92,5 @@ zero.
 }
 
 \examples{
-#res <- purrr::map_df(sim_gauss5, estimate)
-#boxplot(res$alpha1)
-#abline(h = 0.03, col = "red")
-#boxplot(res$alpha2)
-#abline(h = 0.03, col = "red")
-#boxplot(res$alpha12)
-#abline(h = 0.035, col = "red")
-#boxplot(res$tau)
-#abline(h = 0.5, col = "red")
+estimate(sim_gauss0[[1]], model = "Gauss")
 }

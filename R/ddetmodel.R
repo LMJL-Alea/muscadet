@@ -1,30 +1,36 @@
-#' @export
-ddetmodel.direct <- function# Density of determinantal point process model via direct calculation
-### Evaluates the density of a determinantal point process model at a
-### given point pattern via direct calculation (i.e. not using FFT
-### etc.)
-(X,
- ### point pattern of class \code{"ppp"}
- model,
- ### object of class \code{"detmodel"}
- trunc = .99,
- ### Numeric specifying how the model truncation is preformed. See
- ### details of \code{\link{simulate.detmodel}}.
- log = TRUE,
- ### calculate the logarithm? (Default is TRUE).
- ...
- ### ignored.
- ){
-    if(inherits(model, "dppm"))
-        model <- model$fitted
-    if(!inherits(model, "detpointprocfamily"))
-        stop("Argument model must be of class detmodel.")
-    if(!inherits(X, "ppp"))
-        stop("Only implemented for two dimensional patterns at the moment. Please supply a point pattern of class ppp.")
-  W <- as.owin(X)
+#' Density of determinantal point process model via direct calculation
+#'
+#' Evaluates the density of a determinantal point process model at a given point
+#' pattern via direct calculation (i.e. not using FFT, etc.).
+#'
+#' @param X An object of class [spatstat.geom::ppp] specifying a planar point
+#'   pattern.
+#' @param model An object of class [spatstat.core::detpointprocfamilyfun]
+#'   specifying the model to be used.
+#' @param trunc A numeric value specifying how the model truncation is
+#'   preformed. Defaults to `0.99`. See details of
+#'   [spatstat.core::simulate.detpointprocfamily()].
+#' @param log A boolean value specifying whether to compute the logarithm.
+#'   Defaults to `TRUE`.
+#' @param ... Extra parameters to be passed on to next methods. Ignored.
+#'
+#' @keywords internal
+ddetmodel.direct <- function(X,
+                             model,
+                             trunc = .99,
+                             log = TRUE,
+                             ...) {
+  if(inherits(model, "dppm"))
+    model <- model$fitted
+  if(!inherits(model, "detpointprocfamily"))
+    stop("Argument model must be of class detmodel.")
+  if(!inherits(X, "ppp"))
+    stop("Only implemented for two dimensional patterns at the moment. Please
+         supply a point pattern of class ppp.")
+  W <- spatstat.geom::as.owin(X)
   xyscale <- c(diff(W$xrange), diff(W$yrange))
-  XX <- affine(X, mat = matrix(c(1/xyscale[1],0,0,1/xyscale[2]), 2, 2),
-               vec = -c(mean(W$xrange), mean(W$yrange))/xyscale)
+  XX <- spatstat.geom::affine(X, mat = matrix(c(1/xyscale[1],0,0,1/xyscale[2]), 2, 2),
+                              vec = -c(mean(W$xrange), mean(W$yrange))/xyscale)
   n <- XX$n
   x <- XX$x
   y <- XX$y
@@ -55,7 +61,7 @@ ddetmodel.direct <- function# Density of determinantal point process model via d
   rm(lambda.k)
 
   if(lambdao<0|lambdao>=1|any(lambdaa<0|lambdaa>=1)|any(lambda<0|lambda>=1))
-      return(ifelse(log,-Inf,0))
+    return(ifelse(log,-Inf,0))
   D <- log(1-lambdao)+2*sum(log(1-lambdaa))+4*sum(log(1-lambda))
   lambdao <- lambdao/(1-lambdao)
   lambdaa <- lambdaa/(1-lambdaa)
@@ -67,7 +73,7 @@ ddetmodel.direct <- function# Density of determinantal point process model via d
   logdet <- as.numeric(tmp$modulus)
   detsign <- as.numeric(tmp$sign)
 
-  res <- logdet+D+volume(W)-n*log(volume(W))
+  res <- logdet + D + spatstat.geom::volume(W) - n * log(spatstat.geom::volume(W))
 
   if(!log)
     res <- exp(res)
@@ -88,7 +94,7 @@ lambda.and.k <- function#Internal function calculating lambda and k
  stationary = FALSE
  ### logical indicating whether the stationarity of the model should be used (only works in dimension 2).
 ){
-  dim <- dim.detpointprocfamily(model)
+  dim <- spatstat.core::dim.detpointprocfamily(model)
   if(stationary&&dim!=2)
     stop("Stationarity can only be exploited in dimension 2 at the moment.")
 
@@ -100,8 +106,8 @@ lambda.and.k <- function#Internal function calculating lambda and k
   ## Get the maximal truncation in each dimension
   maxtrunc <- 512# dppspatstat.options("max.trunc")^(1/dim)
   ## Extract spectral density
-  specden <- dppspecden(model)
-  truncrange <- dppspecdenrange(model)*max(Wscale)
+  specden <- spatstat.core::dppspecden(model)
+  truncrange <- spatstat.core::dppspecdenrange(model)*max(Wscale)
 
   if(trunc>=1){ ## Integer truncation fixed by user.
     if(stationary){
@@ -135,8 +141,8 @@ lambda.and.k <- function#Internal function calculating lambda and k
     prec <- 0
     ## cat("truncation is being calculated adaptively. Current truncation:\n")
     while(prec<=prec0 & (2*trunc)<=maxtrunc & trunc<=truncrange){
-    # while(prec<=prec0 & (trunc + 1)<=maxtrunc & trunc<=truncrange){
-          trunc <- 2*trunc
+      # while(prec<=prec0 & (trunc + 1)<=maxtrunc & trunc<=truncrange){
+      trunc <- 2*trunc
       # trunc <- trunc + 1
       if(stationary){
         ## Coordinates on axes:

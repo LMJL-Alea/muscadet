@@ -16,34 +16,42 @@ mle(
 )
 }
 \arguments{
-\item{data}{A \code{\link[spatstat]{ppp}} object storing an observed planar
-determinantal point process.}
+\item{data}{An object of class \link[spatstat.geom:ppp]{spatstat.geom::ppp} specifying an observed
+planar determinantal point process.}
 
-\item{initial_guess}{A vector providing an intial guess for the model
-parameters that maximize the likelihood. Defaults to \code{NULL}, which
-initializes at \code{0.5} all parameters after suitable transformation into
-\link{0,1}. If provided, expected order is \code{c(alpha1, alpha2, alpha12, tau)}.}
+\item{initial_guess}{A numeric vector specifying an initial guess for the
+model parameters that maximize the likelihood. Defaults to \code{NULL}, which
+initializes at \eqn{0.5} all parameters after suitable transformation into
+\eqn{[0, 1]}. If provided, expected order is \code{c(alpha1, alpha2, alpha12, tau)}.}
 
-\item{fixed_marginal_parameters}{Boolean specifying whether the marginal
-parameters should be estimated separately using the marginal likelihood and
-then fixed to further estimate the cross parameters. Default is \code{FALSE}.}
+\item{fixed_marginal_parameters}{A boolean value specifying whether the
+marginal parameters should be estimated separately using the marginal
+likelihood and then fixed to further estimate the cross parameters.
+Defaults to \code{FALSE}.}
 
-\item{model}{A DPP model. For now either gauss or bessel (default: gauss).}
+\item{model}{A string specifying a DPP model. Choices are \code{"gauss"} or
+\code{"bessel"}. Defaults to \code{"gauss"}.}
 
-\item{optimizer}{Any derivative-free optimizer in NlOpt (default: bobyqa).}
+\item{optimizer}{A string specifying one of the available derivative-free
+optimizers in NLOpt. Defaults to \code{"bobyqa"}.}
 
-\item{num_threads}{Number of threas to run on (default: 1).}
+\item{num_threads}{An integer value specifying the number of thread to run
+on. Defaults to \code{1L}.}
 
-\item{N}{Maximum truncation index for Fourier transform (default: 512).}
+\item{N}{An integer value specifying the maximum truncation index for Fourier
+transform. Defaults to \code{512L}.}
 
-\item{verbose_level}{Display information during optimization. Choose \code{0}
-for no information, \code{1} for global information at likelihood setup or
-\code{2} for detailed  information at each function evaluation. Defaults to
-\code{0}.}
+\item{verbose_level}{An integer value specifying the display information
+during optimization. Choose \code{0L} for no information, \code{1L} for global
+information at likelihood setup or \code{2L} for detailed information at each
+function evaluation. Defaults to `0L.}
 }
 \value{
-A list with two components: \code{par} (optimized model parameters)
-and \code{value} (\code{-2 logLik} at the maximum likelihood).
+A list with two components:
+\itemize{
+\item \code{par} (optimized model parameters);
+\item \code{value} (\verb{-2 logLik} at the maximum likelihood).
+}
 }
 \description{
 Estimation of multi-mark DPP via Maximum Likelihood

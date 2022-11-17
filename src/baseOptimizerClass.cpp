@@ -218,6 +218,7 @@ double BaseOptimizerFunction::MaximizeLikelihood(arma::vec &parameters,
 
   nlopt_set_min_objective(optimizer, this->MaximizeLikelihoodCostFunction, &extraData);
   nlopt_set_xtol_rel(optimizer, m_ParameterRelativeTolerance);
+  nlopt_set_maxeval(optimizer, m_MaximumNumberOfFunctionEvaluations);
 
   double fVal;
   int exitCode = nlopt_optimize(optimizer, &(parameters[0]), &fVal);

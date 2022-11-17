@@ -300,7 +300,6 @@
 //   return logLik.Evaluate(x);
 // }
 
-//' @export
 // [[Rcpp::export]]
 arma::vec log_likelihood(const arma::mat &theta,
                          const arma::mat &points,

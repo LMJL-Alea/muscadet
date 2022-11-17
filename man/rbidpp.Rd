@@ -6,55 +6,57 @@
 \usage{
 rbidpp(
   n = 1,
-  seed = 1234,
   rho1 = 100,
   rho2 = 100,
   tau = 0.2,
   alpha1 = 0.03,
   alpha2 = 0.03,
   alpha12 = 0.05,
-  nu1 = 10,
-  nu2 = 10,
-  nu12 = 10,
   L = 1,
+  seed = 1234,
   progress = TRUE,
-  ncores = parallel::detectCores(logical = FALSE),
-  Kspec = "Kspecmatern",
-  testtau = "testtaumatern"
+  ncores = parallelly::availableCores(omit = 1)
 )
 }
 \arguments{
-\item{n}{Number of samples to draw (default: \code{1L}).}
+\item{n}{An integer value specifying the sample size. Defaults to \code{1L}.}
 
-\item{rho1}{A numeric scalar specifying the intensity of the 1st DPP (default: 100).}
+\item{rho1}{A numeric value specifying the intensity of the 1st marginal DPP.
+Defaults to \code{100L}.}
 
-\item{rho2}{A numeric scalar specifying the intensity of the 2nd DPP (default: 100).}
+\item{rho2}{A numeric value specifying the intensity of the 2nd marginal DPP.
+Defaults to \code{100L}.}
 
-\item{tau}{A numeric scalar specifying the cross-correlation (default: 0.2).}
+\item{tau}{A numeric value specifying the correlation between marks. Defaults
+to \code{0.2}.}
 
-\item{alpha1}{A numeric scalar specifying the ??? of the 1nd DPP (default: 0.03).}
+\item{alpha1}{A numeric value specifying the repulsion rate of the 1st DPP.
+Defaults to \code{0.03}.}
 
-\item{alpha2}{A numeric scalar specifying the ??? of the 2nd DPP (default: 0.03).}
+\item{alpha2}{A numeric value specifying the repulsion rate of the 2nd DPP.
+Defaults to \code{0.03}.}
 
-\item{alpha12}{A numeric scalar specifying the cross-??? (default: 0.05).}
+\item{alpha12}{A numeric value specifying the repulsion rate between marks.
+Defaults to \code{0.05}.}
 
-\item{nu1}{A numeric scalar specifying the ??? of the first DPP (default: 10).}
+\item{L}{An integer value specifying the window size of the point pattern.
+Defaults to \code{1L}.}
 
-\item{nu2}{A numeric scalar specifying the ??? of the 2nd DPP (default: 10).}
+\item{seed}{An integer value specifying the random generator seed. Defaults
+to \code{1234}.}
 
-\item{nu12}{A numeric scalar specifying the cross-??? (default: 10).}
+\item{progress}{A boolean value specifying whether a progress bar should be
+displayed. Defaults to \code{TRUE}.}
 
-\item{progress}{A numeric specifying whether a progess bar should be displayed (default: 0 for none).}
-
-\item{Kspec}{A function specifying the kernel to be used (default: \code{Kspecbessel}).}
-
-\item{testtau}{A function specifying the upper bound for the cross-correlation (default: \code{testtaubessel}).}
+\item{ncores}{An integer value specifying the number of cores to use.
+Defaults to all cores available except one.}
 }
 \value{
-A \code{\link[spatstat.geom]{ppp}} object containing the simulated point pattern.
+An object of class \link[spatstat.geom:ppp]{spatstat.geom::ppp} storing the simulated point
+pattern.
 }
 \description{
-Random generation of point patterns from a cross-type DPP
+Simulates one or more planar point patterns following a given multi-mark DPP.
 }
 \examples{
 #pp <- rbidpp()

@@ -5,7 +5,6 @@ CtildeStat2d_cpp <- function(x, y, lambdao, lambdaa, lambda, k1a, k2a) {
     .Call(`_muscadet_CtildeStat2d_cpp`, x, y, lambdao, lambdaa, lambda, k1a, k2a)
 }
 
-#' @export
 log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, marks = NULL, num_threads = 1L, N = 50L, verbose_level = 0L) {
     .Call(`_muscadet_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, verbose_level)
 }

@@ -17,7 +17,8 @@ public:
 
   BaseOptimizerFunction()
   {
-    m_ParameterRelativeTolerance = 1.0e-4;
+    m_ParameterRelativeTolerance = std::numeric_limits<double>::epsilon();
+    m_MaximumNumberOfFunctionEvaluations = 1000000;
     m_LowerBounds.reset();
     m_UpperBounds.reset();
   }
@@ -50,6 +51,7 @@ protected:
 
 private:
   double m_ParameterRelativeTolerance;
+  unsigned int m_MaximumNumberOfFunctionEvaluations;
   arma::vec m_LowerBounds;
   arma::vec m_UpperBounds;
 };

@@ -1,27 +1,34 @@
 #' Estimation of multi-mark DPP via Maximum Likelihood
 #'
-#' @param data A \code{\link[spatstat]{ppp}} object storing an observed planar
-#'   determinantal point process.
-#' @param initial_guess A vector providing an intial guess for the model
-#'   parameters that maximize the likelihood. Defaults to \code{NULL}, which
-#'   initializes at \code{0.5} all parameters after suitable transformation into
-#'   [0,1]. If provided, expected order is `c(alpha1, alpha2, alpha12, tau)`.
-#' @param fixed_marginal_parameters Boolean specifying whether the marginal
-#'   parameters should be estimated separately using the marginal likelihood and
-#'   then fixed to further estimate the cross parameters. Default is `FALSE`.
-#' @param model A DPP model. For now either gauss or bessel (default: gauss).
-#' @param optimizer Any derivative-free optimizer in NlOpt (default: bobyqa).
-#' @param num_threads Number of threas to run on (default: 1).
-#' @param N Maximum truncation index for Fourier transform (default: 512).
-#' @param verbose_level Display information during optimization. Choose \code{0}
-#'   for no information, \code{1} for global information at likelihood setup or
-#'   \code{2} for detailed  information at each function evaluation. Defaults to
-#'   \code{0}.
+#' @param data An object of class [spatstat.geom::ppp] specifying an observed
+#'   planar determinantal point process.
+#' @param initial_guess A numeric vector specifying an initial guess for the
+#'   model parameters that maximize the likelihood. Defaults to `NULL`, which
+#'   initializes at \eqn{0.5} all parameters after suitable transformation into
+#'   \eqn{[0, 1]}. If provided, expected order is `c(alpha1, alpha2, alpha12,
+#'   tau)`.
+#' @param fixed_marginal_parameters A boolean value specifying whether the
+#'   marginal parameters should be estimated separately using the marginal
+#'   likelihood and then fixed to further estimate the cross parameters.
+#'   Defaults to `FALSE`.
+#' @param model A string specifying a DPP model. Choices are `"gauss"` or
+#'   `"bessel"`. Defaults to `"gauss"`.
+#' @param optimizer A string specifying one of the available derivative-free
+#'   optimizers in NLOpt. Defaults to `"bobyqa"`.
+#' @param num_threads An integer value specifying the number of thread to run
+#'   on. Defaults to `1L`.
+#' @param N An integer value specifying the maximum truncation index for Fourier
+#'   transform. Defaults to `512L`.
+#' @param verbose_level An integer value specifying the display information
+#'   during optimization. Choose `0L` for no information, `1L` for global
+#'   information at likelihood setup or `2L` for detailed information at each
+#'   function evaluation. Defaults to `0L.
 #'
-#' @return A list with two components: \code{par} (optimized model parameters)
-#'   and \code{value} (\code{-2 logLik} at the maximum likelihood).
+#' @return A list with two components:
+#' - `par` (optimized model parameters);
+#' - `value` (`-2 logLik` at the maximum likelihood).
+#'
 #' @export
-#'
 #' @examples
 #' opt <- mle(sim_gauss5[[1]])
 mle <- function(data,
