@@ -7,6 +7,9 @@
 
 [![check-standard](https://github.com/LMJL-Alea/muscadet/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/check-standard.yaml)
 [![pkgdown](https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/LMJL-Alea/muscadet/branch/master/graph/badge.svg)](https://app.codecov.io/gh/LMJL-Alea/muscadet?branch=master)
+[![test-coverage](https://github.com/LMJL-Alea/muscadet/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
 The goal of **muscadet** is to provide a set of functions for simulating
