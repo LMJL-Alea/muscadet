@@ -6,6 +6,7 @@
 <!-- badges: start -->
 
 [![check-standard](https://github.com/LMJL-Alea/muscadet/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/check-standard.yaml)
+[![pkgdown](https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml)
 <!-- badges: end -->
 
 The goal of **muscadet** is to provide a set of functions for simulating
