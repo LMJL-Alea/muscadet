@@ -28,6 +28,7 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
 // log_likelihood
 arma::vec log_likelihood(const arma::mat& theta, const arma::mat& points, const arma::vec& lower_bound, const arma::vec& upper_bound, const Rcpp::DataFrame& nd_grid, const Rcpp::Nullable<arma::uvec>& marks, const unsigned int num_threads, const unsigned int N, const unsigned int verbose_level);
 RcppExport SEXP _muscadet_log_likelihood(SEXP thetaSEXP, SEXP pointsSEXP, SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP nd_gridSEXP, SEXP marksSEXP, SEXP num_threadsSEXP, SEXP NSEXP, SEXP verbose_levelSEXP) {
@@ -47,6 +48,7 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
 // rbidpp_impl
 Rcpp::List rbidpp_impl(const int N, const double L, const double rho1, const double rho2, const double alpha1, const double alpha2, const double alpha12, const double tau, const unsigned int nbThreads);
 RcppExport SEXP _muscadet_rbidpp_impl(SEXP NSEXP, SEXP LSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP nbThreadsSEXP) {

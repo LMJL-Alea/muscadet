@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "aymeric.stamm@math.cnrs.fr",
            comment = c(ORCID = "0000-0002-8725-3654"))
-Description: This package implements stationary bivariate Gaussian 
+Description: This package implements stationary multi-mark Gaussian 
     and Bessel determinantal point processes. It is possible to 
     simulate points from a given set of parameters or to retrieve 
     model parameters from a given set of points.
