@@ -167,17 +167,18 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Ga
 
 #' Estimation of Stationary Bivariate 2-dimensional DPP
 #'
-#' @section Empirical estimation of the pair correlation function: The empirical
-#'   PCF is computed as a kernel estimate of the PCF in which the contribution
-#'   from an interpoint distance $d_{ij}$ to the estimate of $g(r)$ is divided:
-#'   - either by $r$ using optional argument `divisor = "r"` in the functions
-#'   \code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
-#'   - or by $d_{ij}$ using optional argument `divisor = "d"` in the functions
-#'   \code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
-#'   it is intended to improve the bias of the estimator when $r$ is close to
-#'   zero.
+#' @section Empirical estimation of the pair correlation function:
+#' The empirical PCF is computed as a kernel estimate of the PCF in which the
+#' contribution from an interpoint distance \eqn{d_{ij}} to the estimate of
+#' \eqn{g(r)} is divided:
+#' - either by \eqn{r} using optional argument `divisor = "r"` in the functions
+#' [spatstat.core::pcf()] and [spatstat.core::pcfcross()];
+#' - or by \eqn{d_{ij}} using optional argument `divisor = "d"` in the functions
+#' [spatstat.core::pcf()] and [spatstat.core::pcfcross()]; it is intended to
+#' improve the bias of the estimator when \eqn{r} is close to zero.
 #'
-#' @param X A \code{\link[spatstat.geom]{ppp}} object storing the point pattern.
+#' @param X An object of class [spatstat.geom::ppp] specifying a planar point
+#'   pattern.
 #' @param model A string specifying the model to be fitted. Choices are
 #'   `"Gauss"` or `"Bessel"`. Defaults to `"Gauss"`.
 #' @param method A string specifying the estimation method. Choices are `"PCF"`.

@@ -22,7 +22,8 @@ estimate(
 )
 }
 \arguments{
-\item{X}{A \code{\link[spatstat.geom]{ppp}} object storing the point pattern.}
+\item{X}{An object of class \link[spatstat.geom:ppp]{spatstat.geom::ppp} specifying a planar point
+pattern.}
 
 \item{model}{A string specifying the model to be fitted. Choices are
 \code{"Gauss"} or \code{"Bessel"}. Defaults to \code{"Gauss"}.}
@@ -78,16 +79,16 @@ are returned in the list as well.
 Estimation of Stationary Bivariate 2-dimensional DPP
 }
 \section{Empirical estimation of the pair correlation function}{
- The empirical
-PCF is computed as a kernel estimate of the PCF in which the contribution
-from an interpoint distance $d_{ij}$ to the estimate of $g(r)$ is divided:
+
+The empirical PCF is computed as a kernel estimate of the PCF in which the
+contribution from an interpoint distance \eqn{d_{ij}} to the estimate of
+\eqn{g(r)} is divided:
 \itemize{
-\item either by $r$ using optional argument \code{divisor = "r"} in the functions
-\code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
-\item or by $d_{ij}$ using optional argument \code{divisor = "d"} in the functions
-\code{\link[spatstat.core]{pcf}} and \code{\link[spatstat.core]{pcfcross}};
-it is intended to improve the bias of the estimator when $r$ is close to
-zero.
+\item either by \eqn{r} using optional argument \code{divisor = "r"} in the functions
+\code{\link[spatstat.core:pcf]{spatstat.core::pcf()}} and \code{\link[spatstat.core:pcfcross]{spatstat.core::pcfcross()}};
+\item or by \eqn{d_{ij}} using optional argument \code{divisor = "d"} in the functions
+\code{\link[spatstat.core:pcf]{spatstat.core::pcf()}} and \code{\link[spatstat.core:pcfcross]{spatstat.core::pcfcross()}}; it is intended to
+improve the bias of the estimator when \eqn{r} is close to zero.
 }
 }
 

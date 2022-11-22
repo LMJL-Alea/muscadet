@@ -1,5 +1,5 @@
 Package: muscadet
-Title: Multi-mark Statistical Analysis of Determinantal Point Processes
+Title: Multi-Mark Statistical Analysis of Determinantal Point Processes
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Aymeric",
@@ -37,5 +37,6 @@ Imports:
     spatstat.geom,
     tibble,
     tidyr
-URL: https://github.com/astamm/muscadet
+URL: https://github.com/astamm/muscadet,
+    https://lmjl-alea.github.io/muscadet/
 BugReports: https://github.com/astamm/muscadet/issues
