@@ -15,7 +15,7 @@ mle_grouped <- function(data_list,
                         fixed_marginal_parameters = FALSE,
                         num_threads = ncores) {
   if (is.null(initial_guess)) {
-    fit <- data_list %>%
+    fit <- data_list |>
       imap(~ {
         print(paste0("Estimating parameters for data set #", .y))
         mle(
@@ -25,7 +25,7 @@ mle_grouped <- function(data_list,
         )
       })
   } else {
-    fit <- data_list %>%
+    fit <- data_list |>
       imap(~ {
         print(paste0("Estimating parameters for data set #", .y))
         mle(
@@ -36,14 +36,14 @@ mle_grouped <- function(data_list,
         )
       })
   }
-  fit %>%
-    map_df("par") %>%
+  fit |>
+    map_df("par") |>
     mutate(fmin = map_dbl(fit, "value"))
 }
 
 toto=mle_grouped(simulations$sim[[2]], fixed_marginal_parameters = FALSE, num_threads = 6)
 
-simulations_L1 <- simulations[1:3, ] %>%
+simulations_L1 <- simulations[1:3, ] |>
   mutate(
     mle2_imid = map(sim, mle_grouped, fixed_marginal_parameters = TRUE),
     mle2_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = TRUE),
@@ -53,7 +53,7 @@ simulations_L1 <- simulations[1:3, ] %>%
 
 save(simulations_L1, file = "mle_L1.rda", version = 3, compress = "xz")
 
-simulations_L2 <- simulations[4:6, ] %>%
+simulations_L2 <- simulations[4:6, ] |>
   mutate(
     mle2_imid = map(sim, mle_grouped, fixed_marginal_parameters = TRUE),
     mle2_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = TRUE),
@@ -63,7 +63,7 @@ simulations_L2 <- simulations[4:6, ] %>%
 
 save(simulations_L2, file = "mle_L2.rda", version = 3, compress = "xz")
 
-simulations_L3 <- simulations[7:9, ] %>%
+simulations_L3 <- simulations[7:9, ] |>
   mutate(
     mle2_imid = map(sim, mle_grouped, fixed_marginal_parameters = TRUE),
     mle2_ipcf = map2(sim, pcf, mle_grouped, fixed_marginal_parameters = TRUE),

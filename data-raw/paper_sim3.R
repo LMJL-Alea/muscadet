@@ -46,7 +46,7 @@ df2 <- bind_rows(
       divisor_marginal = "d",
       divisor_cross = "d",
       method = "profiling")
-  }) %>% mutate(L = 1),
+  }) |> mutate(L = 1),
   furrr::future_map_dfr(sim3[[2]], ~ {
     estimate(
       X = .x,
@@ -59,7 +59,7 @@ df2 <- bind_rows(
       divisor_marginal = "d",
       divisor_cross = "d",
       method = "profiling")
-  }) %>% mutate(L = 2),
+  }) |> mutate(L = 2),
   furrr::future_map_dfr(sim3[[3]], ~ {
     estimate(
       X = .x,
@@ -72,28 +72,28 @@ df2 <- bind_rows(
       divisor_marginal = "d",
       divisor_cross = "d",
       method = "profiling")
-  }) %>% mutate(L = 3)
+  }) |> mutate(L = 3)
 )
 plan(sequential)
 
-df2 %>%
-  select(alpha1, alpha2, k12, tau, L) %>%
-  group_by(L) %>%
+df2 |>
+  select(alpha1, alpha2, k12, tau, L) |>
+  group_by(L) |>
   summarise(
     alpha1 = yardstick::rmse_vec(rep(0.03, 100), alpha1),
     alpha2 = yardstick::rmse_vec(rep(0.03, 100), alpha2),
     tau = yardstick::rmse_vec(rep(0.5, 100), tau),
     k12 = yardstick::rmse_vec(rep(0.5 * 100 * pi * 0.035^2, 100), k12)
-  ) %>%
-  pivot_longer(-L) %>%
+  ) |>
+  pivot_longer(-L) |>
   ggplot(aes(L, value, color = name)) +
   geom_line() +
   geom_point() +
   facet_wrap(vars(name), nrow = 1, scales = "free")
 
-df2 %>%
-  select(alpha1, alpha2, k12, tau, L) %>%
-  pivot_longer(-L) %>%
+df2 |>
+  select(alpha1, alpha2, k12, tau, L) |>
+  pivot_longer(-L) |>
   ggplot(aes(as.factor(L), value, fill = as.factor(L))) +
   geom_boxplot() +
   geom_hline(aes(yintercept = value), tibble(

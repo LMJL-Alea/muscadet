@@ -24,21 +24,18 @@ LinkingTo:
 RcppModules: DPP
 Depends: R (>= 3.5.0)
 Imports: 
+    cli,
+    dplyr,
+    furrr,
+    methods,
+    nloptr,
+    progressr,
+    purrr,
     Rcpp,
+    rlang,
     spatstat.core,
     spatstat.geom,
-    nloptr,
-    rlang,
-    dplyr,
-    tidyr,
-    magrittr,
-    purrr,
     tibble,
-    methods,
-    withr,
-    cli
+    tidyr
 URL: https://github.com/astamm/muscadet
 BugReports: https://github.com/astamm/muscadet/issues
-Suggests: 
-    furrr,
-    progressr

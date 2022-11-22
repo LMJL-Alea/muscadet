@@ -51,8 +51,8 @@ mle <- function(data,
       alpha1 <- initial_guess[["alpha1"]]
       alpha2 <- initial_guess[["alpha2"]]
       init <- c(alpha1, alpha2)
-      marginal_parameters <- data %>%
-        spatstat.geom::split.ppp() %>%
+      marginal_parameters <- data |>
+        spatstat.geom::split.ppp() |>
         purrr::map2(
           .y = init,
           .f = mle,
@@ -61,12 +61,12 @@ mle <- function(data,
           num_threads = num_threads,
           N = N,
           verbose_level = verbose_level
-        ) %>%
-        purrr::map("par") %>%
+        ) |>
+        purrr::map("par") |>
         purrr::map_dbl("alpha")
     } else { # Naive initialization
-      marginal_parameters <- data %>%
-        spatstat.geom::split.ppp() %>%
+      marginal_parameters <- data |>
+        spatstat.geom::split.ppp() |>
         purrr::map(
           .f = mle,
           model = model,
@@ -74,8 +74,8 @@ mle <- function(data,
           num_threads = num_threads,
           N = N,
           verbose_level = verbose_level
-        ) %>%
-        purrr::map("par") %>%
+        ) |>
+        purrr::map("par") |>
         purrr::map_dbl("alpha")
     }
   }

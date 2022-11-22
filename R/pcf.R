@@ -35,8 +35,8 @@ compute_bootstrap_stats <- function(rho1, alpha1,
     )
   })
 
-  stat1 <- boot_data %>%
-    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) %>%
+  stat1 <- boot_data |>
+    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) |>
     purrr::map_dbl(
       .f = contrast_cross,
       model = model,
@@ -45,7 +45,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
     )
 
   if (full_bootstrap) {
-    stat2 <- boot_data %>%
+    stat2 <- boot_data |>
       purrr::map(
         .f = estimate,
         model = model,
@@ -57,10 +57,10 @@ compute_bootstrap_stats <- function(rho1, alpha1,
         divisor_marginal = divisor_marginal,
         divisor_cross = divisor_cross,
         method = method
-      ) %>%
+      ) |>
       purrr::map_dbl("tau")
   } else {
-    stat2 <- boot_data %>%
+    stat2 <- boot_data |>
       purrr::map(
         .f = estimate,
         model = model,
@@ -73,7 +73,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
         divisor_cross = divisor_cross,
         method = method,
         params = c(rho1, rho2, alpha1, alpha2)
-      ) %>%
+      ) |>
       purrr::map_dbl("tau")
   }
 

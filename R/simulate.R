@@ -17,60 +17,53 @@
 #'   Defaults to `0.05`.
 #' @param L An integer value specifying the window size of the point pattern.
 #'   Defaults to `1L`.
-#' @param seed An integer value specifying the random generator seed. Defaults
-#'   to `1234`.
-#' @param progress A boolean value specifying whether a progress bar should be
-#'   displayed. Defaults to `TRUE`.
-#' @param ncores An integer value specifying the number of cores to use.
-#'   Defaults to all cores available except one.
+#' @param d An integer value specifying the dimension of the DPP. Defaults to
+#'   `2L`.
+#' @param model A string specifying the model to be used. Choices are `"Gauss"`
+#'   or `"Bessel"`. Defaults to `"Gauss"`.
+#' @param max_trunc An integer value specifying the maximum number of basis
+#'   functions in the Fourier decomposition. Defaults to `1000L`.
 #'
 #' @return An object of class [spatstat.geom::ppp] storing the simulated point
 #'   pattern.
 #'
 #' @export
 #' @examples
-#' #pp <- rbidpp()
-rbidpp <- function(n = 1,
-                   rho1 = 100,
-                   rho2 = 100,
-                   tau = 0.2,
-                   alpha1 = 0.03,
-                   alpha2 = 0.03,
-                   alpha12 = 0.05,
-                   L = 1,
-                   seed = 1234,
-                   progress = TRUE,
-                   ncores = parallelly::availableCores(omit = 1))
+#' rbidpp()
+rbidpp <- function(n = 1L,
+                   rho1 = 100, rho2 = 100,
+                   alpha1 = 0.03, alpha2 = 0.03,
+                   alpha12 = 0.035, tau = 0.5,
+                   L = 1, d = 2L, model = c("Gauss", "Bessel"),
+                   max_trunc = 1000L)
 {
-  withr::local_seed(seed)
-
-  if (progress && requireNamespace("progressr", quietly = TRUE)) {
-    p <- progressr::progressor(along = 1:n)
-  }
-
-  purrr::map(1:n, ~ {
-    if (progress && requireNamespace("progressr", quietly = TRUE)) {
-      p()
-    }
+  pb <- progressr::progressor(along = 1:n)
+  model <- rlang::arg_match(model)
+  furrr::future_map(1:n, ~ {
+    pb()
     .rbidpp_single(
-      rho1 = rho1, rho2 = rho2, tau = tau,
-      alpha1 = alpha1, alpha2 = alpha2, alpha12 = alpha12,
-      nu1 = nu1, nu2 = nu2, nu12 = n12, L = L, ncores = ncores,
-      progress = 0, Kspec = Kspec, testtau = testtau
+      rho1 = rho1, rho2 = rho2,
+      alpha1 = alpha1, alpha2 = alpha2,
+      alpha12 = alpha12, tau = tau,
+      L = L, d = d, model = model,
+      maxtrunc = max_trunc
     )
-  })
+  }, .options = furrr::furrr_options(seed = TRUE))
 }
 
 sumdiag <- function(r, K, L, ...) {
   sum(diag(K(r / L, ...)))
 }
 
-.rbidpp_single <- function(rho1 = 100, rho2 = 100, tau = 0.2,
-                           alpha1 = 0.03, alpha2 = 0.03, alpha12 = 0.05,
-                           d = 2, model = c("Gauss", "Bessel"),
-                           L = 1, maxtrunc = 1000) {
+.rbidpp_single <- function(rho1 = 100, rho2 = 100,
+                           alpha1 = 0.03, alpha2 = 0.03,
+                           alpha12 = 0.035, tau = 0.5,
+                           L = 1, d = 2, model = c("Gauss", "Bessel"),
+                           maxtrunc = 1000) {
   if (!check_parameter_set(rho1, rho2, alpha1, alpha2, alpha12, tau, d, model))
     cli::cli_abort("The set of parameters is not valid for a 2-mark DPP.")
+
+  model <- rlang::arg_match(model)
 
   # Step1
   expnum <- (rho1 + rho2) * L ^ 2
@@ -104,7 +97,7 @@ sumdiag <- function(r, K, L, ...) {
       alpha12 = alpha12, tau = tau,
       d = d, model = model
     )
-    eig <- purrr::map(
+    eig <- purrr::map_dbl(
       .x = sqrt((index1) ^ 2 + (index2) ^ 2),
       .f = sumdiag,
       K = get_khat_matrix, L = L,
@@ -129,11 +122,11 @@ sumdiag <- function(r, K, L, ...) {
   kkindex <- l$kkindex
   V <- l$V
 
-  ordering_idx <- kkindex %>%
-    `colnames<-`(c("x", "y")) %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(norm2 = .data$x^2 + .data$y^2, index = 1:dplyr::n()) %>%
-    dplyr::arrange(.data$norm2, .data$x, .data$y) %>%
+  ordering_idx <- kkindex |>
+    `colnames<-`(c("x", "y")) |>
+    tibble::as_tibble() |>
+    dplyr::mutate(norm2 = .data$x^2 + .data$y^2, index = 1:dplyr::n()) |>
+    dplyr::arrange(.data$norm2, .data$x, .data$y) |>
     dplyr::pull(.data$index)
   kkindex <- kkindex[ordering_idx, ]
   V <- V[, ordering_idx]

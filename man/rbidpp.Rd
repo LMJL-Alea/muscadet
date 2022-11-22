@@ -5,17 +5,17 @@
 \title{Random generation of point patterns from a cross-type DPP}
 \usage{
 rbidpp(
-  n = 1,
+  n = 1L,
   rho1 = 100,
   rho2 = 100,
-  tau = 0.2,
   alpha1 = 0.03,
   alpha2 = 0.03,
-  alpha12 = 0.05,
+  alpha12 = 0.035,
+  tau = 0.5,
   L = 1,
-  seed = 1234,
-  progress = TRUE,
-  ncores = parallelly::availableCores(omit = 1)
+  d = 2L,
+  model = c("Gauss", "Bessel"),
+  max_trunc = 1000L
 )
 }
 \arguments{
@@ -27,9 +27,6 @@ Defaults to \code{100L}.}
 \item{rho2}{A numeric value specifying the intensity of the 2nd marginal DPP.
 Defaults to \code{100L}.}
 
-\item{tau}{A numeric value specifying the correlation between marks. Defaults
-to \code{0.2}.}
-
 \item{alpha1}{A numeric value specifying the repulsion rate of the 1st DPP.
 Defaults to \code{0.03}.}
 
@@ -39,17 +36,20 @@ Defaults to \code{0.03}.}
 \item{alpha12}{A numeric value specifying the repulsion rate between marks.
 Defaults to \code{0.05}.}
 
+\item{tau}{A numeric value specifying the correlation between marks. Defaults
+to \code{0.2}.}
+
 \item{L}{An integer value specifying the window size of the point pattern.
 Defaults to \code{1L}.}
 
-\item{seed}{An integer value specifying the random generator seed. Defaults
-to \code{1234}.}
+\item{d}{An integer value specifying the dimension of the DPP. Defaults to
+\code{2L}.}
 
-\item{progress}{A boolean value specifying whether a progress bar should be
-displayed. Defaults to \code{TRUE}.}
+\item{model}{A string specifying the model to be used. Choices are \code{"Gauss"}
+or \code{"Bessel"}. Defaults to \code{"Gauss"}.}
 
-\item{ncores}{An integer value specifying the number of cores to use.
-Defaults to all cores available except one.}
+\item{max_trunc}{An integer value specifying the maximum number of basis
+functions in the Fourier decomposition. Defaults to \code{1000L}.}
 }
 \value{
 An object of class \link[spatstat.geom:ppp]{spatstat.geom::ppp} storing the simulated point
@@ -59,5 +59,5 @@ pattern.
 Simulates one or more planar point patterns following a given multi-mark DPP.
 }
 \examples{
-#pp <- rbidpp()
+rbidpp()
 }

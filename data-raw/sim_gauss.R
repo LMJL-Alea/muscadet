@@ -47,9 +47,9 @@ new_simulations <- tibble(
   alpha2 = c(0.05, 0.01),
   alpha12 = c(0.05, 0.012),
   tau = c(0.2, 0.5)
-) %>%
+) |>
   mutate(
-    sim = list(rho1, rho2, alpha1, alpha2, alpha12, tau) %>%
+    sim = list(rho1, rho2, alpha1, alpha2, alpha12, tau) |>
       pmap(~ {
         rbidpp(
           n = 100,
