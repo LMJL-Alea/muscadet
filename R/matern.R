@@ -26,23 +26,3 @@ Kspecmatern <- function(r, rho1 = 100, rho2 = 100, alpha1 = 0.03, alpha2 = 0.03,
   matrix(c(rho1 * mfunspec(r, alpha1, nu1), tau * sqrt(rho1 * rho2) * mfunspec(r, alpha12, nu12),
            tau * sqrt(rho1 * rho2) * mfunspec(r, alpha12, nu12), rho2 * mfunspec(r, alpha2, nu2)), 2, 2)
 }
-
-testtaumatern <- function(tau, rho1, rho2, alpha1, alpha2, alpha12, nu1 = 10, nu2 = 10, nu12 = 10) {
-  bound1 <- alpha1*alpha2/alpha12^2
-  bound2 <- sqrt((alpha1*alpha2/alpha12^2)^2*(1/(4*pi*rho1*alpha1^2*nu1)-1)*(1/(4*pi*rho2*alpha2^2*nu2)-1))
-  bound <- min(bound1, bound2)
-
-  if (tau > bound)
-    return(FALSE)
-
-  if (4 * pi * rho1 * alpha1^2 * nu1 > 1)
-    return(FALSE)
-
-  if (4 * pi * rho2 * alpha2^2 * nu2 > 1)
-    return(FALSE)
-
-  if (alpha12 < max(alpha1, alpha2))
-    return(FALSE)
-
-  TRUE
-}

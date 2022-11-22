@@ -1,587 +1,482 @@
-contr_marginal <- function(alpha, r, y, p = 0.5, q = 2, use_polar_coordinates = TRUE) {
-  yobs <- y^p
-  ypred <- (1 - exp(-2 * (r / alpha)^2))^p
-  if (use_polar_coordinates) return(sum(c(0, diff(r)) * abs(yobs - ypred)^q * r))
-  sum(c(0, diff(r)) * abs(yobs - ypred)^q)
+# USEFUL
+compute_bootstrap_stats <- function(rho1, alpha1,
+                                    rho2, alpha2,
+                                    w = list(xrange = c(0, 1), yrange = c(0, 1)),
+                                    B = 100,
+                                    model = "Gauss",
+                                    rmin_alpha = 2,
+                                    rmin_alpha12 = 2,
+                                    rmin_tau = 2,
+                                    q = 1,
+                                    p = 2,
+                                    divisor_marginal = "d",
+                                    divisor_cross = "d",
+                                    method = "profiling",
+                                    full_bootstrap = TRUE) {
+  w <- spatstat.geom::as.owin(w)
+  if (model == "Gauss") {
+    m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
+    m2 <- spatstat.core::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
+  } else if (model == "Bessel") {
+    m1 <- spatstat.core::dppBessel(lambda = rho1, alpha = alpha1, d = 2)
+    m2 <- spatstat.core::dppBessel(lambda = rho2, alpha = alpha2, d = 2)
+  } else
+    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
+
+  data1 <- stats::simulate(m1, nsim = B, w = w)
+  data2 <- stats::simulate(m2, nsim = B, w = w)
+
+  boot_data <- purrr::map2(data1, data2, ~ {
+    spatstat.geom::ppp(
+      x = c(.x$x, .y$x),
+      y = c(.x$y, .y$y),
+      window = w,
+      marks = as.factor(c(rep(1, .x$n), rep(2, .y$n)))
+    )
+  })
+
+  stat1 <- boot_data |>
+    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) |>
+    purrr::map_dbl(
+      .f = contrast_cross,
+      model = model,
+      beta = 1, tau = 0,
+      rmin = rmin_tau, q = q, p = p
+    )
+
+  if (full_bootstrap) {
+    stat2 <- boot_data |>
+      purrr::map(
+        .f = estimate,
+        model = model,
+        rmin_alpha = rmin_alpha,
+        rmin_alpha12 = rmin_alpha12,
+        rmin_tau = rmin_tau,
+        q = q,
+        p = p,
+        divisor_marginal = divisor_marginal,
+        divisor_cross = divisor_cross,
+        method = method
+      ) |>
+      purrr::map_dbl("tau")
+  } else {
+    stat2 <- boot_data |>
+      purrr::map(
+        .f = estimate,
+        model = model,
+        rmin_alpha = rmin_alpha,
+        rmin_alpha12 = rmin_alpha12,
+        rmin_tau = rmin_tau,
+        q = q,
+        p = p,
+        divisor_marginal = divisor_marginal,
+        divisor_cross = divisor_cross,
+        method = method,
+        params = c(rho1, rho2, alpha1, alpha2)
+      ) |>
+      purrr::map_dbl("tau")
+  }
+
+  list(nonparametric = stat1, parametric = stat2)
 }
 
-contr_beta <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  if (use_polar_coordinates) {
-    part1 <- gamma_max^3 * beta^3 * exp(-4 * min(r)^2 * beta) / (24 * rho1^2 * rho2^2 * pi^4)
-    part2 <- gamma_max^2 * beta^2 / (rho1 * rho2 * pi^2) * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2) * r)
-    return(part1 - part2)
-  }
-  part1 <- gamma_max^3 * beta^4 / (3 * rho1^2 * rho2^2 * pi^4) * sum(c(0, diff(r)) * exp(-4 * beta * r^2))
-  part2 <- gamma_max^2 * beta^2 / (rho1 * rho2 * pi^2) * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2))
-  part1 - part2
+# USEFUL
+jinc <- function(x, alpha) {
+  # J_alpha(x) / (x/2)^alpha * gamma(alpha + 1)
+  if (x < sqrt(.Machine$double.eps))
+    return(1)
+  besselJ(x, alpha) / (x / 2)^alpha * gamma(alpha + 1)
 }
 
-compute_gamma_first <- function(r, y, beta_max, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  # a0 <- beta_max * sum(c(0, diff(r)) * (1 - y)^2)
-  # a1 <- 3 / (2 * rho1 * rho2 * pi^2) * sum(c(0, diff(r)) * (1 - y) * pgamma(beta_max, 3, rate = 2 * r^2) / r^6)
-  # a2 <- 15 / (128 * rho1^2 * rho2^2 * pi^4) * sum(c(0, diff(r)) * pgamma(beta_max, 5, rate = 4 * r^2) / r^10)
-  # gamma <- a1 / (2 * a2)
-  gamma <- 32 * rho1 * rho2 * pi^2 / 5 * sum(c(0, diff(r)) * (1 - y) * pgamma(beta_max, 3, rate = 2 * r^2) / r^6) / sum(c(0, diff(r)) * pgamma(beta_max, 5, rate = 4 * r^2) / r^10)
-  if (gamma < 0) return(0)
-  if (gamma > gamma_max) return(gamma_max)
-  gamma
+# USEFUL
+contrast_marginal <- function(model, alpha, r, y, q = 0.5, p = 2, d = 2) {
+  yobs <- y^q
+  ypred <- (1 - get_eta_value(r, 1 / alpha^2, model)^2)^q
+  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
-compute_gamma <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  if (use_polar_coordinates) {
-    gamma <- 8 * rho1 * rho2 * pi^2 * exp(4 * beta * min(r)^2) * sum(c(0, diff(r)) * r * (1 - y) * exp(-2 * beta * r^2)) / beta
-    if (gamma < 0 | gamma > gamma_max) {
-      gamma <- 0
-      val1 <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2 * r)
-      gamma <- gamma_max
-      val2 <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2 * r)
-      if (val1 < val2) gamma <- 0
-    }
-    return(gamma)
-  }
-
-  val0 <- sum(c(0, diff(r)) * (1 - y)^2)
-  gamma <- rho1 * rho2 * pi^2 * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2)) / beta^2 / sum(c(0, diff(r)) * exp(-4 * beta * r^2))
-  val <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2)
-  n <- length(r)
-  if (n * log(val0) <= 2 + n * log(val)) return(0)
-  if (gamma < 0 | gamma > gamma_max) {
-    gamma <- gamma_max
-    val2 <- sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2)
-    if (val0 < val2) gamma <- 0
-  }
-  gamma
+# USEFUL
+contrast_cross <- function(model, beta, tau, pcfemp, rmin, q = 1, p = 2) {
+  r <- pcfemp$r[rmin:length(pcfemp$r)]
+  yobs <- pcfemp$iso[rmin:length(pcfemp$r)]^q
+  ypred <- (1 - tau^2 * get_eta_value(r, beta, model)^2)^q
+  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
-compute_gamma_alt <- function(beta, r, y, gamma_max, rho1, rho2, use_polar_coordinates = TRUE) {
-  cost <- function(x, r, y) {
-    val0 <- sum(c(0, diff(r)) * (1 - y)^2)
-    sum(c(0, diff(r)) * (1 - y - gamma * beta^2 * exp(- 2 * beta * r^2) / (rho1 * rho2 * pi^2))^2) / val0
-  }
+# USEFUL
+compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
+                                   model = c("Gauss", "Bessel")) {
+  model <- rlang::arg_match(model)
+  eta_val <- get_eta_value(r, beta, model = model)
+  I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
+  I2 <- sum(c(0, diff(r)) * eta_val^4)
+  tauSq_max <- alpha1 * alpha2 * beta * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
+  if (I2 < sqrt(.Machine$double.eps))
+    return(tauSq_max)
+  tauSq <- I1 / I2
+  tauSq <- max(0, tauSq)
+  min(tauSq_max, tauSq)
+}
 
-  trials <- 80
-  gamma_vec <- numeric(trials)
-  val_vec <- numeric(trials)
-  rtot <- r
-  ytot <- y
-  for (i in 1:trials) {
-    r <- rtot[i:512]
-    y <- ytot[i:512]
-    gamma <- rho1 * rho2 * pi^2 * sum(c(0, diff(r)) * (1 - y) * exp(-2 * beta * r^2)) / beta^2 / sum(c(0, diff(r)) * exp(-4 * beta * r^2))
-    val <- cost(gamma, r, y)
-    if (gamma < 0 | gamma > gamma_max) {
-      gamma <- gamma_max
-      val <- cost(gamma, r, y)
-      if (1 < val) {
-        gamma <- 0
-        val <- 1
-      }
-    }
-    gamma_vec[i] <- gamma
-    val_vec[i] <- val
-  }
+# USEFUL
+compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Gauss") {
+  if (model == "Gauss") {
+    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppGauss(
+      lambda = spatstat.geom::intensity(x),
+      d = 2
+    ))
+  } else if (model == "Bessel") {
+    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppBessel(
+      lambda = spatstat.geom::intensity(x),
+      d = 2,
+      sigma = 0
+    ))
+  } else
+    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
 
-  gamma_vec[which.min(val_vec)]
+  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
+  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
+
+  pcfemp <- spatstat.core::pcf(x, bw = "SJ", divisor = divisor)
+
+  opt <- stats::optimise(
+    f = contrast_marginal,
+    interval = c(alpha_lb, alpha_ub),
+    model = model,
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    q = q,
+    p = p,
+    tol = .Machine$double.eps
+  )
+
+  opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+  nloptr::bobyqa(
+    x0 = opt$minimum,
+    fn = contrast_marginal,
+    lower = alpha_lb,
+    upper = alpha_ub,
+    model = model,
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    q = q,
+    p = p,
+    control = opts
+  )$par
 }
 
 #' Estimation of Stationary Bivariate 2-dimensional DPP
 #'
-#' @param X a \code{\link[spatstat]{ppp}} object storing the point pattern.
+#' @section Empirical estimation of the pair correlation function:
+#' The empirical PCF is computed as a kernel estimate of the PCF in which the
+#' contribution from an interpoint distance \eqn{d_{ij}} to the estimate of
+#' \eqn{g(r)} is divided:
+#' - either by \eqn{r} using optional argument `divisor = "r"` in the functions
+#' [spatstat.core::pcf()] and [spatstat.core::pcfcross()];
+#' - or by \eqn{d_{ij}} using optional argument `divisor = "d"` in the functions
+#' [spatstat.core::pcf()] and [spatstat.core::pcfcross()]; it is intended to
+#' improve the bias of the estimator when \eqn{r} is close to zero.
+#'
+#' @param X An object of class [spatstat.geom::ppp] specifying a planar point
+#'   pattern.
+#' @param model A string specifying the model to be fitted. Choices are
+#'   `"Gauss"` or `"Bessel"`. Defaults to `"Gauss"`.
+#' @param method A string specifying the estimation method. Choices are `"PCF"`.
+#'   Defaults to `"PCF"`.
 #' @param rmin_alpha The lower bound on distances that should be taken into
-#'   account for estimating marginal alpha parameters (default: index 1).
+#'   account for estimating marginal alpha parameters (default: index 2).
 #' @param rmin_alpha12 The lower bound on distances that should be taken into
-#'   account for estimating the crossing alpha parameter (default: index 1).
+#'   account for estimating the crossing alpha parameter (default: index 2).
 #' @param rmin_tau The lower bound on distances that should be taken into
-#'   account for estimating the correlation (default: index 31).
-#' @param tau_min Correlation value used to compute a suitable upper bound for
-#'   the crossing alpha parameter (default: 0.1).
-#' @param p Power used in the marginal contrasts for estimating \code{alpha1}
-#'   and \code{alpha2} (default: 0.2).
+#'   account for estimating the correlation (default: index 2).
+#' @param p Power for the distance between empirical and moodel-based PCF
+#'   values. Defaults to `2`.
+#' @param q Power for pointwise evaluations of the PCF. Defaults to `0.5`.
+#' @param divisor_marginal Choice of divisor in the estimation formula. Choices
+#'   are `"r"` or `"d"`. See Section Empirical estimation of the pair
+#'   correlation function for more details. Defaults to `"d"`.
+#' @param divisor_cross Choice of divisor in the estimation formula. Choices are
+#'   `"r"` or `"d"`. See Section Empirical estimation of the pair correlation
+#'   function for more details. Defaults to `"d"`.
+#' @param method A character string specifying the estimation method between
+#'   `"profiling"` and `"direct"`. Defaults to `"profiling"`.
+#' @param B An integer value specifying the number of samples to be generated in
+#'   the bootstrap procedure to approximate the distribution of the test
+#'   statistics when testing for absence of correlation between marks. Defaults
+#'   to `0L` which does not perform the test at all.
+#' @param conf_level A numeric value specifying the confidence level when
+#'   testing for absence of correlation between marks. Defaults to `0.95`.
+#' @param params A length-4 numeric vector specifying values for the marginal
+#'   parameters if known. The order needs to be `rho1`, `rho2`, `alpha1` and
+#'   `alpha2`. Defaults to `NULL`, in which case, they are estimated.
+#' @param full_bootstrap A boolean specifying whether marginal parameters should
+#'   be re-estimated when computing the bootstrapped distribution of the tau
+#'   statistic. Defaults to `TRUE`.
 #'
 #' @return A list with the estimated model parameters in the following order:
-#'   \code{rho1}, \code{rho2}, \code{alpha1}, \code{alpha2}, \code{alpha12} and
-#'   \code{tau}.
+#'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`. Additional
+#'   information pertaining to the test for absence of correlation between marks
+#'   are returned in the list as well.
 #' @export
 #'
 #' @examples
-#' res <- purrr::map_df(sim_gauss5, estimate)
-#' boxplot(res$alpha1)
-#' abline(h = 0.03, col = "red")
-#' boxplot(res$alpha2)
-#' abline(h = 0.03, col = "red")
-#' boxplot(res$alpha12)
-#' abline(h = 0.035, col = "red")
-#' boxplot(res$tau)
-#' abline(h = 0.5, col = "red")
+#' estimate(sim_gauss0[[1]], model = "Gauss")
 estimate <- function(X,
                      model = "Gauss",
-                     method = "PCF",
-                     rmin_alpha = 22,
-                     rmin_alpha12 = 22,
-                     rmin_tau = 22,
-                     tau_min = 0.1,
-                     p = 0.5,
+                     rmin_alpha = 2,
+                     rmin_alpha12 = 2,
+                     rmin_tau = 2,
+                     q = 1,
+                     p = 2,
                      divisor_marginal = "d",
                      divisor_cross = "d",
-                     bw_marginal = "SJ",
-                     bw_cross = "SJ",
-                     use_polar_marginal = FALSE,
-                     use_polar_cross = FALSE) {
-  Xs <- spatstat::split.ppp(X)
+                     method = "profiling",
+                     B = 0L,
+                     conf_level = 0.95,
+                     params = NULL,
+                     full_bootstrap = TRUE) {
+  divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
+  divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
-  # First estimate marginal intensities
-  rho2 <- spatstat::intensity(X)
-  rho1 <- as.numeric(rho2[1])
-  rho2 <- as.numeric(rho2[2])
+  Xs <- spatstat.geom::split.ppp(X)
 
-  # Estimate alpha1
-  pcfemp <- spatstat::pcf(Xs[[1]], bw = bw_marginal, divisor = divisor_marginal)
-  alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(lambda = rho1, d = 2))
-  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
-  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
-  alpha1 <- optimise(
-    f = contr_marginal,
-    interval = c(alpha_lb, alpha_ub),
-    r = pcfemp$r[rmin_alpha:512],
-    y = pcfemp$iso[rmin_alpha:512],
-    p = p,
-    use_polar_coordinates = use_polar_marginal
-  )$minimum
+  if (is.null(params)) {
+    # First estimate marginal intensities
+    rho2 <- spatstat.geom::intensity(X)
+    rho1 <- as.numeric(rho2[1])
+    rho2 <- as.numeric(rho2[2])
 
-  # Estimate alpha2
-  pcfemp <- spatstat::pcf(Xs[[2]], bw = bw_marginal, divisor = divisor_marginal)
-  alpha_ub <- spatstat::dppparbounds(spatstat::dppGauss(lambda = rho2, d = 2))
-  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
-  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
-  alpha2 <- optimise(
-    f = contr_marginal,
-    interval = c(alpha_lb, alpha_ub),
-    r = pcfemp$r[rmin_alpha:512],
-    y = pcfemp$iso[rmin_alpha:512],
-    p = p,
-    use_polar_coordinates = use_polar_marginal
-  )$minimum
+    # Estimate alpha1
+    alpha1 <- compute_marginal_alpha(
+      x = Xs[[1]],
+      divisor = divisor_marginal,
+      rmin = rmin_alpha,
+      q = q,
+      p = p,
+      model = model
+    )
 
-  # Set bounds for cross parameters
-  # We estimate
-  # - beta = 1 / alpha12^2
-  # - gamma = tau^2 rho1 rho2 pi^2 alpha12^4
-  pcfemp <- spatstat::pcfcross(X, bw = bw_cross, divisor = divisor_cross)
-  k1 <- rho1 * pi * alpha1^2 # Model dependent
-  k2 <- rho2 * pi * alpha2^2 # Model dependent
-  gamma_max <- min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps))
-  gamma_max <- max(0, gamma_max)
-  beta_min <- tau_min / (alpha1 * alpha2)
-  beta_max <- 2 / (alpha1^2 + alpha2^2) # Model dependent
+    # Estimate alpha2
+    alpha2 <- compute_marginal_alpha(
+      x = Xs[[2]],
+      divisor = divisor_marginal,
+      rmin = rmin_alpha,
+      q = q,
+      p = p,
+      model = model
+    )
+  } else {
+    rho1 <- params[1]
+    rho2 <- params[2]
+    alpha1 <- params[3]
+    alpha2 <- params[4]
+  }
 
-  # Start by beta estimation
-  # beta <- optimise(
-  #   f = contr_beta,
-  #   interval = c(beta_min, beta_max),
-  #   r = pcfemp$r[rmin_alpha12:512],
-  #   y = pcfemp$iso[rmin_alpha12:512],
-  #   gamma_max = gamma_max,
-  #   rho1 = rho1,
-  #   rho2 = rho2,
-  #   use_polar_coordinates = use_polar_cross
-  # )$minimum
-  #
-  # # Retrieve gamma
-  # gamma <- compute_gamma(
-  #   beta = beta,
-  #   r = pcfemp$r[rmin_tau:512],
-  #   y = pcfemp$iso[rmin_tau:512],
-  #   gamma_max = gamma_max,
-  #   rho1 = rho1,
-  #   rho2 = rho2,
-  #   use_polar_coordinates = use_polar_cross
-  # )
+  # Get cross PCF for estimating tau and alpha12
+  pcfemp <- spatstat.core::pcfcross(X, bw = "SJ", divisor = divisor_cross)
 
-  # or
-  # compute gamma first
-  gamma <- compute_gamma_first(
-    r = pcfemp$r[rmin_tau:512],
-    y = pcfemp$iso[rmin_tau:512],
-    beta_max = beta_max,
-    gamma_max = gamma_max,
-    rho1 = rho1,
-    rho2 = rho2
+  # Notations: beta = 1 / alpha12^2
+  bnds <- get_bounds(
+    rho1 = rho1, rho2 = rho2,
+    alpha1 = alpha1, alpha2 = alpha2,
+    d = 2, model = model
   )
+  beta_max <- bnds$beta_max
+  k1 <- bnds$k1
+  k2 <- bnds$k2
+  k12maxSq <- max(0, min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps)))
+  # M <- beta_max^2 / (rho1 * rho2 * pi^2) * k12maxSq # TO DO: check
+  M <- (alpha1 * alpha2 * beta_max)^2 * min(1, (1 - k1) * (1 - k2) / (k1 * k2)) # tau^2 upper bound
 
-  # then retrieve beta
-  if (gamma < sqrt(.Machine$double.eps)) return(list(
+  beta_min <- 0
+
+  if (method == "profiling") {
+    .contrast_cross <- function(x) {
+      tau2 <- compute_tau2_from_beta(
+        beta = x,
+        r = pcfemp$r[rmin_tau:length(pcfemp$r)],
+        y = pcfemp$iso[rmin_tau:length(pcfemp$r)],
+        k1 = k1,
+        k2 = k2,
+        alpha1 = alpha1,
+        alpha2 = alpha2
+      )
+
+      # TO DO
+      if (tau2 * rho1 * rho2 * pi^2 > k12maxSq * x^2) {
+        return(1e6)
+      }
+
+      contrast_cross(model = model, beta = x, tau = sqrt(tau2), pcfemp = pcfemp, rmin = rmin_alpha12)
+    }
+
+    if (abs(beta_max - beta_min) < .Machine$double.eps^0.5) {
+      beta <- beta_max
+      fmin <- .contrast_cross(beta_max)
+    } else {
+      opt <- stats::optimise(
+        f = .contrast_cross,
+        interval = c(beta_min, beta_max),
+        tol = .Machine$double.eps
+      )
+
+      opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+      opt <- nloptr::bobyqa(
+        x0 = opt$minimum,
+        fn = .contrast_cross,
+        lower = beta_min,
+        upper = beta_max,
+        control = opts
+      )
+      beta <- opt$par
+      fmin <- opt$value
+    }
+
+    tau <- sqrt(compute_tau2_from_beta(
+      beta = beta,
+      r = pcfemp$r[rmin_tau:length(pcfemp$r)],
+      y = pcfemp$iso[rmin_tau:length(pcfemp$r)],
+      k1 = k1,
+      k2 = k2,
+      alpha1 = alpha1,
+      alpha2 = alpha2
+    ))
+    k12 <- get_kinf_value(
+      rho = tau * sqrt(rho1 * rho2),
+      alpha = 1 / sqrt(beta),
+      d = 2,
+      model = model
+    )
+  } else {
+    if (abs(beta_max - beta_min) < .Machine$double.eps^0.5) {
+      .contrast_cross <- function(x) {
+        are_params_feasible <- check_parameter_set(
+          rho1 = rho1, rho2 = rho2,
+          alpha1 = alpha1, alpha2 = alpha2,
+          alpha12 = 1 / sqrt(beta_max), tau = x,
+          d = 2, model = model
+        )
+        if (!are_params_feasible)
+          return(1e6)
+        contrast_cross(model, beta_max, x, pcfemp, rmin_alpha12, q = q, p = p)
+      }
+
+      opt <- stats::optimise(
+        f = .contrast_cross,
+        lower = 0,
+        upper = sqrt(M),
+        tol = .Machine$double.eps
+      )
+
+      opt <- nloptr::bobyqa(
+        x0 = opt$minimum,
+        fn = .contrast_cross,
+        lower = 0,
+        upper = sqrt(M),
+        control = list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+      )
+
+      beta <- beta_max
+      tau <- opt$par
+    } else {
+      .contrast_cross <- function(x) {
+        are_params_feasible <- check_parameter_set(
+          rho1 = rho1, rho2 = rho2,
+          alpha1 = alpha1, alpha2 = alpha2,
+          alpha12 = 1 / sqrt(x[1]), tau = x[2],
+          d = 2, model = model
+        )
+        if (!are_params_feasible)
+          return(1e6)
+        contrast_cross(model, x[1], x[2], pcfemp, rmin_alpha12, q = q, p = p)
+      }
+      lower <- c(beta_min, 0)
+      upper <- c(beta_max, sqrt(M))
+
+      opt <- nloptr::directL(
+        fn = .contrast_cross,
+        lower = lower,
+        upper = upper,
+        control = list(xtol_rel = 1e-6, maxeval = 1e3)
+      )
+
+      opt <- nloptr::bobyqa(
+        x0 = opt$par,
+        fn = .contrast_cross,
+        lower = lower,
+        upper = upper,
+        control = list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+      )
+
+      beta <- opt$par[1]
+      tau <- opt$par[2]
+    }
+
+    fmin <- opt$value
+    if (beta < sqrt(.Machine$double.eps))
+      k12 <- sqrt(k12maxSq)
+    else
+      k12 <- min(get_kinf_value(
+        rho = tau * sqrt(rho1 * rho2),
+        alpha = 1 / sqrt(beta),
+        d = 2, model = model
+      ), sqrt(k12maxSq))
+  }
+
+  # compute tau first via integrated contrast
+  stat_np_obs <- contrast_cross(
+    model = model,
+    beta = 1,
+    tau = 0,
+    pcfemp,
+    rmin = rmin_tau,
+    q = q,
+    p = p
+  )
+  stat_p_obs <- tau
+  null_np_distr <- NULL
+  null_p_distr <- NULL
+  np_reject <- NULL
+  p_reject <- NULL
+  if (B > 0) {
+    cli::cli_alert_info("Testing for absence of correlation...")
+    null_values <- compute_bootstrap_stats(
+      rho1 = rho1, alpha1 = alpha1,
+      rho2 = rho2, alpha2 = alpha2,
+      w = X$window,
+      B = B,
+      model = model,
+      rmin_alpha = rmin_alpha,
+      rmin_alpha12 = rmin_alpha12,
+      rmin_tau = rmin_tau,
+      q = q,
+      p = p,
+      divisor_marginal = divisor_marginal,
+      divisor_cross = divisor_cross,
+      method = method,
+      full_bootstrap = full_bootstrap
+    )
+    null_np_distr <- null_values$nonparametric
+    null_p_distr <- null_values$parametric
+    quantile_idx <- round(B * conf_level)
+    np_reject <- as.logical(stat_np_obs >= sort(null_np_distr)[quantile_idx])
+    p_reject <- as.logical(stat_p_obs >= sort(null_p_distr)[quantile_idx])
+  }
+
+  list(
     rho1 = rho1,
     rho2 = rho2,
     alpha1 = alpha1,
     alpha2 = alpha2,
-    alpha12 = NA,
-    tau = 0
-  ))
-
-  cost <- function(x) {
-    r <- pcfemp$r[rmin_alpha12:512]
-    y <- pcfemp$iso[rmin_alpha12:512]
-    sum(c(0, diff(r)) * (1 - y - gamma * x^2 * exp(-2 * x * r^2) / (rho1 * rho2 * pi^2))^2)
-  }
-
-  beta <- optimise(
-    f = cost,
-    interval = c(beta_min, beta_max)
-  )$minimum
-
-  if (method == "PCF")
-    return(list(
-      rho1 = rho1,
-      rho2 = rho2,
-      alpha1 = alpha1,
-      alpha2 = alpha2,
-      alpha12 = 1 / sqrt(beta),
-      tau = sqrt(gamma / (rho1 * rho2)) * beta / pi
-    ))
-
-  # Code for MLE
-
-}
-
-#' Estimation of Stationary Bivariate Bessel DPP via PCF
-#'
-#' @param X A 2-dimensional marked \code{\link[spatstat]{ppp}} object.
-#' @param init A list giving an initial guess at the parameters (default:
-#'   \code{NULL}).
-#' @param type A character scalar specifying whether PCF contrasts should be
-#'   minimized jointly (default) or independently. The latter is faster but
-#'   provides biased estimates.
-#'
-#' @return The estimated model parameters as a list.
-#' @export
-#'
-#' @examples
-#' res <- lapply(sim, bessel_pcf_estimation, type = "independent")
-#' temp <- unlist(res)
-#' par(mfrow = c(2, 2))
-#' boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
-#' abline(h = 0.03)
-#' boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
-#' abline(h = 0.03)
-#' boxplot(temp[seq(5, 600, 6)], main = 'tau')
-#' abline(h = 0.2)
-#' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-#' abline(h = 0.05)
-#'
-#' res <- lapply(sim, bessel_pcf_estimation, type = "joint")
-#' temp <- unlist(res)
-#' par(mfrow = c(2, 2))
-#' boxplot(temp[seq(2, 600, 6)], main = 'alpha1')
-#' abline(h = 0.03)
-#' boxplot(temp[seq(4, 600, 6)], main = 'alpha2')
-#' abline(h = 0.03)
-#' boxplot(temp[seq(5, 600, 6)], main = 'tau')
-#' abline(h = 0.2)
-#' boxplot(temp[seq(6, 600, 6)], main = 'alpha12')
-#' abline(h = 0.05)
-bessel_pcf_estimation <- function(X, init = NULL, type = "joint") {
-  Xs <- spatstat::split.ppp(X)
-  d <- length(Xs)
-  X1 <- Xs[[1]]
-  X2 <- Xs[[2]]
-  V <- spatstat::volume(X$window)
-  pcf12 <- spatstat::pcfcross(X)
-  x12 <- pcf12$iso[22:513]
-  r12 <- pcf12$r[22:513]
-
-  # Set rho1 and rho2
-  if (is.null(init)) {
-    rho1 <- X1$n / V
-    rho2 <- X2$n / V
-  } else {
-    rho1 <- init$rho1
-    rho2 <- init$rho2
-  }
-
-  if (type == "individual") {
-    # First marginal model
-    alpha1 <- NULL
-    if (!is.null(init)) {
-      alpha1 <- ialpha1 <- init$alpha1
-      ik1 <- get_k(rho1, ialpha1, d)
-    }
-    m1 <- fit_marginal_model(X1, V, d, rho1, alpha1)
-    rho1 <- m1$rho
-    alpha1 <- m1$alpha
-    k1 <- m1$k
-
-    # Second marginal model
-    alpha2 <- NULL
-    if (!is.null(init)) {
-      alpha2 <- ialpha2 <- init$alpha2
-      ik2 <- get_k(rho2, ialpha2, d)
-    }
-    m2 <- fit_marginal_model(X2, V, d, rho2, alpha2)
-    rho2 <- m2$rho
-    alpha2 <- m2$alpha
-    k2 <- m2$k
-
-    # Cross contrast for tau and alpha12
-    funcontrast <- function(par) {
-      k12 <- par[1]
-      tau <- par[2]
-      alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
-      ifelse(
-        alpha12 <= max(alpha1, alpha2),
-        1e6,
-        sum((x12^0.5 - pcftheocross(c(k12, alpha12), r12, rho1, rho2, d)^0.5)^2)
-      )
-    }
-    if (is.null(init)) {
-      lbs <- c(0, 0)
-      ubs <- c(
-        get_k12_ub(k1, k2),
-        1
-      )
-      # fit12 <- rgenoud::genoud(
-      #   fn = funcontrast,
-      #   nvars = 2,
-      #   Domains = cbind(lbs, ubs),
-      #   boundary.enforcement = 1,
-      #   print.level = 0
-      # )
-      # fit12 <- GenSA::GenSA(
-      #   fn = funcontrast,
-      #   lower = lbs,
-      #   upper = ubs
-      # )
-      # x0 <- fit12$par
-      fit12 <- RcppDE::DEoptim(
-        fn = funcontrast,
-        lower = lbs,
-        upper = ubs,
-        control = RcppDE::DEoptim.control(trace = FALSE)
-      )
-      x0 <- fit12$optim$bestmem
-      # fit12 <- nloptr::directL(
-      #   fn = funcontrast,
-      #   lower = lbs,
-      #   upper = ubs,
-      #   original = TRUE
-      # )
-      # x0 <- fit12$par
-      fit12 <- nloptr::neldermead(
-        x0 = x0,
-        fn = funcontrast,
-        lower = lbs,
-        upper = ubs
-      )
-    } else {
-      k12 <- get_k(init$tau * sqrt(rho1 * rho2), init$alpha12, d)
-      x0 <- c(k12, init$tau)
-      fit12 <- nloptr::neldermead(
-        x0 = x0,
-        fn = funcontrast,
-        lower = c(0, 0),
-        upper = c(
-          get_k12_ub(ik1, ik2),
-          1
-        )
-      )
-    }
-
-    k12 <- fit12$par[1]
-    tau <- fit12$par[2]
-    alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
-
-    return(list(
-      rho1 = rho1,
-      alpha1 = alpha1,
-      rho2 = rho2,
-      alpha2 = alpha2,
-      tau = tau,
-      alpha12 = alpha12,
-      min_contrast = fit12$value
-    ))
-  }
-
-  # Get empirical marginal PCFs
-  pcf1 <- spatstat::pcf(X1)
-  x1 <- pcf1$iso[22:513]
-  r1 <- pcf1$r[22:513]
-  pcf2 <- spatstat::pcf(X2)
-  x2 <- pcf2$iso[22:513]
-  r2 <- pcf2$r[22:513]
-  # Get common intersection grid
-  rmin <- max(min(r1), min(r2), min(r12))
-  rmax <- min(max(r1), max(r2), max(r12))
-  rc <- seq(rmin, rmax, length.out = 513-22+1)
-  # approx
-  x1 <- approx(r1, x1, rc)$y
-  x2 <- approx(r2, x2, rc)$y
-  x12 <- approx(r12, x12, rc)$y
-
-  # Joint PCF contrast
-  joint_pcf <- function(par) {
-    alpha1 <- par[1]
-    alpha2 <- par[2]
-    k12 <- par[3]
-    tau <- par[4]
-    alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
-    k1 <- get_k(rho1, alpha1, d)
-    k2 <- get_k(rho2, alpha2, d)
-    ifelse(
-      k12 >= get_k12_ub(k1, k2) | alpha12 < max(alpha1, alpha2),
-      1e6,
-      sum((x1^0.5 - pcftheomarginal(alpha1, rc, d)^0.5)^2) +
-          sum((x2^0.5 - pcftheomarginal(alpha2, rc, d)^0.5)^2) +
-          10 * sum((x12^0.5 - pcftheocross(c(k12, alpha12), rc, rho1, rho2, d)^0.5)^2)
-    )
-  }
-  lbs <- c(
-    sqrt(.Machine$double.eps),
-    sqrt(.Machine$double.eps),
-    0,
-    0
-  )
-  ubs <- c(
-    get_alpha_ub(rho1, d),
-    get_alpha_ub(rho2, d),
-    1,
-    1
-  )
-
-  if (is.null(init)) {
-    joint_fit <- RcppDE::DEoptim(
-      fn = joint_pcf,
-      lower = lbs,
-      upper = ubs,
-      control = RcppDE::DEoptim.control(trace = FALSE)
-    )
-    x0 <- joint_fit$optim$bestmem
-    # joint_fit <- nloptr::directL(
-    #   fn = joint_pcf,
-    #   lower = lbs,
-    #   upper = ubs,
-    #   original = TRUE
-    # )
-    # x0 <- joint_fit$par
-  } else {
-    x0 <- c(
-      init$alpha1,
-      init$alpha2,
-      get_k(init$tau * sqrt(init$rho1 * init$rho2), init$alpha12, d),
-      init$tau
-    )
-  }
-
-  joint_fit <- nloptr::neldermead(
-    x0 = x0,
-    fn = joint_pcf,
-    lower = lbs,
-    upper = ubs
-  )
-
-  k12 <- joint_fit$par[3]
-  tau <- joint_fit$par[4]
-  alpha12 <- get_alpha12(tau, k12, rho1, rho2, d)
-
-  # Output estimated parameters
-  list(
-    rho1 = rho1,
-    alpha1 = joint_fit$par[1],
-    rho2 = rho2,
-    alpha2 = joint_fit$par[2],
+    k12 = k12,
     tau = tau,
-    alpha12 = alpha12
+    alpha12 = 1 / sqrt(beta),
+    fmin = fmin,
+    stat_np_obs = stat_np_obs,
+    stat_p_obs = stat_p_obs,
+    null_np_distr = null_np_distr,
+    null_p_distr = null_p_distr,
+    np_reject = np_reject,
+    p_reject = p_reject
   )
-}
-
-fit_marginal_model <- function(X, V, d, rho = NULL, alpha = NULL) {
-  # Get initial values if not provided
-  ## rho
-  if (is.null(rho)) rho <- X$n / V
-  ## alpha
-  alpha_lb <- sqrt(.Machine$double.eps)
-  alpha_ub <- get_alpha_ub(rho, d)
-  pcf <- spatstat::pcf(X)
-  x <- pcf$iso[22:513]
-  r <- pcf$r[22:513]
-  funcontrast <- function(par) {
-    sum((x^0.5 - pcftheomarginal(par, r, d)^0.5)^2)
-  }
-
-  if (is.null(alpha)) {
-    alpha_init <- optimise(
-      f = funcontrast,
-      lower = alpha_lb,
-      upper = alpha_ub
-    )$minimum
-  } else {
-    alpha_init <- alpha
-  }
-
-  fit <- nloptr::neldermead(
-    x0 = alpha_init,
-    fn = funcontrast,
-    lower = alpha_lb,
-    upper = alpha_ub
-  )
-
-  alpha <- fit$par
-  min_contrast <- fit$value
-  k <- get_k(rho, alpha, d)
-
-  list(
-    rho = rho,
-    alpha = alpha,
-    k = k,
-    min_contrast = min_contrast
-  )
-}
-
-mfunbessel <- function(r, alpha, d = 2) {
-  order <- d / 2
-  sapply(r, function(.x) {
-    x <- sqrt(2 * d * .x^2) / alpha
-    if (x < sqrt(.Machine$double.eps))
-      return(1 / gamma(1 + order))
-    if (x > 1e5)
-      return(2^order * sqrt(2 / pi) * cos(x - alpha * pi / 2 - pi/4) / x^(0.5 + order))
-    2^order * besselJ(x, order) / x^order
-  })
-}
-
-pcftheomarginal <- function(alpha, r, d = 2) {
-  1 - mfunbessel(r, alpha, d = d)^2
-}
-
-pcftheocross <- function(par, r, rho1, rho2, d = 2) {
-  k <- par[1]
-  alpha <- par[2]
-  tau2 <- get_rho(k, alpha, d)^2 / (rho1 * rho2)
-  1 - tau2 * mfunbessel(r, alpha, d = d)^2
-}
-
-get_k <- function(rho, alpha, d) {
-  rho * gamma(d / 2 + 1) * (2 * pi * alpha^2 / d)^(d / 2)
-}
-
-get_rho <- function(k, alpha, d) {
-  k / (gamma(d / 2 + 1) * (2 * pi * alpha^2 / d)^(d / 2))
-}
-
-get_alpha_ub <- function(rho, d = 2) {
-  spatstat::dppparbounds(
-    model = spatstat::dppBessel(
-      lambda = rho,
-      sigma = 0,
-      d = d
-    ),
-    name = "alpha"
-  )[2]
-}
-
-get_k12_ub <- function(k1, k2) {
-  sqrt(max(min(k1 * k2, (1 - k1) * (1 - k2)), 0))
-}
-
-get_alpha12 <- function(tau, k12, rho1, rho2, d) {
-  rho12 <- tau * sqrt(rho1 * rho2)
-  ifelse(rho12 < 0.001, sqrt(.Machine$double.eps), (k12 / (rho12 * (2 * pi / d)^(d / 2) * gamma(1 + d / 2)))^(1 / d))
 }

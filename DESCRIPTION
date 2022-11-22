@@ -1,30 +1,42 @@
 Package: muscadet
-Title: Multimark Statistical Analysis of Determinantal Point Processes
+Title: Multi-Mark Statistical Analysis of Determinantal Point Processes
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Aymeric",
            family = "Stamm",
            role = c("aut", "cre"),
-           email = "aymeric@stamm.fr",
+           email = "aymeric.stamm@math.cnrs.fr",
            comment = c(ORCID = "0000-0002-8725-3654"))
 Description: This package implements stationary multi-mark Gaussian 
     and Bessel determinantal point processes. It is possible to 
     simulate points from a given set of parameters or to retrieve 
     model parameters from a given set of points.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.2
 LinkingTo:
-    RcppEnsmallen,
+    Rcpp,
     RcppArmadillo,
-    Rcpp,
-    BH
+    nloptr
+RcppModules: DPP
+Depends: R (>= 3.5.0)
 Imports: 
+    cli,
+    dplyr,
+    furrr,
+    methods,
+    nloptr,
+    progressr,
+    purrr,
     Rcpp,
-    spatstat
-URL: https://github.com/astamm/muscadet
+    rlang,
+    spatstat.core,
+    spatstat.geom,
+    tibble,
+    tidyr
+URL: https://github.com/astamm/muscadet,
+    https://lmjl-alea.github.io/muscadet/
 BugReports: https://github.com/astamm/muscadet/issues
-Suggests: 
-    furrr

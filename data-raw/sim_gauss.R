@@ -37,3 +37,32 @@ sims <- purrr::imap(tau, ~ {
     compress = "xz"
   )
 })
+
+library(tidyverse)
+library(muscadet)
+new_simulations <- tibble(
+  rho1 = 100,
+  rho2 = 100,
+  alpha1 = c(0.05, 0.01),
+  alpha2 = c(0.05, 0.01),
+  alpha12 = c(0.05, 0.012),
+  tau = c(0.2, 0.5)
+) |>
+  mutate(
+    sim = list(rho1, rho2, alpha1, alpha2, alpha12, tau) |>
+      pmap(~ {
+        rbidpp(
+          n = 100,
+          seed = 1234,
+          rho1 = ..1,
+          rho2 = ..2,
+          tau = ..6,
+          alpha1 = ..3,
+          alpha2 = ..4,
+          alpha12 = ..5,
+          progress = FALSE,
+          Kspec = "Kspecgauss",
+          testtau = "testtaugauss"
+        )
+      })
+  )

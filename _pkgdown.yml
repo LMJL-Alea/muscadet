@@ -1,0 +1,31 @@
+url: https://lmjl-alea.github.io/muscadet/
+template:
+  bootstrap: 5
+
+reference:
+  - title: Simulation
+  - contents:
+    - rbidpp
+    - get_feasible_repulsion_rate
+    - get_feasible_space
+  - title: Estimation
+  - contents:
+    - estimate
+    - mle
+  - title: Data Sets
+  - contents:
+    - sim_bessel0
+    - sim_bessel1
+    - sim_bessel2
+    - sim_bessel3
+    - sim_bessel4
+    - sim_bessel5
+    - sim_gauss0
+    - sim_gauss1
+    - sim_gauss2
+    - sim_gauss3
+    - sim_gauss4
+    - sim_gauss5
+    - sim_gauss6
+    - sim_gauss7
+    - simulations
