@@ -15,7 +15,7 @@ models. It currently provides support for Gaussian and Bessel DPPs.
 
 ## Installation
 
-You can install the development version of muscadet from
+You can install the development version of **muscadet** from
 [GitHub](https://github.com/) with:
 
 ``` r
