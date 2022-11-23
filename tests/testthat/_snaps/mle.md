@@ -1,15 +1,15 @@
 # fit_via_mle() works
 
     Code
-      res
+      round(res$par, digits = 3)
     Output
-      $par
-              rho1         rho2       alpha1       alpha2          k12          tau 
-      1.000000e+02 8.600000e+01 3.190365e-02 3.076222e-02 1.517198e-01 3.797155e-03 
-           alpha12 
-      3.703331e-01 
-      
-      $value
+         rho1    rho2  alpha1  alpha2     k12     tau alpha12 
+      100.000  86.000   0.032   0.031   0.152   0.004   0.370 
+
+---
+
+    Code
+      round(res$value, digits = 3)
+    Output
       [1] -1328.854
-      
 
