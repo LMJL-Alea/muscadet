@@ -1,171 +1,4 @@
-# USEFUL
-compute_bootstrap_stats <- function(rho1, alpha1,
-                                    rho2, alpha2,
-                                    w = list(xrange = c(0, 1), yrange = c(0, 1)),
-                                    B = 100,
-                                    model = "Gauss",
-                                    rmin_alpha = 2,
-                                    rmin_alpha12 = 2,
-                                    rmin_tau = 2,
-                                    q = 1,
-                                    p = 2,
-                                    divisor_marginal = "d",
-                                    divisor_cross = "d",
-                                    method = "profiling",
-                                    full_bootstrap = TRUE) {
-  w <- spatstat.geom::as.owin(w)
-  if (model == "Gauss") {
-    m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
-    m2 <- spatstat.core::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
-  } else if (model == "Bessel") {
-    m1 <- spatstat.core::dppBessel(lambda = rho1, alpha = alpha1, d = 2)
-    m2 <- spatstat.core::dppBessel(lambda = rho2, alpha = alpha2, d = 2)
-  } else
-    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
-
-  data1 <- stats::simulate(m1, nsim = B, w = w)
-  data2 <- stats::simulate(m2, nsim = B, w = w)
-
-  boot_data <- purrr::map2(data1, data2, ~ {
-    spatstat.geom::ppp(
-      x = c(.x$x, .y$x),
-      y = c(.x$y, .y$y),
-      window = w,
-      marks = as.factor(c(rep(1, .x$n), rep(2, .y$n)))
-    )
-  })
-
-  stat1 <- boot_data |>
-    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) |>
-    purrr::map_dbl(
-      .f = contrast_cross,
-      model = model,
-      beta = 1, tau = 0,
-      rmin = rmin_tau, q = q, p = p
-    )
-
-  if (full_bootstrap) {
-    stat2 <- boot_data |>
-      purrr::map(
-        .f = estimate,
-        model = model,
-        rmin_alpha = rmin_alpha,
-        rmin_alpha12 = rmin_alpha12,
-        rmin_tau = rmin_tau,
-        q = q,
-        p = p,
-        divisor_marginal = divisor_marginal,
-        divisor_cross = divisor_cross,
-        method = method
-      ) |>
-      purrr::map_dbl("tau")
-  } else {
-    stat2 <- boot_data |>
-      purrr::map(
-        .f = estimate,
-        model = model,
-        rmin_alpha = rmin_alpha,
-        rmin_alpha12 = rmin_alpha12,
-        rmin_tau = rmin_tau,
-        q = q,
-        p = p,
-        divisor_marginal = divisor_marginal,
-        divisor_cross = divisor_cross,
-        method = method,
-        params = c(rho1, rho2, alpha1, alpha2)
-      ) |>
-      purrr::map_dbl("tau")
-  }
-
-  list(nonparametric = stat1, parametric = stat2)
-}
-
-# USEFUL
-jinc <- function(x, alpha) {
-  # J_alpha(x) / (x/2)^alpha * gamma(alpha + 1)
-  if (x < sqrt(.Machine$double.eps))
-    return(1)
-  besselJ(x, alpha) / (x / 2)^alpha * gamma(alpha + 1)
-}
-
-# USEFUL
-contrast_marginal <- function(model, alpha, r, y, q = 0.5, p = 2, d = 2) {
-  yobs <- y^q
-  ypred <- (1 - get_eta_value(r, 1 / alpha^2, model)^2)^q
-  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
-}
-
-# USEFUL
-contrast_cross <- function(model, beta, tau, pcfemp, rmin, q = 1, p = 2) {
-  r <- pcfemp$r[rmin:length(pcfemp$r)]
-  yobs <- pcfemp$iso[rmin:length(pcfemp$r)]^q
-  ypred <- (1 - tau^2 * get_eta_value(r, beta, model)^2)^q
-  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
-}
-
-# USEFUL
-compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
-                                   model = c("Gauss", "Bessel")) {
-  model <- rlang::arg_match(model)
-  eta_val <- get_eta_value(r, beta, model = model)
-  I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
-  I2 <- sum(c(0, diff(r)) * eta_val^4)
-  tauSq_max <- alpha1 * alpha2 * beta * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
-  if (I2 < sqrt(.Machine$double.eps))
-    return(tauSq_max)
-  tauSq <- I1 / I2
-  tauSq <- max(0, tauSq)
-  min(tauSq_max, tauSq)
-}
-
-# USEFUL
-compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Gauss") {
-  if (model == "Gauss") {
-    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppGauss(
-      lambda = spatstat.geom::intensity(x),
-      d = 2
-    ))
-  } else if (model == "Bessel") {
-    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppBessel(
-      lambda = spatstat.geom::intensity(x),
-      d = 2,
-      sigma = 0
-    ))
-  } else
-    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
-
-  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
-  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
-
-  pcfemp <- spatstat.core::pcf(x, bw = "SJ", divisor = divisor)
-
-  opt <- stats::optimise(
-    f = contrast_marginal,
-    interval = c(alpha_lb, alpha_ub),
-    model = model,
-    r = pcfemp$r[rmin:length(pcfemp$r)],
-    y = pcfemp$iso[rmin:length(pcfemp$r)],
-    q = q,
-    p = p,
-    tol = .Machine$double.eps
-  )
-
-  opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
-  nloptr::bobyqa(
-    x0 = opt$minimum,
-    fn = contrast_marginal,
-    lower = alpha_lb,
-    upper = alpha_ub,
-    model = model,
-    r = pcfemp$r[rmin:length(pcfemp$r)],
-    y = pcfemp$iso[rmin:length(pcfemp$r)],
-    q = q,
-    p = p,
-    control = opts
-  )$par
-}
-
-#' Estimation of Stationary Bivariate 2-dimensional DPP
+#' Estimation of Two-Mark Planar DPPs via the Pair Correlation Function
 #'
 #' @section Empirical estimation of the pair correlation function:
 #' The empirical PCF is computed as a kernel estimate of the PCF in which the
@@ -220,21 +53,21 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Ga
 #' @export
 #'
 #' @examples
-#' estimate(sim_gauss0[[1]], model = "Gauss")
-estimate <- function(X,
-                     model = "Gauss",
-                     rmin_alpha = 2,
-                     rmin_alpha12 = 2,
-                     rmin_tau = 2,
-                     q = 1,
-                     p = 2,
-                     divisor_marginal = "d",
-                     divisor_cross = "d",
-                     method = "profiling",
-                     B = 0L,
-                     conf_level = 0.95,
-                     params = NULL,
-                     full_bootstrap = TRUE) {
+#' fit_via_pcf(sim_gauss0[[1]])
+fit_via_pcf <- function(X,
+                        model = "Gauss",
+                        rmin_alpha = 2,
+                        rmin_alpha12 = 2,
+                        rmin_tau = 2,
+                        q = 1,
+                        p = 2,
+                        divisor_marginal = "d",
+                        divisor_cross = "d",
+                        method = "profiling",
+                        B = 0L,
+                        conf_level = 0.95,
+                        params = NULL,
+                        full_bootstrap = TRUE) {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
@@ -479,4 +312,165 @@ estimate <- function(X,
     np_reject = np_reject,
     p_reject = p_reject
   )
+}
+
+compute_bootstrap_stats <- function(rho1, alpha1,
+                                    rho2, alpha2,
+                                    w = list(xrange = c(0, 1), yrange = c(0, 1)),
+                                    B = 100,
+                                    model = "Gauss",
+                                    rmin_alpha = 2,
+                                    rmin_alpha12 = 2,
+                                    rmin_tau = 2,
+                                    q = 1,
+                                    p = 2,
+                                    divisor_marginal = "d",
+                                    divisor_cross = "d",
+                                    method = "profiling",
+                                    full_bootstrap = TRUE) {
+  w <- spatstat.geom::as.owin(w)
+  if (model == "Gauss") {
+    m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
+    m2 <- spatstat.core::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
+  } else if (model == "Bessel") {
+    m1 <- spatstat.core::dppBessel(lambda = rho1, alpha = alpha1, d = 2)
+    m2 <- spatstat.core::dppBessel(lambda = rho2, alpha = alpha2, d = 2)
+  } else
+    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
+
+  data1 <- stats::simulate(m1, nsim = B, w = w)
+  data2 <- stats::simulate(m2, nsim = B, w = w)
+
+  boot_data <- purrr::map2(data1, data2, ~ {
+    spatstat.geom::ppp(
+      x = c(.x$x, .y$x),
+      y = c(.x$y, .y$y),
+      window = w,
+      marks = as.factor(c(rep(1, .x$n), rep(2, .y$n)))
+    )
+  })
+
+  stat1 <- boot_data |>
+    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) |>
+    purrr::map_dbl(
+      .f = contrast_cross,
+      model = model,
+      beta = 1, tau = 0,
+      rmin = rmin_tau, q = q, p = p
+    )
+
+  if (full_bootstrap) {
+    stat2 <- boot_data |>
+      purrr::map(
+        .f = fit_via_pcf,
+        model = model,
+        rmin_alpha = rmin_alpha,
+        rmin_alpha12 = rmin_alpha12,
+        rmin_tau = rmin_tau,
+        q = q,
+        p = p,
+        divisor_marginal = divisor_marginal,
+        divisor_cross = divisor_cross,
+        method = method
+      ) |>
+      purrr::map_dbl("tau")
+  } else {
+    stat2 <- boot_data |>
+      purrr::map(
+        .f = fit_via_pcf,
+        model = model,
+        rmin_alpha = rmin_alpha,
+        rmin_alpha12 = rmin_alpha12,
+        rmin_tau = rmin_tau,
+        q = q,
+        p = p,
+        divisor_marginal = divisor_marginal,
+        divisor_cross = divisor_cross,
+        method = method,
+        params = c(rho1, rho2, alpha1, alpha2)
+      ) |>
+      purrr::map_dbl("tau")
+  }
+
+  list(nonparametric = stat1, parametric = stat2)
+}
+
+jinc <- function(x, alpha) {
+  # J_alpha(x) / (x/2)^alpha * gamma(alpha + 1)
+  if (x < sqrt(.Machine$double.eps))
+    return(1)
+  besselJ(x, alpha) / (x / 2)^alpha * gamma(alpha + 1)
+}
+
+contrast_marginal <- function(model, alpha, r, y, q = 0.5, p = 2, d = 2) {
+  yobs <- y^q
+  ypred <- (1 - get_eta_value(r, 1 / alpha^2, model)^2)^q
+  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
+}
+
+contrast_cross <- function(model, beta, tau, pcfemp, rmin, q = 1, p = 2) {
+  r <- pcfemp$r[rmin:length(pcfemp$r)]
+  yobs <- pcfemp$iso[rmin:length(pcfemp$r)]^q
+  ypred <- (1 - tau^2 * get_eta_value(r, beta, model)^2)^q
+  sum(c(0, diff(r)) * abs(yobs - ypred)^p)
+}
+
+compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
+                                   model = c("Gauss", "Bessel")) {
+  model <- rlang::arg_match(model)
+  eta_val <- get_eta_value(r, beta, model = model)
+  I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
+  I2 <- sum(c(0, diff(r)) * eta_val^4)
+  tauSq_max <- alpha1 * alpha2 * beta * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
+  if (I2 < sqrt(.Machine$double.eps))
+    return(tauSq_max)
+  tauSq <- I1 / I2
+  tauSq <- max(0, tauSq)
+  min(tauSq_max, tauSq)
+}
+
+compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Gauss") {
+  if (model == "Gauss") {
+    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppGauss(
+      lambda = spatstat.geom::intensity(x),
+      d = 2
+    ))
+  } else if (model == "Bessel") {
+    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppBessel(
+      lambda = spatstat.geom::intensity(x),
+      d = 2,
+      sigma = 0
+    ))
+  } else
+    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
+
+  alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
+  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
+
+  pcfemp <- spatstat.core::pcf(x, bw = "SJ", divisor = divisor)
+
+  opt <- stats::optimise(
+    f = contrast_marginal,
+    interval = c(alpha_lb, alpha_ub),
+    model = model,
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    q = q,
+    p = p,
+    tol = .Machine$double.eps
+  )
+
+  opts <- list(xtol_rel = .Machine$double.eps, maxeval = 1e6)
+  nloptr::bobyqa(
+    x0 = opt$minimum,
+    fn = contrast_marginal,
+    lower = alpha_lb,
+    upper = alpha_ub,
+    model = model,
+    r = pcfemp$r[rmin:length(pcfemp$r)],
+    y = pcfemp$iso[rmin:length(pcfemp$r)],
+    q = q,
+    p = p,
+    control = opts
+  )$par
 }

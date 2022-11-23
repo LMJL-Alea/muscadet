@@ -27,9 +27,7 @@
 #' @return An object of class [spatstat.geom::ppp] storing the simulated point
 #'   pattern.
 #'
-#' @export
-#' @examples
-#' rbidpp()
+#' @keywords internal
 rbidpp <- function(n = 1L,
                    rho1 = 100, rho2 = 100,
                    alpha1 = 0.03, alpha2 = 0.03,

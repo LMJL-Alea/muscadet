@@ -58,6 +58,4 @@ pattern.
 \description{
 Simulates one or more planar point patterns following a given multi-mark DPP.
 }
-\examples{
-rbidpp()
-}
+\keyword{internal}

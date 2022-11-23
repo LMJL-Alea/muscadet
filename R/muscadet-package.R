@@ -1,6 +1,6 @@
 #' @useDynLib muscadet, .registration=TRUE
-#' @import rlang
 #' @import nloptr
+#' @importFrom R6 R6Class
 #' @importFrom Rcpp sourceCpp
-#' @importFrom tibble tibble
+#' @importFrom rlang .data `:=`
 NULL

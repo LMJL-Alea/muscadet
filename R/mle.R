@@ -1,6 +1,6 @@
-#' Estimation of multi-mark DPP via Maximum Likelihood
+#' Estimation of Two-Mark Planar DPPs via Maximum Likelihood
 #'
-#' @param data An object of class [spatstat.geom::ppp] specifying an observed
+#' @param X An object of class [spatstat.geom::ppp] specifying an observed
 #'   planar determinantal point process.
 #' @param initial_guess A numeric vector specifying an initial guess for the
 #'   model parameters that maximize the likelihood. Defaults to `NULL`, which
@@ -30,17 +30,17 @@
 #'
 #' @export
 #' @examples
-#' opt <- mle(sim_gauss5[[1]])
-mle <- function(data,
-                initial_guess = NULL,
-                fixed_marginal_parameters = FALSE,
-                model = "gauss",
-                optimizer = "bobyqa",
-                num_threads = 1,
-                N = 512,
-                verbose_level = 0) {
-  points <- cbind(data$x, data$y)
-  marks <- data$marks
+#' opt <- fit_via_mle(sim_gauss5[[1]])
+fit_via_mle <- function(X,
+                        initial_guess = NULL,
+                        fixed_marginal_parameters = FALSE,
+                        model = "gauss",
+                        optimizer = "bobyqa",
+                        num_threads = 1,
+                        N = 512,
+                        verbose_level = 0) {
+  points <- cbind(X$x, X$y)
+  marks <- X$marks
 
   # Bivariate case
   # Fixed marginal params so need to estimate them through marginal likelihood
@@ -51,11 +51,11 @@ mle <- function(data,
       alpha1 <- initial_guess[["alpha1"]]
       alpha2 <- initial_guess[["alpha2"]]
       init <- c(alpha1, alpha2)
-      marginal_parameters <- data |>
+      marginal_parameters <- X |>
         spatstat.geom::split.ppp() |>
         purrr::map2(
           .y = init,
-          .f = mle,
+          .f = fit_via_mle,
           model = model,
           optimizer = optimizer,
           num_threads = num_threads,
@@ -65,10 +65,10 @@ mle <- function(data,
         purrr::map("par") |>
         purrr::map_dbl("alpha")
     } else { # Naive initialization
-      marginal_parameters <- data |>
+      marginal_parameters <- X |>
         spatstat.geom::split.ppp() |>
         purrr::map(
-          .f = mle,
+          .f = fit_via_mle,
           model = model,
           optimizer = optimizer,
           num_threads = num_threads,
@@ -80,8 +80,8 @@ mle <- function(data,
     }
   }
 
-  lower_bound <- c(data$window$xrange[1], data$window$yrange[1])
-  upper_bound <- c(data$window$xrange[2], data$window$yrange[2])
+  lower_bound <- c(X$window$xrange[1], X$window$yrange[1])
+  upper_bound <- c(X$window$xrange[2], X$window$yrange[2])
 
   nd_grid <- generate_nd_grid(N, dim(points)[2], lower_bound, upper_bound)
 

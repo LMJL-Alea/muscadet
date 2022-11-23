@@ -1,4 +1,4 @@
-test_that("fit_via_pcf() works", {
+test_that("fit_via_mle() works", {
   set.seed(1234)
   df <- rbidpp(
     n = 1,
@@ -7,6 +7,6 @@ test_that("fit_via_pcf() works", {
     alpha12 = 0.035, tau = 0.5,
     L = 1, model = "Gauss"
   )
-  res <- fit_via_pcf(df[[1]])
+  res <- fit_via_mle(df[[1]])
   expect_snapshot(res)
 })

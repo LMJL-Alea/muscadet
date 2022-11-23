@@ -20,11 +20,14 @@ knitr::opts_chunk$set(
 [![pkgdown](https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml)
 [![Codecov test coverage](https://codecov.io/gh/LMJL-Alea/muscadet/branch/master/graph/badge.svg)](https://app.codecov.io/gh/LMJL-Alea/muscadet?branch=master)
 [![test-coverage](https://github.com/LMJL-Alea/muscadet/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/LMJL-Alea/muscadet/actions/workflows/test-coverage.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/muscadet)](https://CRAN.R-project.org/package=muscadet)
 <!-- badges: end -->
 
-The goal of **muscadet** is to provide a set of functions for simulating and
-estimating planar point patterns according to various two-mark DPP models. It
-currently provides support for Gaussian and Bessel DPPs.
+The goal of **muscadet** is to provide ways of simulating and estimating planar
+point patterns according to various two-mark DPP models. It currently provides
+support for Gaussian and Bessel DPPs. Estimation can be performed either by
+minimizing the pair correlation function contrast or by maximizing the
+likelihood.
 
 ## Installation
 
@@ -38,27 +41,72 @@ devtools::install_github("LMJL-Alea/muscadet")
 
 ## Example
 
-You can simulate a planar point pattern following a two-mark DPP using the
-`rbidpp()` function:
-
-```{r sim}
+The typical way of using **muscadet** for studying two-mark planar DPPs is to
+use the
+[`TwoMarkDPP`](https://lmjl-alea.github.io/muscadet/reference/TwoMarkDPP.html)
+class:
+```{r}
 library(muscadet)
+mod <- TwoMarkDPP$new(model = "Gauss")
+mod
+```
+
+As one can see, the model is initially empty, in the sense that no parameter is
+provided. You can start setting them manually one at a time:
+
+```{r}
+mod$first_intensity <- 100
+mod
+```
+
+You can notice how the model gets updated and gives you intervals of feasible
+values for some parameters as soon as it is able to compute this information
+given the set of already known parameters.
+
+```{r}
+mod$second_intensity <- 100
+mod$first_repulsion_rate <- 0.03
+mod$second_repulsion_rate <- 0.03
+mod
+```
+
+```{r}
+mod$cross_repulsion_rate <- 0.035
+mod
+```
+
+```{r}
+mod$between_mark_correlation <- 0.5
+mod$window_size <- 1
+mod
+```
+
+Now the model is fully specified and you can simulate a point pattern from it
+via the `$random()` method:
+
+```{r}
+progressr::handlers("rstudio")
 withr::with_seed(1234, {
   progressr::with_progress({
-    df <- rbidpp(
-      n = 1, 
-      rho1 = 100, rho2 = 100, 
-      alpha1 = 0.03, alpha2 = 0.03, 
-      alpha12 = 0.035, tau = 0.5, 
-      L = 1, model = "Gauss"
-    )  
+    df <- mod$random(n = 1)
   })
 })
 ```
 
-You can estimate the parameters of a two-mark DPP from an observed planar point
-pattern using the `estimate()` function:
+Note that the computations are parallelized over the sample size using the
+[**futureverse**](https://future.futureverse.org) framework.
 
-```{r est}
-estimate(df[[1]], model = "Gauss")
+If you have an observed two-mark planar point pattern, you can also use it to
+fit the model which automatically adjusts the parameter set and bounds. This is
+achieved via the `$fit()` method:
+
+```{r}
+mod$fit(df[[1]])
+mod
 ```
+
+If you want finer control over the estimation methods, you can use the functions
+[`fit_via_pcf()`](https://lmjl-alea.github.io/muscadet/reference/fit_via_pcf.html)
+and
+[`fit_via_mle()`](https://lmjl-alea.github.io/muscadet/reference/fit_via_mle.html)
+from outside the model class.

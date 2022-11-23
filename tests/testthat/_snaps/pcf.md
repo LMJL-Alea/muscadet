@@ -1,4 +1,4 @@
-# estimate() works
+# fit_via_pcf() works
 
     Code
       res
