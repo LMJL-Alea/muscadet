@@ -16,22 +16,19 @@
     <loc>https://lmjl-alea.github.io/muscadet/index.html</loc>
   </url>
   <url>
+    <loc>https://lmjl-alea.github.io/muscadet/reference/TwoMarkDPP.html</loc>
+  </url>
+  <url>
     <loc>https://lmjl-alea.github.io/muscadet/reference/ddetmodel.direct.html</loc>
   </url>
   <url>
-    <loc>https://lmjl-alea.github.io/muscadet/reference/estimate.html</loc>
+    <loc>https://lmjl-alea.github.io/muscadet/reference/fit_via_mle.html</loc>
   </url>
   <url>
-    <loc>https://lmjl-alea.github.io/muscadet/reference/get_feasible_repulsion_rate.html</loc>
-  </url>
-  <url>
-    <loc>https://lmjl-alea.github.io/muscadet/reference/get_feasible_space.html</loc>
+    <loc>https://lmjl-alea.github.io/muscadet/reference/fit_via_pcf.html</loc>
   </url>
   <url>
     <loc>https://lmjl-alea.github.io/muscadet/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://lmjl-alea.github.io/muscadet/reference/mle.html</loc>
   </url>
   <url>
     <loc>https://lmjl-alea.github.io/muscadet/reference/rbidpp.html</loc>

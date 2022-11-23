@@ -68,7 +68,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>The goal of <strong>muscadet</strong> is to provide a set of functions for simulating and estimating planar point patterns according to various two-mark DPP models. It currently provides support for Gaussian and Bessel DPPs.</p>
+<p>The goal of <strong>muscadet</strong> is to provide ways of simulating and estimating planar point patterns according to various two-mark DPP models. It currently provides support for Gaussian and Bessel DPPs. Estimation can be performed either by minimizing the pair correlation function contrast or by maximizing the likelihood.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -80,64 +80,96 @@
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<p>You can simulate a planar point pattern following a two-mark DPP using the <code><a href="reference/rbidpp.html">rbidpp()</a></code> function:</p>
+<p>The typical way of using <strong>muscadet</strong> for studying two-mark planar DPPs is to use the <a href="https://lmjl-alea.github.io/muscadet/reference/TwoMarkDPP.html"><code>TwoMarkDPP</code></a> class:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/astamm/muscadet" class="external-link">muscadet</a></span><span class="op">)</span></span>
+<span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/TwoMarkDPP.html">TwoMarkDPP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>model <span class="op">=</span> <span class="st">"Gauss"</span><span class="op">)</span></span>
+<span><span class="va">mod</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Two-mark planar Gauss determinantal point process ───────────────────────────</span></span>
+<span><span class="co">#&gt; • Intensity of the 1st marginal DPP: ?</span></span>
+<span><span class="co">#&gt; • Intensity of the 2nd marginal DPP: ?</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 1st marginal DPP: ?</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 2nd marginal DPP: ?</span></span>
+<span><span class="co">#&gt; • Repulsion rate between marks: ?</span></span>
+<span><span class="co">#&gt; • Correlation between marks: ?</span></span>
+<span><span class="co">#&gt; • Window size: ?</span></span></code></pre></div>
+<p>As one can see, the model is initially empty, in the sense that no parameter is provided. You can start setting them manually one at a time:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="va">first_intensity</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">mod</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Two-mark planar Gauss determinantal point process ───────────────────────────</span></span>
+<span><span class="co">#&gt; • Intensity of the 1st marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Intensity of the 2nd marginal DPP: ?</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 1st marginal DPP: (0, 0.056)</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 2nd marginal DPP: ?</span></span>
+<span><span class="co">#&gt; • Repulsion rate between marks: ?</span></span>
+<span><span class="co">#&gt; • Correlation between marks: ?</span></span>
+<span><span class="co">#&gt; • Window size: ?</span></span></code></pre></div>
+<p>You can notice how the model gets updated and gives you intervals of feasible values for some parameters as soon as it is able to compute this information given the set of already known parameters.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="va">second_intensity</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">mod</span><span class="op">$</span><span class="va">first_repulsion_rate</span> <span class="op">&lt;-</span> <span class="fl">0.03</span></span>
+<span><span class="va">mod</span><span class="op">$</span><span class="va">second_repulsion_rate</span> <span class="op">&lt;-</span> <span class="fl">0.03</span></span>
+<span><span class="va">mod</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Two-mark planar Gauss determinantal point process ───────────────────────────</span></span>
+<span><span class="co">#&gt; • Intensity of the 1st marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Intensity of the 2nd marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 1st marginal DPP: 0.03</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 2nd marginal DPP: 0.03</span></span>
+<span><span class="co">#&gt; • Repulsion rate between marks: [0.03, Inf)</span></span>
+<span><span class="co">#&gt; • Correlation between marks: ?</span></span>
+<span><span class="co">#&gt; • Window size: ?</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="va">cross_repulsion_rate</span> <span class="op">&lt;-</span> <span class="fl">0.035</span></span>
+<span><span class="va">mod</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Two-mark planar Gauss determinantal point process ───────────────────────────</span></span>
+<span><span class="co">#&gt; • Intensity of the 1st marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Intensity of the 2nd marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 1st marginal DPP: 0.03</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 2nd marginal DPP: 0.03</span></span>
+<span><span class="co">#&gt; • Repulsion rate between marks: 0.035</span></span>
+<span><span class="co">#&gt; • Correlation between marks: [0, 0.735)</span></span>
+<span><span class="co">#&gt; • Window size: ?</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="va">between_mark_correlation</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
+<span><span class="va">mod</span><span class="op">$</span><span class="va">window_size</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="va">mod</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Two-mark planar Gauss determinantal point process ───────────────────────────</span></span>
+<span><span class="co">#&gt; • Intensity of the 1st marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Intensity of the 2nd marginal DPP: 100</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 1st marginal DPP: 0.03</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 2nd marginal DPP: 0.03</span></span>
+<span><span class="co">#&gt; • Repulsion rate between marks: 0.035</span></span>
+<span><span class="co">#&gt; • Correlation between marks: 0.5</span></span>
+<span><span class="co">#&gt; • Window size: 1</span></span></code></pre></div>
+<p>Now the model is fully specified and you can simulate a point pattern from it via the <code>$random()</code> method:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">progressr</span><span class="fu">::</span><span class="fu"><a href="https://progressr.futureverse.org/reference/handlers.html" class="external-link">handlers</a></span><span class="op">(</span><span class="st">"rstudio"</span><span class="op">)</span></span>
 <span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_seed.html" class="external-link">with_seed</a></span><span class="op">(</span><span class="fl">1234</span>, <span class="op">{</span></span>
 <span>  <span class="fu">progressr</span><span class="fu">::</span><span class="fu"><a href="https://progressr.futureverse.org/reference/with_progress.html" class="external-link">with_progress</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>    <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rbidpp.html">rbidpp</a></span><span class="op">(</span></span>
-<span>      n <span class="op">=</span> <span class="fl">1</span>, </span>
-<span>      rho1 <span class="op">=</span> <span class="fl">100</span>, rho2 <span class="op">=</span> <span class="fl">100</span>, </span>
-<span>      alpha1 <span class="op">=</span> <span class="fl">0.03</span>, alpha2 <span class="op">=</span> <span class="fl">0.03</span>, </span>
-<span>      alpha12 <span class="op">=</span> <span class="fl">0.035</span>, tau <span class="op">=</span> <span class="fl">0.5</span>, </span>
-<span>      L <span class="op">=</span> <span class="fl">1</span>, model <span class="op">=</span> <span class="st">"Gauss"</span></span>
-<span>    <span class="op">)</span>  </span>
+<span>    <span class="va">df</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">random</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
-<p>You can estimate the parameters of a two-mark DPP from an observed planar point pattern using the <code><a href="reference/estimate.html">estimate()</a></code> function:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/estimate.html">estimate</a></span><span class="op">(</span><span class="va">df</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, model <span class="op">=</span> <span class="st">"Gauss"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $rho1</span></span>
-<span><span class="co">#&gt; [1] 105</span></span>
+<p>Note that the computations are parallelized over the sample size using the <a href="https://future.futureverse.org" class="external-link"><strong>futureverse</strong></a> framework.</p>
+<p>If you have an observed two-mark planar point pattern, you can also use it to fit the model which automatically adjusts the parameter set and bounds. This is achieved via the <code>$fit()</code> method:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="fu">fit</span><span class="op">(</span><span class="va">df</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">mod</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $rho2</span></span>
-<span><span class="co">#&gt; [1] 102</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $alpha1</span></span>
-<span><span class="co">#&gt; [1] 0.03351226</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $alpha2</span></span>
-<span><span class="co">#&gt; [1] 0.03741944</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $k12</span></span>
-<span><span class="co">#&gt; [1] 0.2910802</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $tau</span></span>
-<span><span class="co">#&gt; [1] 0.7096292</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $alpha12</span></span>
-<span><span class="co">#&gt; [1] 0.03551962</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $fmin</span></span>
-<span><span class="co">#&gt; [1] 0.001426345</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $stat_np_obs</span></span>
-<span><span class="co">#&gt; [1] 0.005231958</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $stat_p_obs</span></span>
-<span><span class="co">#&gt; [1] 0.7096292</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $null_np_distr</span></span>
-<span><span class="co">#&gt; NULL</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $null_p_distr</span></span>
-<span><span class="co">#&gt; NULL</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $np_reject</span></span>
-<span><span class="co">#&gt; NULL</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $p_reject</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt; ── Two-mark planar Gauss determinantal point process ───────────────────────────</span></span>
+<span><span class="co">#&gt; • Intensity of the 1st marginal DPP: 105</span></span>
+<span><span class="co">#&gt; • Intensity of the 2nd marginal DPP: 102</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 1st marginal DPP: 0.034</span></span>
+<span><span class="co">#&gt; • Repulsion rate of the 2nd marginal DPP: 0.037</span></span>
+<span><span class="co">#&gt; • Repulsion rate between marks: 0.036</span></span>
+<span><span class="co">#&gt; • Correlation between marks: 0.71</span></span>
+<span><span class="co">#&gt; • Window size: 1</span></span></code></pre></div>
+<p>If you want finer control over the estimation methods, you can use the functions <a href="https://lmjl-alea.github.io/muscadet/reference/fit_via_pcf.html"><code>fit_via_pcf()</code></a> and <a href="https://lmjl-alea.github.io/muscadet/reference/fit_via_mle.html"><code>fit_via_mle()</code></a> from outside the model class.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -178,6 +210,7 @@
 <li><a href="https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml" class="external-link"><img src="https://github.com/LMJL-Alea/muscadet/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a></li>
 <li><a href="https://app.codecov.io/gh/LMJL-Alea/muscadet?branch=master" class="external-link"><img src="https://codecov.io/gh/LMJL-Alea/muscadet/branch/master/graph/badge.svg" alt="Codecov test coverage"></a></li>
 <li><a href="https://github.com/LMJL-Alea/muscadet/actions/workflows/test-coverage.yaml" class="external-link"><img src="https://github.com/LMJL-Alea/muscadet/actions/workflows/test-coverage.yaml/badge.svg" alt="test-coverage"></a></li>
+<li><a href="https://CRAN.R-project.org/package=muscadet" class="external-link"><img src="https://www.r-pkg.org/badges/version/muscadet" alt="CRAN status"></a></li>
 </ul>
 </div>
 
