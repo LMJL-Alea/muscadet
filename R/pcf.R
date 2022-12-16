@@ -5,10 +5,10 @@
 #' contribution from an interpoint distance \eqn{d_{ij}} to the estimate of
 #' \eqn{g(r)} is divided:
 #' - either by \eqn{r} using optional argument `divisor = "r"` in the functions
-#' [spatstat.core::pcf()] and [spatstat.core::pcfcross()];
+#' [spatstat.explore::pcf()] and [spatstat.explore::pcfcross()];
 #' - or by \eqn{d_{ij}} using optional argument `divisor = "d"` in the functions
-#' [spatstat.core::pcf()] and [spatstat.core::pcfcross()]; it is intended to
-#' improve the bias of the estimator when \eqn{r} is close to zero.
+#' [spatstat.explore::pcf()] and [spatstat.explore::pcfcross()]; it is intended
+#' to improve the bias of the estimator when \eqn{r} is close to zero.
 #'
 #' @param X An object of class [spatstat.geom::ppp] specifying a planar point
 #'   pattern.
@@ -103,7 +103,7 @@ fit_via_pcf <- function(X,
   }
 
   # Get cross PCF for estimating tau and alpha12
-  pcfemp <- spatstat.core::pcfcross(X, bw = "SJ", divisor = divisor_cross)
+  pcfemp <- spatstat.explore::pcfcross(X, bw = "SJ", divisor = divisor_cross)
 
   # Notations: beta = 1 / alpha12^2
   bnds <- get_bounds(
@@ -325,13 +325,14 @@ compute_bootstrap_stats <- function(rho1, alpha1,
                                     full_bootstrap = TRUE) {
   w <- spatstat.geom::as.owin(w)
   if (model == "Gauss") {
-    m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
-    m2 <- spatstat.core::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
+    m1 <- spatstat.model::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
+    m2 <- spatstat.model::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
   } else if (model == "Bessel") {
-    m1 <- spatstat.core::dppBessel(lambda = rho1, alpha = alpha1, sigma = 0, d = 2)
-    m2 <- spatstat.core::dppBessel(lambda = rho2, alpha = alpha2, sigma = 0, d = 2)
+    m1 <- spatstat.model::dppBessel(lambda = rho1, alpha = alpha1, sigma = 0, d = 2)
+    m2 <- spatstat.model::dppBessel(lambda = rho2, alpha = alpha2, sigma = 0, d = 2)
   } else
-    cli::cli_abort("Model {model} is not yet implemented. Currently supported
+    cli::cli_abort("Model
+    {model} is not yet implemented. Currently supported
                    models are {.field Gauss} or {.field Bessel}.")
 
   data1 <- stats::simulate(m1, nsim = B, W = w, trunc = switch(
@@ -355,7 +356,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
   })
 
   stat1 <- boot_data |>
-    purrr::map(spatstat.core::pcfcross, bw = "SJ", divisor = divisor_cross) |>
+    purrr::map(spatstat.explore::pcfcross, bw = "SJ", divisor = divisor_cross) |>
     purrr::map_dbl(
       .f = contrast_cross,
       model = model,
@@ -435,12 +436,12 @@ compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
 
 compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Gauss") {
   if (model == "Gauss") {
-    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppGauss(
+    alpha_ub <- spatstat.model::dppparbounds(spatstat.model::dppGauss(
       lambda = spatstat.geom::intensity(x),
       d = 2
     ))
   } else if (model == "Bessel") {
-    alpha_ub <- spatstat.core::dppparbounds(spatstat.core::dppBessel(
+    alpha_ub <- spatstat.model::dppparbounds(spatstat.model::dppBessel(
       lambda = spatstat.geom::intensity(x),
       d = 2,
       sigma = 0
@@ -451,7 +452,7 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Ga
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
   alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
 
-  pcfemp <- spatstat.core::pcf(x, bw = "SJ", divisor = divisor)
+  pcfemp <- spatstat.explore::pcf(x, bw = "SJ", divisor = divisor)
 
   opt <- stats::optimise(
     f = contrast_marginal,

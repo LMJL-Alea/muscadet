@@ -81,10 +81,10 @@ contribution from an interpoint distance \eqn{d_{ij}} to the estimate of
 \eqn{g(r)} is divided:
 \itemize{
 \item either by \eqn{r} using optional argument \code{divisor = "r"} in the functions
-\code{\link[spatstat.core:pcf]{spatstat.core::pcf()}} and \code{\link[spatstat.core:pcfcross]{spatstat.core::pcfcross()}};
+\code{\link[spatstat.explore:pcf]{spatstat.explore::pcf()}} and \code{\link[spatstat.explore:pcfcross]{spatstat.explore::pcfcross()}};
 \item or by \eqn{d_{ij}} using optional argument \code{divisor = "d"} in the functions
-\code{\link[spatstat.core:pcf]{spatstat.core::pcf()}} and \code{\link[spatstat.core:pcfcross]{spatstat.core::pcfcross()}}; it is intended to
-improve the bias of the estimator when \eqn{r} is close to zero.
+\code{\link[spatstat.explore:pcf]{spatstat.explore::pcf()}} and \code{\link[spatstat.explore:pcfcross]{spatstat.explore::pcfcross()}}; it is intended
+to improve the bias of the estimator when \eqn{r} is close to zero.
 }
 }
 

@@ -10,12 +10,12 @@ ddetmodel.direct(X, model, trunc = 0.99, log = TRUE, ...)
 \item{X}{An object of class \link[spatstat.geom:ppp]{spatstat.geom::ppp} specifying a planar point
 pattern.}
 
-\item{model}{An object of class \link[spatstat.core:detpointprocfamilyfun]{spatstat.core::detpointprocfamilyfun}
+\item{model}{An object of class \link[spatstat.model:detpointprocfamilyfun]{spatstat.model::detpointprocfamilyfun}
 specifying the model to be used.}
 
 \item{trunc}{A numeric value specifying how the model truncation is
 preformed. Defaults to \code{0.99}. See details of
-\code{\link[spatstat.core:simulate.dppm]{spatstat.core::simulate.detpointprocfamily()}}.}
+\code{\link[spatstat.model:simulate.dppm]{spatstat.model::simulate.detpointprocfamily()}}.}
 
 \item{log}{A boolean value specifying whether to compute the logarithm.
 Defaults to \code{TRUE}.}

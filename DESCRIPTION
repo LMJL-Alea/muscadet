@@ -34,8 +34,9 @@ Imports:
     R6,
     Rcpp,
     rlang,
-    spatstat.core,
+    spatstat.explore,
     spatstat.geom,
+    spatstat.model,
     tibble,
     tidyr
 URL: https://github.com/astamm/muscadet,

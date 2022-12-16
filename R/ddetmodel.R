@@ -5,11 +5,11 @@
 #'
 #' @param X An object of class [spatstat.geom::ppp] specifying a planar point
 #'   pattern.
-#' @param model An object of class [spatstat.core::detpointprocfamilyfun]
+#' @param model An object of class [spatstat.model::detpointprocfamilyfun]
 #'   specifying the model to be used.
 #' @param trunc A numeric value specifying how the model truncation is
 #'   preformed. Defaults to `0.99`. See details of
-#'   [spatstat.core::simulate.detpointprocfamily()].
+#'   [spatstat.model::simulate.detpointprocfamily()].
 #' @param log A boolean value specifying whether to compute the logarithm.
 #'   Defaults to `TRUE`.
 #' @param ... Extra parameters to be passed on to next methods. Ignored.
@@ -94,7 +94,7 @@ lambda.and.k <- function#Internal function calculating lambda and k
  stationary = FALSE
  ### logical indicating whether the stationarity of the model should be used (only works in dimension 2).
 ){
-  dim <- spatstat.core::dim.detpointprocfamily(model)
+  dim <- spatstat.model::dim.detpointprocfamily(model)
   if(stationary&&dim!=2)
     stop("Stationarity can only be exploited in dimension 2 at the moment.")
 
@@ -106,8 +106,8 @@ lambda.and.k <- function#Internal function calculating lambda and k
   ## Get the maximal truncation in each dimension
   maxtrunc <- 512# dppspatstat.options("max.trunc")^(1/dim)
   ## Extract spectral density
-  specden <- spatstat.core::dppspecden(model)
-  truncrange <- spatstat.core::dppspecdenrange(model)*max(Wscale)
+  specden <- spatstat.model::dppspecden(model)
+  truncrange <- spatstat.model::dppspecdenrange(model) * max(Wscale)
 
   if(trunc>=1){ ## Integer truncation fixed by user.
     if(stationary){

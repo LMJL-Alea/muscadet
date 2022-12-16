@@ -170,7 +170,7 @@ rdpppmulti <- function(index,
 {
   ##Check if really multi -fred
   if (is.null(V)) {
-    return(spatstat.core::rdpp(
+    return(spatstat.model::rdpp(
       index = index,
       basis = "fourierbasis",
       window = spatstat.geom::boxx(rep(list(0:1),ncol(index))),
