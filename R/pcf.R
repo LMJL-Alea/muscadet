@@ -37,14 +37,12 @@
 #'   the bootstrap procedure to approximate the distribution of the test
 #'   statistics when testing for absence of correlation between marks. Defaults
 #'   to `0L` which does not perform the test at all.
-#' @param conf_level A numeric value specifying the confidence level when
-#'   testing for absence of correlation between marks. Defaults to `0.95`.
-#' @param params A length-4 numeric vector specifying values for the marginal
-#'   parameters if known. The order needs to be `rho1`, `rho2`, `alpha1` and
-#'   `alpha2`. Defaults to `NULL`, in which case, they are estimated.
 #' @param full_bootstrap A boolean specifying whether marginal parameters should
 #'   be re-estimated when computing the bootstrapped distribution of the tau
 #'   statistic. Defaults to `TRUE`.
+#' @param params A length-4 numeric vector specifying values for the marginal
+#'   parameters if known. The order needs to be `rho1`, `rho2`, `alpha1` and
+#'   `alpha2`. Defaults to `NULL`, in which case, they are estimated.
 #'
 #' @return A list with the estimated model parameters in the following order:
 #'   `rho1`, `rho2`, `alpha1`, `alpha2`, `k12`, `alpha12` and `tau`. Additional
@@ -65,9 +63,8 @@ fit_via_pcf <- function(X,
                         divisor_cross = "d",
                         method = "profiling",
                         B = 0L,
-                        conf_level = 0.95,
-                        params = NULL,
-                        full_bootstrap = TRUE) {
+                        full_bootstrap = TRUE,
+                        params = NULL) {
   divisor_marginal <- match.arg(divisor_marginal, c("d", "r"))
   divisor_cross <- match.arg(divisor_cross, c("d", "r"))
 
@@ -118,7 +115,6 @@ fit_via_pcf <- function(X,
   k1 <- bnds$k1
   k2 <- bnds$k2
   k12maxSq <- max(0, min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps)))
-  # M <- beta_max^2 / (rho1 * rho2 * pi^2) * k12maxSq # TO DO: check
   M <- (alpha1 * alpha2 * beta_max)^2 * min(1, (1 - k1) * (1 - k2) / (k1 * k2)) # tau^2 upper bound
 
   beta_min <- 0
@@ -136,9 +132,9 @@ fit_via_pcf <- function(X,
       )
 
       # TO DO
-      if (tau2 * rho1 * rho2 * pi^2 > k12maxSq * x^2) {
-        return(1e6)
-      }
+      # if (tau2 * rho1 * rho2 * pi^2 > k12maxSq * x^2) {
+      #   return(1e6)
+      # }
 
       contrast_cross(model = model, beta = x, tau = sqrt(tau2), pcfemp = pcfemp, rmin = rmin_alpha12)
     }
@@ -261,18 +257,18 @@ fit_via_pcf <- function(X,
     model = model,
     beta = 1,
     tau = 0,
-    pcfemp,
+    pcfemp = pcfemp,
     rmin = rmin_tau,
     q = q,
     p = p
   )
   stat_p_obs <- tau
-  null_np_distr <- NULL
-  null_p_distr <- NULL
-  np_reject <- NULL
-  p_reject <- NULL
+  stat_np_boots <- NULL
+  stat_p_boots <- NULL
+  pvalue_np <- NULL
+  pvalue_p <- NULL
+
   if (B > 0) {
-    cli::cli_alert_info("Testing for absence of correlation...")
     null_values <- compute_bootstrap_stats(
       rho1 = rho1, alpha1 = alpha1,
       rho2 = rho2, alpha2 = alpha2,
@@ -289,11 +285,10 @@ fit_via_pcf <- function(X,
       method = method,
       full_bootstrap = full_bootstrap
     )
-    null_np_distr <- null_values$nonparametric
-    null_p_distr <- null_values$parametric
-    quantile_idx <- round(B * conf_level)
-    np_reject <- as.logical(stat_np_obs >= sort(null_np_distr)[quantile_idx])
-    p_reject <- as.logical(stat_p_obs >= sort(null_p_distr)[quantile_idx])
+    stat_np_boots <- null_values$nonparametric
+    stat_p_boots <- null_values$parametric
+    pvalue_np <- (1 + sum(stat_np_boots >= stat_np_obs)) / (1 + B)
+    pvalue_p <- (1 + sum(stat_p_boots >= stat_p_obs)) / (1 + B)
   }
 
   list(
@@ -307,10 +302,10 @@ fit_via_pcf <- function(X,
     fmin = fmin,
     stat_np_obs = stat_np_obs,
     stat_p_obs = stat_p_obs,
-    null_np_distr = null_np_distr,
-    null_p_distr = null_p_distr,
-    np_reject = np_reject,
-    p_reject = p_reject
+    stat_np_boots = stat_np_boots,
+    stat_p_boots = stat_p_boots,
+    pvalue_np = pvalue_np,
+    pvalue_p = pvalue_p
   )
 }
 
@@ -333,13 +328,22 @@ compute_bootstrap_stats <- function(rho1, alpha1,
     m1 <- spatstat.core::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
     m2 <- spatstat.core::dppGauss(lambda = rho2, alpha = alpha2, d = 2)
   } else if (model == "Bessel") {
-    m1 <- spatstat.core::dppBessel(lambda = rho1, alpha = alpha1, d = 2)
-    m2 <- spatstat.core::dppBessel(lambda = rho2, alpha = alpha2, d = 2)
+    m1 <- spatstat.core::dppBessel(lambda = rho1, alpha = alpha1, sigma = 0, d = 2)
+    m2 <- spatstat.core::dppBessel(lambda = rho2, alpha = alpha2, sigma = 0, d = 2)
   } else
-    cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
+    cli::cli_abort("Model {model} is not yet implemented. Currently supported
+                   models are {.field Gauss} or {.field Bessel}.")
 
-  data1 <- stats::simulate(m1, nsim = B, w = w)
-  data2 <- stats::simulate(m2, nsim = B, w = w)
+  data1 <- stats::simulate(m1, nsim = B, W = w, trunc = switch(
+    model,
+    Gauss = 0.99,
+    Bessel = 0.95
+  ))
+  data2 <- stats::simulate(m2, nsim = B, W = w, trunc = switch(
+    model,
+    Gauss = 0.99,
+    Bessel = 0.95
+  ))
 
   boot_data <- purrr::map2(data1, data2, ~ {
     spatstat.geom::ppp(
@@ -421,7 +425,7 @@ compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
   eta_val <- get_eta_value(r, beta, model = model)
   I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
   I2 <- sum(c(0, diff(r)) * eta_val^4)
-  tauSq_max <- alpha1 * alpha2 * beta * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
+  tauSq_max <- (alpha1 * alpha2 * beta)^2 * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
   if (I2 < sqrt(.Machine$double.eps))
     return(tauSq_max)
   tauSq <- I1 / I2
