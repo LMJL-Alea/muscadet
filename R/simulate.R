@@ -115,7 +115,7 @@ sumdiag <- function(r, K, L, ...) {
     rho1 = rho1, rho2 = rho2,
     alpha1 = alpha1, alpha2 = alpha2,
     alpha12 = alpha12, tau = tau,
-    nbThreads = 1
+    model = model, nbThreads = 1
   )
   kkindex <- l$kkindex
   V <- l$V

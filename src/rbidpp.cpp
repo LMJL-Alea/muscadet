@@ -22,6 +22,30 @@ arma::mat22 GetGaussianKernel(const double rSq,
   return kernelMatrix;
 }
 
+arma::mat22 GetBesselKernel(const double rSq,
+                            const double rho1,
+                            const double rho2,
+                            const double alpha1Sq,
+                            const double alpha2Sq,
+                            const double alpha12Sq,
+                            const double tau)
+{
+  arma::mat22 kernelMatrix;
+  double piVal = M_PI;
+  double rho12 = tau * std::sqrt(rho1* rho2);
+  kernelMatrix(0, 0) = 0.0;
+  if (piVal * piVal * alpha1Sq * rSq < 1.0)
+    kernelMatrix(0, 0) = rho1 * alpha1Sq * piVal;
+  kernelMatrix(0, 1) = 0.0;
+  if (piVal * piVal * alpha12Sq * rSq < 1.0)
+    kernelMatrix(0, 1) = rho12 * alpha12Sq * piVal;
+  kernelMatrix(1, 0) = kernelMatrix(0, 1);
+  kernelMatrix(1, 1) = 0.0;
+  if (piVal * piVal * alpha2Sq * rSq < 1.0)
+    kernelMatrix(1, 1) = rho2 * alpha2Sq * piVal;
+  return kernelMatrix;
+}
+
 Rcpp::List rbidpp_impl(const int N,
                        const double L,
                        const double rho1,
@@ -30,6 +54,7 @@ Rcpp::List rbidpp_impl(const int N,
                        const double alpha2,
                        const double alpha12,
                        const double tau,
+                       const std::string model,
                        const unsigned int nbThreads)
 {
   std::vector<arma::imat> threadedKIndices(nbThreads);
@@ -64,14 +89,29 @@ Rcpp::List rbidpp_impl(const int N,
     {
       workIndices(1) = j;
 
-      workKernelMatrix = GetGaussianKernel(
-        (i * i + j * j) / (L * L),
-        rho1, rho2,
-        alpha1 * alpha1,
-        alpha2 * alpha2,
-        alpha12 * alpha12,
-        tau
-      );
+      if (model == "Gauss")
+      {
+        Rcpp::Rcout << (i * i + j * j) / (L * L) << std::endl;
+        workKernelMatrix = GetGaussianKernel(
+          (i * i + j * j) / (L * L),
+          rho1, rho2,
+          alpha1 * alpha1,
+          alpha2 * alpha2,
+          alpha12 * alpha12,
+          tau
+        );
+      }
+      else if (model == "Bessel")
+        workKernelMatrix = GetBesselKernel(
+          (i * i + j * j) / (L * L),
+          rho1, rho2,
+          alpha1 * alpha1,
+          alpha2 * alpha2,
+          alpha12 * alpha12,
+          tau
+        );
+      else
+        Rcpp::stop("Unsupported model for simulation.");
 
       arma::eig_sym(workEigenValues, workEigenVectors, workKernelMatrix);
 

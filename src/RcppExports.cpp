@@ -48,8 +48,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rbidpp_impl
-Rcpp::List rbidpp_impl(const int N, const double L, const double rho1, const double rho2, const double alpha1, const double alpha2, const double alpha12, const double tau, const unsigned int nbThreads);
-RcppExport SEXP _muscadet_rbidpp_impl(SEXP NSEXP, SEXP LSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP nbThreadsSEXP) {
+Rcpp::List rbidpp_impl(const int N, const double L, const double rho1, const double rho2, const double alpha1, const double alpha2, const double alpha12, const double tau, const std::string model, const unsigned int nbThreads);
+RcppExport SEXP _muscadet_rbidpp_impl(SEXP NSEXP, SEXP LSEXP, SEXP rho1SEXP, SEXP rho2SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha12SEXP, SEXP tauSEXP, SEXP modelSEXP, SEXP nbThreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -61,8 +61,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< const double >::type alpha12(alpha12SEXP);
     Rcpp::traits::input_parameter< const double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type model(modelSEXP);
     Rcpp::traits::input_parameter< const unsigned int >::type nbThreads(nbThreadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(rbidpp_impl(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, nbThreads));
+    rcpp_result_gen = Rcpp::wrap(rbidpp_impl(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, model, nbThreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -72,7 +73,7 @@ RcppExport SEXP _rcpp_module_boot_DPP();
 static const R_CallMethodDef CallEntries[] = {
     {"_muscadet_CtildeStat2d_cpp", (DL_FUNC) &_muscadet_CtildeStat2d_cpp, 7},
     {"_muscadet_log_likelihood", (DL_FUNC) &_muscadet_log_likelihood, 9},
-    {"_muscadet_rbidpp_impl", (DL_FUNC) &_muscadet_rbidpp_impl, 9},
+    {"_muscadet_rbidpp_impl", (DL_FUNC) &_muscadet_rbidpp_impl, 10},
     {"_rcpp_module_boot_DPP", (DL_FUNC) &_rcpp_module_boot_DPP, 0},
     {NULL, NULL, 0}
 };

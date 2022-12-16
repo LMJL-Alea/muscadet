@@ -9,7 +9,7 @@ log_likelihood <- function(theta, points, lower_bound, upper_bound, nd_grid, mar
     .Call(`_muscadet_log_likelihood`, theta, points, lower_bound, upper_bound, nd_grid, marks, num_threads, N, verbose_level)
 }
 
-rbidpp_impl <- function(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, nbThreads) {
-    .Call(`_muscadet_rbidpp_impl`, N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, nbThreads)
+rbidpp_impl <- function(N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, model, nbThreads) {
+    .Call(`_muscadet_rbidpp_impl`, N, L, rho1, rho2, alpha1, alpha2, alpha12, tau, model, nbThreads)
 }
 
