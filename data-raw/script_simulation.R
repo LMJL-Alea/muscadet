@@ -56,7 +56,7 @@ plan(multisession, workers = parallelly::availableCores(omit = 1))
 sims_gauss1 <- crossing(L, tau1) |>
   mutate(data = map2(L, tau1, run_gauss1, n = R))
 plan(sequential)
-write_rds(sims_gauss1, file = "data-raw/sims_gauss1.rds", compress = "xz", version = 3)
+write_rds(sims_gauss1, file = "~/Documents/Professionnel/Data/DPP/sims_gauss1.rds", compress = "xz", version = 3)
 
 # BESSEL1 -----------------------------------------------------------------
 
@@ -76,7 +76,7 @@ plan(multisession, workers = parallelly::availableCores(omit = 1))
 sims_bessel1 <- crossing(L, tau1) |>
   mutate(data = map2(L, tau1, run_bessel1, n = R))
 plan(sequential)
-write_rds(sims_bessel1, file = "data-raw/sims_bessel1.rds", compress = "xz", version = 3)
+write_rds(sims_bessel1, file = "~/Documents/Professionnel/Data/DPP/sims_bessel1.rds", compress = "xz", version = 3)
 
 # GAUSS2 ------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ plan(multisession, workers = parallelly::availableCores(omit = 1))
 sims_gauss2 <- crossing(L, tau2) |>
   mutate(data = map2(L, tau2, run_gauss2, n = R))
 plan(sequential)
-write_rds(sims_gauss2, file = "data-raw/sims_gauss2.rds", compress = "xz", version = 3)
+write_rds(sims_gauss2, file = "~/Documents/Professionnel/Data/DPP/sims_gauss2.rds", compress = "xz", version = 3)
 
 # BESSEL2 -----------------------------------------------------------------
 
@@ -116,4 +116,4 @@ plan(multisession, workers = parallelly::availableCores(omit = 1))
 sims_bessel2 <- crossing(L, tau2) |>
   mutate(data = map2(L, tau2, run_bessel2, n = R))
 plan(sequential)
-write_rds(sims_bessel2, file = "data-raw/sims_bessel2.rds", compress = "xz", version = 3)
+write_rds(sims_bessel2, file = "~/Documents/Professionnel/Data/DPP/sims_bessel2.rds", compress = "xz", version = 3)
