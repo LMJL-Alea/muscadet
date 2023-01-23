@@ -128,15 +128,17 @@ fit_via_pcf <- function(X,
         k1 = k1,
         k2 = k2,
         alpha1 = alpha1,
-        alpha2 = alpha2
+        alpha2 = alpha2,
+        model = model
       )
 
-      # TO DO
-      # if (tau2 * rho1 * rho2 * pi^2 > k12maxSq * x^2) {
-      #   return(1e6)
-      # }
-
-      contrast_cross(model = model, beta = x, tau = sqrt(tau2), pcfemp = pcfemp, rmin = rmin_alpha12)
+      contrast_cross(
+        beta = x,
+        tau = sqrt(tau2),
+        pcfemp = pcfemp,
+        rmin = rmin_alpha12,
+        model = model
+      )
     }
 
     if (abs(beta_max - beta_min) < .Machine$double.eps^0.5) {
@@ -168,7 +170,8 @@ fit_via_pcf <- function(X,
       k1 = k1,
       k2 = k2,
       alpha1 = alpha1,
-      alpha2 = alpha2
+      alpha2 = alpha2,
+      model = model
     ))
     k12 <- get_kinf_value(
       rho = tau * sqrt(rho1 * rho2),
@@ -180,14 +183,26 @@ fit_via_pcf <- function(X,
     if (abs(beta_max - beta_min) < .Machine$double.eps^0.5) {
       .contrast_cross <- function(x) {
         are_params_feasible <- check_parameter_set(
-          rho1 = rho1, rho2 = rho2,
-          alpha1 = alpha1, alpha2 = alpha2,
-          alpha12 = 1 / sqrt(beta_max), tau = x,
-          d = 2, model = model
+          rho1 = rho1,
+          rho2 = rho2,
+          alpha1 = alpha1,
+          alpha2 = alpha2,
+          alpha12 = 1 / sqrt(beta_max),
+          tau = x,
+          d = 2,
+          model = model
         )
         if (!are_params_feasible)
           return(1e6)
-        contrast_cross(model, beta_max, x, pcfemp, rmin_alpha12, q = q, p = p)
+        contrast_cross(
+          beta = beta_max,
+          tau = x,
+          pcfemp = pcfemp,
+          rmin = rmin_alpha12,
+          q = q,
+          p = p,
+          model = model
+        )
       }
 
       opt <- stats::optimise(
@@ -210,14 +225,26 @@ fit_via_pcf <- function(X,
     } else {
       .contrast_cross <- function(x) {
         are_params_feasible <- check_parameter_set(
-          rho1 = rho1, rho2 = rho2,
-          alpha1 = alpha1, alpha2 = alpha2,
-          alpha12 = 1 / sqrt(x[1]), tau = x[2],
-          d = 2, model = model
+          rho1 = rho1,
+          rho2 = rho2,
+          alpha1 = alpha1,
+          alpha2 = alpha2,
+          alpha12 = 1 / sqrt(x[1]),
+          tau = x[2],
+          d = 2,
+          model = model
         )
         if (!are_params_feasible)
           return(1e6)
-        contrast_cross(model, x[1], x[2], pcfemp, rmin_alpha12, q = q, p = p)
+        contrast_cross(
+          beta = x[1],
+          tau = x[2],
+          pcfemp = pcfemp,
+          rmin = rmin_alpha12,
+          q = q,
+          p = p,
+          model = model
+        )
       }
       lower <- c(beta_min, 0)
       upper <- c(beta_max, sqrt(M))
@@ -248,19 +275,20 @@ fit_via_pcf <- function(X,
       k12 <- min(get_kinf_value(
         rho = tau * sqrt(rho1 * rho2),
         alpha = 1 / sqrt(beta),
-        d = 2, model = model
+        d = 2,
+        model = model
       ), sqrt(k12maxSq))
   }
 
   # compute tau first via integrated contrast
   stat_np_obs <- contrast_cross(
-    model = model,
     beta = 1,
     tau = 0,
     pcfemp = pcfemp,
     rmin = rmin_tau,
     q = q,
-    p = p
+    p = p,
+    model = model
   )
   stat_p_obs <- tau
   stat_np_boots <- NULL
@@ -313,7 +341,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
                                     rho2, alpha2,
                                     w = list(xrange = c(0, 1), yrange = c(0, 1)),
                                     B = 100,
-                                    model = "Gauss",
+                                    model = AVAILABLE_MODELS,
                                     rmin_alpha = 2,
                                     rmin_alpha12 = 2,
                                     rmin_tau = 2,
@@ -323,6 +351,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
                                     divisor_cross = "d",
                                     method = "profiling",
                                     full_bootstrap = TRUE) {
+  model <- rlang::arg_match(model)
   w <- spatstat.geom::as.owin(w)
   if (model == "Gauss") {
     m1 <- spatstat.model::dppGauss(lambda = rho1, alpha = alpha1, d = 2)
@@ -360,8 +389,11 @@ compute_bootstrap_stats <- function(rho1, alpha1,
     purrr::map_dbl(
       .f = contrast_cross,
       model = model,
-      beta = 1, tau = 0,
-      rmin = rmin_tau, q = q, p = p
+      beta = 1,
+      tau = 0,
+      rmin = rmin_tau,
+      q = q,
+      p = p
     )
 
   if (full_bootstrap) {
@@ -400,20 +432,15 @@ compute_bootstrap_stats <- function(rho1, alpha1,
   list(nonparametric = stat1, parametric = stat2)
 }
 
-jinc <- function(x, alpha) {
-  # J_alpha(x) / (x/2)^alpha * gamma(alpha + 1)
-  if (x < sqrt(.Machine$double.eps))
-    return(1)
-  besselJ(x, alpha) / (x / 2)^alpha * gamma(alpha + 1)
-}
-
-contrast_marginal <- function(model, alpha, r, y, q = 0.5, p = 2, d = 2) {
+contrast_marginal <- function(alpha, r, y, q = 0.5, p = 2, d = 2, model = AVAILABLE_MODELS) {
+  model <- rlang::arg_match(model)
   yobs <- y^q
   ypred <- (1 - get_eta_value(r, 1 / alpha^2, model)^2)^q
   sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
-contrast_cross <- function(model, beta, tau, pcfemp, rmin, q = 1, p = 2) {
+contrast_cross <- function(beta, tau, pcfemp, rmin, q = 1, p = 2, model = AVAILABLE_MODELS) {
+  model <- rlang::arg_match(model)
   r <- pcfemp$r[rmin:length(pcfemp$r)]
   yobs <- pcfemp$iso[rmin:length(pcfemp$r)]^q
   ypred <- (1 - tau^2 * get_eta_value(r, beta, model)^2)^q
@@ -421,7 +448,7 @@ contrast_cross <- function(model, beta, tau, pcfemp, rmin, q = 1, p = 2) {
 }
 
 compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
-                                   model = c("Gauss", "Bessel")) {
+                                   model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   eta_val <- get_eta_value(r, beta, model = model)
   I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
@@ -434,7 +461,8 @@ compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
   min(tauSq_max, tauSq)
 }
 
-compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = "Gauss") {
+compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = AVAILABLE_MODELS) {
+  model <- rlang::arg_match(model)
   if (model == "Gauss") {
     alpha_ub <- spatstat.model::dppparbounds(spatstat.model::dppGauss(
       lambda = spatstat.geom::intensity(x),

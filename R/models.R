@@ -1,5 +1,5 @@
 get_bounds <- function(rho1, rho2, alpha1, alpha2,
-                       d = 2, model = c("Gauss", "Bessel")) {
+                       d = 2, model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   beta_max <- 1 / get_alpha12_lb(alpha1, alpha2, model)^2
   k1 <- get_kinf_value(rho1, alpha1, d, model)
@@ -8,7 +8,7 @@ get_bounds <- function(rho1, rho2, alpha1, alpha2,
 }
 
 get_eta_value <- function(r, beta,
-                          d = 2, model = c("Gauss", "Bessel")) {
+                          d = 2, model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   switch(
     model,
@@ -18,7 +18,7 @@ get_eta_value <- function(r, beta,
 }
 
 get_kinf_value <- function(rho, alpha,
-                           d = 2, model = c("Gauss", "Bessel")) {
+                           d = 2, model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   switch(
     model,
@@ -28,7 +28,7 @@ get_kinf_value <- function(rho, alpha,
 }
 
 get_alpha12_lb <- function(alpha1, alpha2,
-                           model = c("Gauss", "Bessel")) {
+                           model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   switch(
     model,
@@ -38,7 +38,7 @@ get_alpha12_lb <- function(alpha1, alpha2,
 }
 
 get_khat_value <- function(r, rho, alpha,
-                           d = 2, model = c("Gauss", "Bessel")) {
+                           d = 2, model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   switch(
     model,
@@ -55,7 +55,7 @@ get_khat_value <- function(r, rho, alpha,
 }
 
 get_khat_matrix <- function(r, rho1, rho2, alpha1, alpha2, alpha12, tau,
-                            d = 2, model = c("Gauss", "Bessel")) {
+                            d = 2, model = AVAILABLE_MODELS) {
   model <- rlang::arg_match(model)
   k1 <- get_khat_value(r, rho1, alpha1, d, model)
   k2 <- get_khat_value(r, rho2, alpha2, d, model)
@@ -64,7 +64,7 @@ get_khat_matrix <- function(r, rho1, rho2, alpha1, alpha2, alpha12, tau,
 }
 
 check_parameter_set <- function(rho1, rho2, alpha1, alpha2, alpha12, tau,
-                                d = 2, model = c("Gauss", "Bessel")) {
+                                d = 2, model = AVAILABLE_MODELS) {
   k1 <- get_kinf_value(rho1, alpha1, d, model)
   if (k1 <= 0 || k1 >= 1)
     return(FALSE)

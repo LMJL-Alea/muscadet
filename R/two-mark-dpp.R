@@ -20,7 +20,7 @@ TwoMarkDPP <- R6::R6Class(
     #'
     #' @examples
     #' mod <- TwoMarkDPP$new(model = "Gauss")
-    initialize = function(model = c("Gauss", "Bessel")) {
+    initialize = function(model = AVAILABLE_MODELS) {
       model <- rlang::arg_match(model)
       private$m_ParametricModel <- model
     },
