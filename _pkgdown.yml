@@ -8,6 +8,7 @@ reference:
     - TwoMarkDPP
     - fit_via_pcf
     - fit_via_mle
+    - MUSCADET_DPP_MODELS
   - title: Data Sets
   - contents:
     - sim_bessel0
