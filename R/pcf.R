@@ -341,7 +341,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
                                     rho2, alpha2,
                                     w = list(xrange = c(0, 1), yrange = c(0, 1)),
                                     B = 100,
-                                    model = AVAILABLE_MODELS,
+                                    model = MUSCADET_DPP_MODELS,
                                     rmin_alpha = 2,
                                     rmin_alpha12 = 2,
                                     rmin_tau = 2,
@@ -432,14 +432,14 @@ compute_bootstrap_stats <- function(rho1, alpha1,
   list(nonparametric = stat1, parametric = stat2)
 }
 
-contrast_marginal <- function(alpha, r, y, q = 0.5, p = 2, d = 2, model = AVAILABLE_MODELS) {
+contrast_marginal <- function(alpha, r, y, q = 0.5, p = 2, d = 2, model = MUSCADET_DPP_MODELS) {
   model <- rlang::arg_match(model)
   yobs <- y^q
   ypred <- (1 - get_eta_value(r, 1 / alpha^2, model)^2)^q
   sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
-contrast_cross <- function(beta, tau, pcfemp, rmin, q = 1, p = 2, model = AVAILABLE_MODELS) {
+contrast_cross <- function(beta, tau, pcfemp, rmin, q = 1, p = 2, model = MUSCADET_DPP_MODELS) {
   model <- rlang::arg_match(model)
   r <- pcfemp$r[rmin:length(pcfemp$r)]
   yobs <- pcfemp$iso[rmin:length(pcfemp$r)]^q
@@ -448,7 +448,7 @@ contrast_cross <- function(beta, tau, pcfemp, rmin, q = 1, p = 2, model = AVAILA
 }
 
 compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
-                                   model = AVAILABLE_MODELS) {
+                                   model = MUSCADET_DPP_MODELS) {
   model <- rlang::arg_match(model)
   eta_val <- get_eta_value(r, beta, model = model)
   I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
@@ -461,7 +461,7 @@ compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
   min(tauSq_max, tauSq)
 }
 
-compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = AVAILABLE_MODELS) {
+compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = MUSCADET_DPP_MODELS) {
   model <- rlang::arg_match(model)
   if (model == "Gauss") {
     alpha_ub <- spatstat.model::dppparbounds(spatstat.model::dppGauss(

@@ -79,7 +79,7 @@ rate \eqn{\alpha_{12}}.}
 \subsection{Method \code{new()}}{
 The \link{TwoMarkDPP} constructor.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TwoMarkDPP$new(model = AVAILABLE_MODELS)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TwoMarkDPP$new(model = MUSCADET_DPP_MODELS)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

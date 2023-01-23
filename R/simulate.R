@@ -32,7 +32,7 @@ rbidpp <- function(n = 1L,
                    rho1 = 100, rho2 = 100,
                    alpha1 = 0.03, alpha2 = 0.03,
                    alpha12 = 0.035, tau = 0.5,
-                   L = 1, d = 2L, model = AVAILABLE_MODELS,
+                   L = 1, d = 2L, model = MUSCADET_DPP_MODELS,
                    max_trunc = 1000L)
 {
   pb <- progressr::progressor(along = 1:n)
@@ -56,7 +56,7 @@ sumdiag <- function(r, K, L, ...) {
 .rbidpp_single <- function(rho1 = 100, rho2 = 100,
                            alpha1 = 0.03, alpha2 = 0.03,
                            alpha12 = 0.035, tau = 0.5,
-                           L = 1, d = 2, model = AVAILABLE_MODELS,
+                           L = 1, d = 2, model = MUSCADET_DPP_MODELS,
                            maxtrunc = 1000) {
   if (!check_parameter_set(rho1, rho2, alpha1, alpha2, alpha12, tau, d, model))
     cli::cli_abort("The set of parameters is not valid for a 2-mark DPP.")

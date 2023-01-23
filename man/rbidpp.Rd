@@ -14,7 +14,7 @@ rbidpp(
   tau = 0.5,
   L = 1,
   d = 2L,
-  model = AVAILABLE_MODELS,
+  model = MUSCADET_DPP_MODELS,
   max_trunc = 1000L
 )
 }
