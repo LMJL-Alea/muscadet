@@ -10,10 +10,10 @@
       [1] 86
       
       $alpha1
-      [1] 0.03291071
+      [1] 0.0323542
       
       $alpha2
-      [1] 0.02880718
+      [1] 0.02833893
       
       $k12
       [1] 0
@@ -22,7 +22,7 @@
       [1] 0
       
       $alpha12
-      [1] 0.03092708
+      [1] 0.0304129
       
       $fmin
       [1] 0.0008385533
@@ -33,16 +33,16 @@
       $stat_p_obs
       [1] 0
       
-      $null_np_distr
+      $stat_np_boots
       NULL
       
-      $null_p_distr
+      $stat_p_boots
       NULL
       
-      $np_reject
+      $pvalue_np
       NULL
       
-      $p_reject
+      $pvalue_p
       NULL
       
 

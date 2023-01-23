@@ -91,7 +91,6 @@ Rcpp::List rbidpp_impl(const int N,
 
       if (model == "Gauss")
       {
-        Rcpp::Rcout << (i * i + j * j) / (L * L) << std::endl;
         workKernelMatrix = GetGaussianKernel(
           (i * i + j * j) / (L * L),
           rho1, rho2,
