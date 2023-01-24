@@ -114,7 +114,7 @@ fit_via_pcf <- function(X,
   beta_max <- bnds$beta_max
   k1 <- bnds$k1
   k2 <- bnds$k2
-  k12maxSq <- max(0, min(k1 * k2, (1 - k1) * (1 - k2) - sqrt(.Machine$double.eps)))
+  k12maxSq <- max(0, min(k1 * k2, (1 - k1) * (1 - k2)))
   M <- (alpha1 * alpha2 * beta_max)^2 * min(1, (1 - k1) * (1 - k2) / (k1 * k2)) # tau^2 upper bound
 
   beta_min <- 0
@@ -131,6 +131,19 @@ fit_via_pcf <- function(X,
         alpha2 = alpha2,
         model = model
       )
+
+      are_params_feasible <- check_parameter_set(
+        rho1 = rho1,
+        rho2 = rho2,
+        alpha1 = alpha1,
+        alpha2 = alpha2,
+        alpha12 = 1 / sqrt(x),
+        tau = sqrt(tau2),
+        d = 2,
+        model = model
+      )
+      if (!are_params_feasible)
+        return(1e100)
 
       contrast_cross(
         beta = x,
@@ -193,7 +206,8 @@ fit_via_pcf <- function(X,
           model = model
         )
         if (!are_params_feasible)
-          return(1e6)
+          return(1e100)
+
         contrast_cross(
           beta = beta_max,
           tau = x,
@@ -235,7 +249,8 @@ fit_via_pcf <- function(X,
           model = model
         )
         if (!are_params_feasible)
-          return(1e6)
+          return(1e100)
+
         contrast_cross(
           beta = x[1],
           tau = x[2],
@@ -454,8 +469,12 @@ compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
   I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
   I2 <- sum(c(0, diff(r)) * eta_val^4)
   tauSq_max <- (alpha1 * alpha2 * beta)^2 * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
-  if (I2 < sqrt(.Machine$double.eps))
-    return(tauSq_max)
+  if (I2 < sqrt(.Machine$double.eps)) {
+    if (I1 < 0)
+      return(0)
+    else
+      return(tauSq_max)
+  }
   tauSq <- I1 / I2
   tauSq <- max(0, tauSq)
   min(tauSq_max, tauSq)
@@ -478,7 +497,7 @@ compute_marginal_alpha <- function(x, divisor, rmin, q = 0.5, p = 2, model = MUS
     cli::cli_abort("Model {model} is not yet implemented. Currently supported models are {.field Gauss} or {.field Bessel}.")
 
   alpha_lb <- alpha_ub[2, 1] + sqrt(.Machine$double.eps)
-  alpha_ub <- alpha_ub[2, 2] - sqrt(.Machine$double.eps)
+  alpha_ub <- alpha_ub[2, 2]
 
   pcfemp <- spatstat.explore::pcf(x, bw = "SJ", divisor = divisor)
 

@@ -13,9 +13,7 @@ MUSCADET_DPP_MODELS <- function() {
 
 jinc <- function(x, alpha) {
   # J_alpha(x) / (x/2)^alpha * gamma(alpha + 1)
-  if (x < sqrt(.Machine$double.eps))
-    return(1)
-  besselJ(x, alpha) / (x / 2)^alpha * gamma(alpha + 1)
+  ifelse(x < sqrt(.Machine$double.eps), 1, besselJ(x, alpha) / (x / 2)^alpha * gamma(alpha + 1))
 }
 
 get_bounds <- function(rho1, rho2, alpha1, alpha2,
@@ -84,17 +82,33 @@ get_khat_matrix <- function(r, rho1, rho2, alpha1, alpha2, alpha12, tau,
 }
 
 check_parameter_set <- function(rho1, rho2, alpha1, alpha2, alpha12, tau,
-                                d = 2, model = MUSCADET_DPP_MODELS()) {
+                                d = 2, model = MUSCADET_DPP_MODELS(), verbose = FALSE) {
   k1 <- get_kinf_value(rho1, alpha1, d, model)
-  if (k1 <= 0 || k1 >= 1)
+  if (k1 <= 0 || k1 > 1) {
+    if (verbose)
+      cli::cli_alert_danger("The value of {.arg k1} is {k1} which is out-of-bounds.")
     return(FALSE)
+  }
+
   k2 <- get_kinf_value(rho2, alpha2, d, model)
-  if (k2 <= 0 || k2 >= 1)
+  if (k2 <= 0 || k2 > 1) {
+    if (verbose)
+      cli::cli_alert_danger("The value of {.arg k2} is {k2} which is out-of-bounds.")
     return(FALSE)
+  }
+
   k12 <- get_kinf_value(tau * sqrt(rho1 * rho2), alpha12, d, model)
-  if (k12^2 >= min(k1 * k2, (1 - k1) * (1 - k2)))
+  if (k12^2 > min(k1 * k2, (1 - k1) * (1 - k2))) {
+    if (verbose)
+      cli::cli_alert_danger("The value of {.arg k12} is {k12} which is out-of-bounds.")
     return(FALSE)
-  if (alpha12 < get_alpha12_lb(alpha1, alpha2, model))
+  }
+
+  if (alpha12 < get_alpha12_lb(alpha1, alpha2, model)) {
+    if (verbose)
+      cli::cli_alert_danger("The value of {.arg alpha12} is {alpha12} which is out-of-bounds.")
     return(FALSE)
+  }
+
   TRUE
 }
