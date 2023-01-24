@@ -49,8 +49,8 @@ rbidpp <- function(n = 1L,
   }, .options = furrr::furrr_options(seed = TRUE))
 }
 
-sumdiag <- function(r, K, L, ...) {
-  sum(diag(K(r / L, ...)))
+sumdiag <- function(r, L, ...) {
+  sum(diag(get_khat_matrix(r / L, ...)))
 }
 
 .rbidpp_single <- function(rho1 = 100, rho2 = 100,
@@ -80,29 +80,27 @@ sumdiag <- function(r, K, L, ...) {
     index1 <- rep(1:trunc, trunc)
     index2 <- rep(1:trunc, each = trunc)
     eigo <- sumdiag(
-      r = 0, K = get_khat_matrix, L = L,
+      r = 0,
       rho1 = rho1, rho2 = rho2,
       alpha1 = alpha1, alpha2 = alpha2,
       alpha12 = alpha12, tau = tau,
-      d = d, model = model
+      d = d, model = model, L = L
     )
     eiga <- purrr::map_dbl(
-      .x = sqrt((index1a) ^ 2 + (index2a) ^ 2),
+      .x = sqrt(index1a^2 + index2a^2),
       .f = sumdiag,
-      K = get_khat_matrix, L = L,
       rho1 = rho1, rho2 = rho2,
       alpha1 = alpha1, alpha2 = alpha2,
       alpha12 = alpha12, tau = tau,
-      d = d, model = model
+      d = d, model = model, L = L
     )
     eig <- purrr::map_dbl(
-      .x = sqrt((index1) ^ 2 + (index2) ^ 2),
+      .x = sqrt(index1^2 + index2^2),
       .f = sumdiag,
-      K = get_khat_matrix, L = L,
       rho1 = rho1, rho2 = rho2,
       alpha1 = alpha1, alpha2 = alpha2,
       alpha12 = alpha12, tau = tau,
-      d = d, model = model
+      d = d, model = model, L = L
     )
     prec <- (eigo + 2 * sum(eiga) + 4 * sum(eig)) / expnum
   }

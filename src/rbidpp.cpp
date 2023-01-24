@@ -14,7 +14,7 @@ arma::mat22 GetGaussianKernel(const double rSq,
 {
   arma::mat22 kernelMatrix;
   double piVal = M_PI;
-  double rho12 = tau * std::sqrt(rho1* rho2);
+  double rho12 = tau * std::sqrt(rho1 * rho2);
   kernelMatrix(0, 0) = rho1 * alpha1Sq * piVal * std::exp(-piVal * piVal * alpha1Sq * rSq);
   kernelMatrix(0, 1) = rho12 * alpha12Sq * piVal * std::exp(-piVal * piVal * alpha12Sq * rSq);
   kernelMatrix(1, 0) = kernelMatrix(0, 1);
@@ -32,7 +32,7 @@ arma::mat22 GetBesselKernel(const double rSq,
 {
   arma::mat22 kernelMatrix;
   double piVal = M_PI;
-  double rho12 = tau * std::sqrt(rho1* rho2);
+  double rho12 = tau * std::sqrt(rho1 * rho2);
   kernelMatrix(0, 0) = 0.0;
   if (piVal * piVal * alpha1Sq * rSq < 1.0)
     kernelMatrix(0, 0) = rho1 * alpha1Sq * piVal;
