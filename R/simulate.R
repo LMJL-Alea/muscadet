@@ -58,7 +58,10 @@ sumdiag <- function(r, L, ...) {
                            alpha12 = 0.035, tau = 0.5,
                            L = 1, d = 2, model = MUSCADET_DPP_MODELS(),
                            maxtrunc = 1000) {
-  if (!check_parameter_set(rho1, rho2, alpha1, alpha2, alpha12, tau, d, model))
+  if (!check_parameter_set(
+    rho1 = rho1, rho2 = rho2, alpha1 = alpha1, alpha2 = alpha2,
+    alpha12 = alpha12, tau = tau, d = d, model = model
+  ))
     cli::cli_abort("The set of parameters is not valid for a 2-mark DPP.")
 
   model <- rlang::arg_match(model)

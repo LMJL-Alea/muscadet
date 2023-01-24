@@ -313,8 +313,10 @@ fit_via_pcf <- function(X,
 
   if (B > 0) {
     null_values <- compute_bootstrap_stats(
-      rho1 = rho1, alpha1 = alpha1,
-      rho2 = rho2, alpha2 = alpha2,
+      rho1 = rho1,
+      alpha1 = alpha1,
+      rho2 = rho2,
+      alpha2 = alpha2,
       w = X$window,
       B = B,
       model = model,
@@ -450,7 +452,7 @@ compute_bootstrap_stats <- function(rho1, alpha1,
 contrast_marginal <- function(alpha, r, y, q = 0.5, p = 2, d = 2, model = MUSCADET_DPP_MODELS()) {
   model <- rlang::arg_match(model)
   yobs <- y^q
-  ypred <- (1 - get_eta_value(r, 1 / alpha^2, model)^2)^q
+  ypred <- (1 - get_eta_value(r = r, beta = 1 / alpha^2, model = model)^2)^q
   sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
@@ -458,14 +460,14 @@ contrast_cross <- function(beta, tau, pcfemp, rmin, q = 1, p = 2, model = MUSCAD
   model <- rlang::arg_match(model)
   r <- pcfemp$r[rmin:length(pcfemp$r)]
   yobs <- pcfemp$iso[rmin:length(pcfemp$r)]^q
-  ypred <- (1 - tau^2 * get_eta_value(r, beta, model)^2)^q
+  ypred <- (1 - tau^2 * get_eta_value(r = r, beta = beta, model = model)^2)^q
   sum(c(0, diff(r)) * abs(yobs - ypred)^p)
 }
 
 compute_tau2_from_beta <- function(beta, r, y, k1, k2, alpha1, alpha2,
                                    model = MUSCADET_DPP_MODELS()) {
   model <- rlang::arg_match(model)
-  eta_val <- get_eta_value(r, beta, model = model)
+  eta_val <- get_eta_value(r = r, beta = beta, model = model)
   I1 <- sum(c(0, diff(r)) * (1 - y) * eta_val^2)
   I2 <- sum(c(0, diff(r)) * eta_val^4)
   tauSq_max <- (alpha1 * alpha2 * beta)^2 * min(1, (1 - k1) * (1 - k2) / (k1 * k2))
