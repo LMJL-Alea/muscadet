@@ -25,7 +25,7 @@ jinc_single <- function(x, alpha) {
 }
 
 jinc <- function(x, alpha) {
-  purrr::map(x, jinc_single, alpha = alpha)
+  purrr::map_dbl(x, jinc_single, alpha = alpha)
 }
 
 get_bounds <- function(rho1, rho2, alpha1, alpha2,
