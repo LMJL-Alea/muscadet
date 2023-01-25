@@ -11,9 +11,21 @@ MUSCADET_DPP_MODELS <- function() {
   c("Gauss", "Bessel")
 }
 
-jinc <- function(x, alpha) {
+jinc_single <- function(x, alpha) {
   # J_alpha(x) / (x/2)^alpha * gamma(alpha + 1)
-  ifelse(x < sqrt(.Machine$double.eps), 1, besselJ(x = x, nu = alpha) / (x / 2)^alpha * gamma(alpha + 1))
+  if (x < sqrt(.Machine$double.eps))
+    return(1)
+
+  bessel_value <- if (x > 1e5)
+    cos(x - alpha * pi / 2 - pi / 4) / (x / 2)^(alpha + 1 / 2) / sqrt(pi)
+  else
+    besselJ(x = x, nu = alpha) / (x / 2)^alpha
+
+  bessel_value * gamma(alpha + 1)
+}
+
+jinc <- function(x, alpha) {
+  purrr::map(x, jinc_single)
 }
 
 get_bounds <- function(rho1, rho2, alpha1, alpha2,
