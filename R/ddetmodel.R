@@ -104,7 +104,7 @@ lambda.and.k <- function#Internal function calculating lambda and k
   if(!is.null(rhoname))
     expnum <- getElement(model$fixedpar, rhoname)*prod(Wscale)
   ## Get the maximal truncation in each dimension
-  maxtrunc <- 512# dppspatstat.options("max.trunc")^(1/dim)
+  maxtrunc <- 2^14# dppspatstat.options("max.trunc")^(1/dim)
   ## Extract spectral density
   specden <- spatstat.model::dppspecden(model)
   truncrange <- spatstat.model::dppspecdenrange(model) * max(Wscale)
